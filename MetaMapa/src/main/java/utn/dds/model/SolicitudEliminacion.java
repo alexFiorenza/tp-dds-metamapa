@@ -7,7 +7,7 @@ public class SolicitudEliminacion {
     private String texto;
     private Hecho hecho;
     private LocalDateTime fechaSolicitud;
-    private EstadoSolicitud estado;     // Hay que crear esta clase
+    private EstadoSolicitud estado;
     private DetectorSpam detectorSpam;  // Hay que crear esta clase
 
     // Constructor
@@ -29,7 +29,7 @@ public class SolicitudEliminacion {
     }
 }
 
-public enum EstadoHecho {
+public enum EstadoSolicitud {
     ACTIVO,
     OCULTO;
 }
