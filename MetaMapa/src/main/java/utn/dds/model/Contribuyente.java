@@ -7,9 +7,10 @@ import java.util.Optional;
 public class Contribuyente {
     private List<Hecho> aportes;
     private String nombre;
-    private Optional <String> apellido;    // Creo que asi se ponen opcionalmentre los atributos
+    private Optional <String> apellido;
     private String edad;   // No seria mejor usar un INT aca ?
 
+    // Constructor
     public Contribuyente(String nombre, Optional<String> apellido, Integer edad) {
         this.nombre = nombre;
         this.apellido = apellido;
