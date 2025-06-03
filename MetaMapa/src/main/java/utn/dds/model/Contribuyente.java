@@ -17,6 +17,7 @@ public class Contribuyente {
         this.aportes = new ArrayList<>();
     }
 
+    // Para hacer necesito la base de datos a donde va a subir el hecho
     public subirHecho(){
 
     }

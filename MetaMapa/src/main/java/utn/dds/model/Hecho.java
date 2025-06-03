@@ -38,10 +38,10 @@ public class Hecho {
     }
 
     public void ocultar(){
-
+        this.estado = "Oculto"
     }
 
     public void activar(){
-
+        this.estado = "Activo"
     }
 }
