@@ -36,11 +36,19 @@ public class Hecho {
         this.etiquetas = etiquetas;
     }
 
-    public void ocultar(){
-        this.estado = "Oculto"
+
+    public void ocultar() {
+        this.estado = EstadoHecho.OCULTO;
     }
 
-    public void activar(){
-        this.estado = "Activo"
+    public void activar() {
+        this.estado = EstadoHecho.ACTIVO;
     }
+
+}
+
+
+public enum EstadoHecho {
+    ACTIVO,
+    OCULTO;
 }
