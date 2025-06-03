@@ -18,9 +18,23 @@ public class Hecho {
     private EstadoHecho estado;  // hay que crear la clase EstadoHecho
     private List<String> etiquetas;
 
-    // No se si habria que implementar un constructor
-    public Hecho(){
-
+    // Constructor
+    public Hecho(String titulo, String descripcion, String categoria, LocalDate fechaAcontecimiento,
+                 Origen origen, Contribuyente contribuyente, TipoHecho tipo,
+                 Integer longitud, Integer latitud, LocalDate fechaCarga,
+                 EstadoHecho estado, List<String> etiquetas) {
+        this.titulo = titulo;
+        this.descripcion = descripcion;
+        this.categoria = categoria;
+        this.fechaAcontecimiento = fechaAcontecimiento;
+        this.origen = origen;
+        this.contribuyente = contribuyente;
+        this.tipo = tipo;
+        this.longitud = longitud;
+        this.latitud = latitud;
+        this.fechaCarga = fechaCarga;
+        this.estado = estado;
+        this.etiquetas = etiquetas;
     }
 
     public void ocultar(){
