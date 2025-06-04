@@ -8,7 +8,7 @@ public class SolicitudEliminacion {
     private Hecho hecho;
     private LocalDateTime fechaSolicitud;
     private EstadoSolicitud estado;
-    private DetectorSpam detectorSpam;  // Hay que crear esta clase
+    private DetectorSpam detectorSpam;  // Hay que crear esta Interface
 
     // Constructor
     public SolicitudEliminacion(String texto, Hecho hecho, LocalDateTime fechaSolicitud,
