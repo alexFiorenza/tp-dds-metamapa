@@ -8,7 +8,7 @@ public class Contribuyente {
     private List<Hecho> aportes;
     private String nombre;
     private Optional <String> apellido;
-    private String edad;   // No seria mejor usar un INT aca ?
+    private Int edad;
 
     // Constructor
     public Contribuyente(String nombre, Optional<String> apellido, Integer edad) {

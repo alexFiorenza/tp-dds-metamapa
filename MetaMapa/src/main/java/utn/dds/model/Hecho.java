@@ -8,13 +8,13 @@ public class Hecho {
     private String descripcion;
     private String categoria;
     private LocalDate fechaAcontecimiento;
-    private Origen origen;    // hay que crear la clase Origen
+    private Origen origen;
     private Contribuyente contribuyente;
-    private TipoHecho tipo; // hay que crear la clase TipoHecho
+    private TipoHecho tipo;
     private Int longitud;
     private Int latitud;
     private LocalDate fechaCarga;
-    private EstadoHecho estado;  // hay que crear la clase EstadoHecho
+    private EstadoHecho estado;
     private List<String> etiquetas;
 
     // Constructor
@@ -51,4 +51,15 @@ public class Hecho {
 public enum EstadoHecho {
     ACTIVO,
     OCULTO;
+}
+
+public enum Origen {
+    DATASET,
+    MANUAL;
+    CONTRIBUYENTE;
+}
+
+public enum TipoHecho {
+    TEXTO,
+    MULTIMEDIA;
 }
