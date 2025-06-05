@@ -1,6 +1,7 @@
 package utn.dds.model;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class Hecho {
@@ -11,8 +12,8 @@ public class Hecho {
     private Origen origen;
     private Contribuyente contribuyente;
     private TipoHecho tipo;
-    private int longitud;
-    private int latitud;
+    private double longitud;
+    private double latitud;
     private LocalDate fechaCarga;
     private EstadoHecho estado;
     private List<String> etiquetas;
@@ -20,7 +21,7 @@ public class Hecho {
     // Constructor
     public Hecho(String titulo, String descripcion, String categoria, LocalDate fechaAcontecimiento,
                  Origen origen, Contribuyente contribuyente, TipoHecho tipo,
-                 int longitud, int latitud, LocalDate fechaCarga,
+                 double longitud, double latitud, LocalDate fechaCarga,
                  EstadoHecho estado, List<String> etiquetas) {
         this.titulo = titulo;
         this.descripcion = descripcion;
@@ -37,6 +38,56 @@ public class Hecho {
     }
 
 
+    // Getters
+    public String getTitulo() {
+        return titulo;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public String getCategoria() {
+        return categoria;
+    }
+
+    public LocalDate getFechaAcontecimiento() {
+        return fechaAcontecimiento;
+    }
+
+    public Origen getOrigen() {
+        return origen;
+    }
+
+    public Contribuyente getContribuyente() {
+        return contribuyente;
+    }
+
+    public TipoHecho getTipo() {
+        return tipo;
+    }
+
+    public double getLongitud() {
+        return longitud;
+    }
+
+    public double getLatitud() {
+        return latitud;
+    }
+
+    public LocalDate getFechaCarga() {
+        return fechaCarga;
+    }
+
+    public EstadoHecho getEstado() {
+        return estado;
+    }
+
+    public List<String> getEtiquetas() {
+        return etiquetas;
+    }
+
+    // Acciones
     public void ocultar() {
         this.estado = EstadoHecho.OCULTO;
     }
@@ -44,5 +95,4 @@ public class Hecho {
     public void activar() {
         this.estado = EstadoHecho.ACTIVO;
     }
-
 }
