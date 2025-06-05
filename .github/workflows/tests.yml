@@ -21,5 +21,5 @@ jobs:
           distribution: "temurin"
 
       - name: 🧪 Ejecutar tests con Maven
-        working-directory: tests
+        working-directory: MetaMapa/tests
         run: mvn -B clean test
