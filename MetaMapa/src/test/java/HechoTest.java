@@ -1,5 +1,6 @@
 import org.junit.jupiter.api.Test;
 import utn.dds.model.Hecho;
+import utn.dds.model.fuentes.estatica.strategies.CSVStrategy;
 import utn.dds.service.negocio.FuenteDeDatos;
 
 import java.nio.file.Path;
@@ -20,7 +21,7 @@ public class HechoTest {
         String separador = ",";
         FuenteDeDatos fuente = new FuenteDeDatos();
 
-        List<Hecho> hechosImportados = fuente.importarHechosDesdeCSV(path,separador);
+        List<Hecho> hechosImportados = fuente.importarDesdeEstatica(new CSVStrategy(path,separador));
         assertNotNull(hechosImportados, "La lista de hechos no debería ser nula");
         assertFalse(hechosImportados.isEmpty(), "La lista de hechos debería tener elementos");
 

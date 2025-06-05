@@ -50,6 +50,10 @@ public class Coleccion {
         return criteriosDePertenencia;
     }
 
+    public List<Hecho> getHechos() {
+        return hechos;
+    }
+
     // Setters
     public void setHechos(List<Hecho> hechos){
         this.hechos = hechos;
