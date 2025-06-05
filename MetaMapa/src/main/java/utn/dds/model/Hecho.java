@@ -11,8 +11,8 @@ public class Hecho {
     private Origen origen;
     private Contribuyente contribuyente;
     private TipoHecho tipo;
-    private Int longitud;
-    private Int latitud;
+    private int longitud;
+    private int latitud;
     private LocalDate fechaCarga;
     private EstadoHecho estado;
     private List<String> etiquetas;
@@ -20,7 +20,7 @@ public class Hecho {
     // Constructor
     public Hecho(String titulo, String descripcion, String categoria, LocalDate fechaAcontecimiento,
                  Origen origen, Contribuyente contribuyente, TipoHecho tipo,
-                 Integer longitud, Integer latitud, LocalDate fechaCarga,
+                 int longitud, int latitud, LocalDate fechaCarga,
                  EstadoHecho estado, List<String> etiquetas) {
         this.titulo = titulo;
         this.descripcion = descripcion;
@@ -45,21 +45,4 @@ public class Hecho {
         this.estado = EstadoHecho.ACTIVO;
     }
 
-}
-
-
-public enum EstadoHecho {
-    ACTIVO,
-    OCULTO;
-}
-
-public enum Origen {
-    DATASET,
-    MANUAL;
-    CONTRIBUYENTE;
-}
-
-public enum TipoHecho {
-    TEXTO,
-    MULTIMEDIA;
 }

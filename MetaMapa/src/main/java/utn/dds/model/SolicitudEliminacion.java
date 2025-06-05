@@ -21,15 +21,10 @@ public class SolicitudEliminacion {
     }
 
     public void ocultar() {
-        this.estado = EstadoHecho.OCULTO;
+        this.estado = EstadoSolicitud.OCULTO;
     }
 
     public void activar() {
-        this.estado = EstadoHecho.ACTIVO;
+        this.estado = EstadoSolicitud.ACTIVO;
     }
-}
-
-public enum EstadoSolicitud {
-    ACTIVO,
-    OCULTO;
 }
