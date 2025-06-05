@@ -19,7 +19,7 @@ public class Contribuyente {
     }
 
     // Para hacer necesito la base de datos a donde va a subir el hecho
-    public subirHecho(){
+    public void subirHecho(){
 
     }
 }
