@@ -1,7 +1,7 @@
 import org.junit.jupiter.api.Test;
 import utn.dds.model.Hecho;
 import utn.dds.model.fuentes.estatica.strategies.CSVStrategy;
-import utn.dds.service.negocio.FuenteDeDatos;
+import utn.dds.service.negocio.FuenteDeDatosService;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,9 +19,9 @@ public class HechoTest {
     void importarHechosDesdeUnCSV(){
         Path path = Paths.get("src/test/resources/data/desastres_sanitarios_contaminacion_argentina.csv");
         String separador = ",";
-        FuenteDeDatos fuente = new FuenteDeDatos();
 
-        List<Hecho> hechosImportados = fuente.importarDesdeEstatica(new CSVStrategy(path,separador));
+        FuenteDeDatosService fuente = new FuenteDeDatosService();
+        List<Hecho> hechosImportados = fuente.importarDesdeArchivo(new CSVStrategy(path,separador));
         assertNotNull(hechosImportados, "La lista de hechos no debería ser nula");
         assertFalse(hechosImportados.isEmpty(), "La lista de hechos debería tener elementos");
 

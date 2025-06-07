@@ -2,7 +2,7 @@ package utn.dds.service.negocio;
 
 import utn.dds.model.Coleccion;
 import utn.dds.model.Hecho;
-import utn.dds.model.HechoStrategy;
+import utn.dds.model.criterios.HechoStrategy;
 import java.util.List;
 import java.util.stream.Collectors;
 

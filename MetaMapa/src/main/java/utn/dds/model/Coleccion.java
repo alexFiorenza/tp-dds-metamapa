@@ -1,5 +1,7 @@
 package utn.dds.model;
 
+import utn.dds.model.criterios.HechoStrategy;
+
 import java.util.List;
 import java.util.ArrayList;
 import java.util.UUID;

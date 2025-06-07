@@ -53,7 +53,8 @@ public class CSVStrategy implements ProcesadorStrategy {
                         longitud,latitud,
                         LocalDate.now(),
                         EstadoHecho.ACTIVO,
-                        etiquetas
+                        etiquetas,
+                        null
                 );
                 hechos.add(hecho);
             }
