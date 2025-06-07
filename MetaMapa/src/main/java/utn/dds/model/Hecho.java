@@ -1,27 +1,28 @@
 package utn.dds.model;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class Hecho {
-    private String titulo;
-    private String descripcion;
-    private String categoria;
-    private LocalDate fechaAcontecimiento;
-    private Origen origen;
-    private Contribuyente contribuyente;
-    private TipoHecho tipo;
-    private int longitud;
-    private int latitud;
-    private LocalDate fechaCarga;
+    private final String titulo;
+    private final String descripcion;
+    private final String categoria;
+    private final LocalDate fechaAcontecimiento;
+    private final Origen origen;
+    private final Contribuyente contribuyente;
+    private final TipoHecho tipo;
+    private final double longitud;
+    private final double latitud;
+    private final LocalDate fechaCarga;
     private EstadoHecho estado;
-    private List<String> etiquetas;
+    private final List<String> etiquetas;
+    private final String uuid; // Esto es para identificar en la base de datos o en memoria en caso de Estatica
 
     // Constructor
     public Hecho(String titulo, String descripcion, String categoria, LocalDate fechaAcontecimiento,
                  Origen origen, Contribuyente contribuyente, TipoHecho tipo,
-                 int longitud, int latitud, LocalDate fechaCarga,
-                 EstadoHecho estado, List<String> etiquetas) {
+                 double longitud, double latitud, LocalDate fechaCarga,
+                 EstadoHecho estado, List<String> etiquetas, String uuid) {
         this.titulo = titulo;
         this.descripcion = descripcion;
         this.categoria = categoria;
@@ -34,9 +35,68 @@ public class Hecho {
         this.fechaCarga = fechaCarga;
         this.estado = estado;
         this.etiquetas = etiquetas;
+        if (uuid == null){
+            this.uuid = UUID.randomUUID().toString();
+        }else{
+            this.uuid = uuid;
+        }
     }
 
 
+    // Getters
+    public String getTitulo() {
+        return titulo;
+    }
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public String getCategoria() {
+        return categoria;
+    }
+
+    public LocalDate getFechaAcontecimiento() {
+        return fechaAcontecimiento;
+    }
+
+    public Origen getOrigen() {
+        return origen;
+    }
+
+    public Contribuyente getContribuyente() {
+        return contribuyente;
+    }
+
+    public TipoHecho getTipo() {
+        return tipo;
+    }
+
+    public double getLongitud() {
+        return longitud;
+    }
+
+    public double getLatitud() {
+        return latitud;
+    }
+
+    public LocalDate getFechaCarga() {
+        return fechaCarga;
+    }
+
+    public EstadoHecho getEstado() {
+        return estado;
+    }
+
+    public List<String> getEtiquetas() {
+        return etiquetas;
+    }
+
+    // Acciones
     public void ocultar() {
         this.estado = EstadoHecho.OCULTO;
     }
@@ -44,5 +104,4 @@ public class Hecho {
     public void activar() {
         this.estado = EstadoHecho.ACTIVO;
     }
-
 }
