@@ -19,9 +19,9 @@ public class SolicitudEliminacionService {
         SolicitudEliminacion solicitud;
         try{
             if(detectorSpam.esSpam(texto)){
-                solicitud = this.solicitudEliminacionRepository.nuevaSolicitudEliminacion(uuidHecho, texto, this.detectorSpam,EstadoSolicitud.OCULTO);
+                solicitud = this.solicitudEliminacionRepository.nuevaSolicitudEliminacion(uuidHecho, texto, EstadoSolicitud.OCULTO);
             }else{
-                solicitud = this.solicitudEliminacionRepository.nuevaSolicitudEliminacion(uuidHecho, texto, this.detectorSpam,EstadoSolicitud.ACTIVO);
+                solicitud = this.solicitudEliminacionRepository.nuevaSolicitudEliminacion(uuidHecho, texto, EstadoSolicitud.ACTIVO);
             }
             return solicitud;
         } catch(Exception e){

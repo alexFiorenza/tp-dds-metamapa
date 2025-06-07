@@ -17,7 +17,6 @@ public class SolicitudEliminacionRepository {
 
     public SolicitudEliminacion nuevaSolicitudEliminacion(
             String _uuidHecho, String texto,
-            DetectorSpam detectorSpam,
             EstadoSolicitud estadoSolicitud
     ) {
         //TODO:  Almacenar en la Base de Datos

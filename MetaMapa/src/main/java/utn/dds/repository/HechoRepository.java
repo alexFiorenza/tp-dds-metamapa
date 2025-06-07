@@ -13,6 +13,6 @@ public class HechoRepository {
         // Aca por ejemplo seria obtener desde la base de datos
         // hechos = orm.find("hechos")
         // hechos -> transform -> List<Hecho>
-        return null;
+        throw new UnsupportedOperationException("Metodo no implementado");
     }
 }
