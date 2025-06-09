@@ -43,5 +43,16 @@ public class FuentesDeDatosTest {
      */
     void crearDesdeFuenteDinamica(){
 
+        // Desarrollo del caso
+        // ContribuyenteService contribuyenteService  = new ContribuyenteService();
+        // Hecho hecho = contribuyenteService.aportarHecho(datos del hecho, datos del contribuyente) -> devuelve un Hecho
+
+        // dentro de aportarHecho() seria:
+                // HechoRepository hechoRepository = new HechoRepository();
+                // Hecho hecho = hechoRepository.nuevoHechoDinamico(datos del hecho, datos del contribuyente) -> devuelve un hecho
+                //  return hecho;
+
+        // assertNotNull(hecho,'el hecho creado dinamicamente no tendria que ser nulo');
+        // otros tests ... 
     }
 }
