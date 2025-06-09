@@ -29,7 +29,7 @@ public class Contribuyente {
                            double longitud, double latitud, LocalDate fechaCarga,
                            EstadoHecho estado, List<String> etiquetas){
 
-        Hecho nuevoHecho = servicio.crearHecho(this, titulo, descripcion, categoria, fechaAcontecimiento, origen, tipo,
+        Hecho nuevoHecho = servicio.aportarHecho(this, titulo, descripcion, categoria, fechaAcontecimiento, origen, tipo,
                                     longitud, latitud, fechaCarga, estado, etiquetas);
 
         // Aca habria que poner un if, de si fue aceptado el hecho o fue rechazado
