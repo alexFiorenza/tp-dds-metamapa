@@ -62,7 +62,9 @@ public class FuentesDeDatosTest {
          EstadoHecho estadoHecho;
 
 
-         Hecho hecho = contribuyenteService.aportarHecho(contribuyente, "Ataque en el bosque", "3 muertos", "Natural", fechaCarga, Origen.CONTRIBUYENTE, TipoHecho.TEXTO, 0, 0, fechaCarga, EstadoHecho.OCULTO, etiquetas); // devuelve un hecho
+         Hecho hecho = contribuyenteService.aportarHecho(contribuyente, "Ataque en el bosque", "3 muertos",
+                 "Natural", fechaCarga, Origen.CONTRIBUYENTE, TipoHecho.TEXTO, 0, 0, fechaCarga,
+                 EstadoHecho.OCULTO, etiquetas); // devuelve un hecho
 
         // dentro de aportarHecho() seria:
                 // HechoRepository hechoRepository = new HechoRepository();

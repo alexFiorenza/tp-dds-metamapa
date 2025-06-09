@@ -16,8 +16,9 @@ public class HechoRepository {
         throw new UnsupportedOperationException("Metodo no implementado");
     }
 
+    /*
     public Hecho nuevoHechoDinamico(){
 
     }
-
+    */
 }
