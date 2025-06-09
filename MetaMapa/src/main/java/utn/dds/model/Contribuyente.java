@@ -24,13 +24,23 @@ public class Contribuyente {
     // Invoco al servicio
     ContribuyenteService servicio = new ContribuyenteService();
 
-    public void crearHecho(String titulo, String descripcion, String categoria, LocalDate fechaAcontecimiento,
+    public Hecho crearHecho(String titulo, String descripcion, String categoria, LocalDate fechaAcontecimiento,
                            Origen origen, TipoHecho tipo,
                            double longitud, double latitud, LocalDate fechaCarga,
                            EstadoHecho estado, List<String> etiquetas){
 
-        servicio.crearHecho(this, titulo, descripcion, categoria, fechaAcontecimiento, origen, tipo,
+        Hecho nuevoHecho = servicio.crearHecho(this, titulo, descripcion, categoria, fechaAcontecimiento, origen, tipo,
                                     longitud, latitud, fechaCarga, estado, etiquetas);
+
+        // Aca habria que poner un if, de si fue aceptado el hecho o fue rechazado
+        // Si fue aceptado, habria que agregarlo a la lista de aportes
+        /*
+        if(fueAceptado()){
+            aportes.add(nuevoHecho)
+        }
+         */
+
+        return nuevoHecho;
     }
 
     // Getters
