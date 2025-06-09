@@ -15,4 +15,9 @@ public class HechoRepository {
         // hechos -> transform -> List<Hecho>
         throw new UnsupportedOperationException("Metodo no implementado");
     }
+
+    public Hecho nuevoHechoDinamico(){
+
+    }
+
 }

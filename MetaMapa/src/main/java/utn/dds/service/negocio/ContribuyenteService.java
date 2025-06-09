@@ -7,7 +7,7 @@ import java.util.List;
 
 public class ContribuyenteService {
     // No se si se deberian pasar las fuentes por atributo, y tampoco si esto seria repeticion de codigo por lo de Hecho
-    public Hecho crearHecho(Contribuyente contribuyente, String titulo, String descripcion, String categoria, LocalDate fechaAcontecimiento,
+    public Hecho aportarHecho(Contribuyente contribuyente, String titulo, String descripcion, String categoria, LocalDate fechaAcontecimiento,
                            Origen origen, TipoHecho tipo,
                            double longitud, double latitud, LocalDate fechaCarga,
                            EstadoHecho estado, List<String> etiquetas){

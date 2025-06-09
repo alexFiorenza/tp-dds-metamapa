@@ -1,10 +1,18 @@
 import org.junit.jupiter.api.Test;
 import utn.dds.model.Hecho;
+import utn.dds.service.negocio.ContribuyenteService;
+import utn.dds.model.Contribuyente;
 import utn.dds.model.fuentes.estatica.strategies.CSVStrategy;
 import utn.dds.service.negocio.FuenteDeDatosService;
+import utn.dds.model.Origen;
+import utn.dds.model.TipoHecho;
+import utn.dds.model.EstadoHecho;
+
+
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -44,13 +52,22 @@ public class FuentesDeDatosTest {
     void crearDesdeFuenteDinamica(){
 
         // Desarrollo del caso
-        // ContribuyenteService contribuyenteService  = new ContribuyenteService();
-        // Hecho hecho = contribuyenteService.aportarHecho(datos del hecho, datos del contribuyente) -> devuelve un Hecho
+         ContribuyenteService contribuyenteService  = new ContribuyenteService();
+         Contribuyente contribuyente = new Contribuyente("Pedro", "Ruiz", 22);
+         LocalDate fechaCarga = LocalDate.now(); // para el test hardcodeado, hay que borrarlo
+         List<String> etiquetas = List.of("urgente", "transporte"); //para la prueba
+
+         Origen origen;
+         TipoHecho tipoHecho;
+         EstadoHecho estadoHecho;
+
+
+         Hecho hecho = contribuyenteService.aportarHecho(contribuyente, "Ataque en el bosque", "3 muertos", "Natural", fechaCarga, Origen.CONTRIBUYENTE, TipoHecho.TEXTO, 0, 0, fechaCarga, EstadoHecho.OCULTO, etiquetas); // devuelve un hecho
 
         // dentro de aportarHecho() seria:
                 // HechoRepository hechoRepository = new HechoRepository();
                 // Hecho hecho = hechoRepository.nuevoHechoDinamico(datos del hecho, datos del contribuyente) -> devuelve un hecho
-                //  return hecho;
+                // return hecho;
 
         // assertNotNull(hecho,'el hecho creado dinamicamente no tendria que ser nulo');
         // otros tests ... 
