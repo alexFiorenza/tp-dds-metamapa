@@ -22,7 +22,7 @@ public class Hecho {
     public Hecho(String titulo, String descripcion, String categoria, LocalDate fechaAcontecimiento,
                  Origen origen, Contribuyente contribuyente, TipoHecho tipo,
                  double longitud, double latitud, LocalDate fechaCarga,
-                 EstadoHecho estado, List<String> etiquetas, String uuid) {
+                 EstadoHecho estado, List<String> etiquetas) {
         this.titulo = titulo;
         this.descripcion = descripcion;
         this.categoria = categoria;
@@ -35,11 +35,7 @@ public class Hecho {
         this.fechaCarga = fechaCarga;
         this.estado = estado;
         this.etiquetas = etiquetas;
-        if (uuid == null){
-            this.uuid = UUID.randomUUID().toString();
-        }else{
-            this.uuid = uuid;
-        }
+        this.uuid = UUID.randomUUID().toString();
     }
 
 
