@@ -8,9 +8,10 @@ import java.nio.file.Paths;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class HechoTest {
-
+public class FuentesDeDatosTest {
     /**
      * Como persona administradora,
      * deseo poder importar hechos desde un archivo CSV.
@@ -33,5 +34,14 @@ public class HechoTest {
         assertNotNull(primerHecho.getFechaAcontecimiento(), "La fecha no debería ser nula");
         assertTrue(primerHecho.getLatitud() >= -90 && primerHecho.getLatitud() <= 90, "Latitud válida");
         assertTrue(primerHecho.getLongitud() >= -180 && primerHecho.getLongitud() <= 180, "Longitud válida");
+    }
+
+
+    /**
+     * Como persona contribuyente,
+     * deseo poder crear un hecho a partir de una fuente dinamica.
+     */
+    void crearDesdeFuenteDinamica(){
+
     }
 }
