@@ -1,10 +1,9 @@
 package utn.dds.model;
 import utn.dds.service.negocio.ContribuyenteService;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 
 public class Contribuyente {
@@ -24,9 +23,9 @@ public class Contribuyente {
     // Invoco al servicio
     ContribuyenteService servicio = new ContribuyenteService();
 
-    public Hecho crearHecho(String titulo, String descripcion, String categoria, LocalDate fechaAcontecimiento,
+    public Hecho crearHecho(String titulo, String descripcion, String categoria, LocalDateTime fechaAcontecimiento,
                            Origen origen, TipoHecho tipo,
-                           double longitud, double latitud, LocalDate fechaCarga,
+                           double longitud, double latitud, LocalDateTime fechaCarga,
                            EstadoHecho estado, List<String> etiquetas){
 
         Hecho nuevoHecho = servicio.aportarHecho(this, titulo, descripcion, categoria, fechaAcontecimiento, origen, tipo,
