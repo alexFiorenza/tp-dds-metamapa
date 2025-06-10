@@ -23,8 +23,9 @@ public class ContribuyenteService {
         return hecho;
     }
 
-    public List<Hecho>obtenerHechosRecientes(Coleccion coleccion){  // Hay que instanciar la coleccion con los hechos
-        List<Hecho> hechosRecientes = coleccion.stream()
+    // Hay que toquetearla, fijarse la coleccion
+    public List<Hecho>obtenerHechosRecientes(Coleccion coleccion){  // Hay que instanciar la coleccion de donde queremos obtener los primeros hechos
+        List<Hecho> hechosRecientes = coleccion.getHechos().stream()
                 .filter(hecho -> hecho.getOrigen() == Origen.CONTRIBUYENTE) // esto puede no estar porque ya nos pasan la fuente
                 .filter(hecho -> Duration.between(hecho.getFechaCarga(), LocalDateTime.now()).toHours() < 1)
                 .collect(Collectors.toList());
