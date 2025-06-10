@@ -53,26 +53,27 @@ public class FuentesDeDatosTest {
     void crearDesdeFuenteDinamica(){
 
         // Desarrollo del caso
-         ContribuyenteService contribuyenteService  = new ContribuyenteService();
-         Contribuyente contribuyente = new Contribuyente("Pedro", "Ruiz", 22);
-         LocalDate fechaCarga = LocalDate.now(); // para el test hardcodeado, hay que borrarlo
-         List<String> etiquetas = List.of("urgente", "transporte"); //para la prueba
+        ContribuyenteService contribuyenteService  = new ContribuyenteService();
+        Contribuyente contribuyente = new Contribuyente("Pedro", "Ruiz", 22);
+        LocalDate fechaCarga = LocalDate.now(); // para el test hardcodeado, hay que borrarlo
+        List<String> etiquetas = List.of("urgente", "transporte"); //para la prueba
 
-         Origen origen;
-         TipoHecho tipoHecho;
-         EstadoHecho estadoHecho;
+        Origen origen;
+        TipoHecho tipoHecho;
+        EstadoHecho estadoHecho;
 
 
-         Hecho hecho = contribuyenteService.aportarHecho(contribuyente, "Ataque en el bosque", "3 muertos",
-                 "Natural", fechaCarga, Origen.CONTRIBUYENTE, TipoHecho.TEXTO, 0, 0, fechaCarga,
+        Hecho hecho = contribuyenteService.aportarHecho(contribuyente, "Ataque en el bosque", "3 muertos",
+                "Natural", fechaCarga, Origen.CONTRIBUYENTE, TipoHecho.TEXTO, 0, 0, fechaCarga,
                  EstadoHecho.OCULTO, etiquetas); // devuelve un hecho
 
-         // dentro de aportarHecho() seria:
-                // HechoRepository hechoRepository = new HechoRepository();
-                // Hecho hecho = hechoRepository.nuevoHechoDinamico(datos del hecho, datos del contribuyente) -> devuelve un hecho
-                // return hecho;
 
-         // assertNotNull(hecho,'el hecho creado dinamicamente no tendria que ser nulo');
-         // otros tests ...
+        assertNotNull(hecho,"el hecho creado dinamicamente no tendria que ser nulo");
+        assertNotNull(hecho.getTitulo(), "El título no debería ser nulo");
+        assertNotNull(hecho.getDescripcion(), "La descripción no debería ser nula");
+        assertNotNull(hecho.getCategoria(), "La categoría no debería ser nula");
+        assertTrue(hecho.getLatitud() >= -90 && hecho.getLatitud() <= 90, "Latitud válida");
+        assertTrue(hecho.getLongitud() >= -180 && hecho.getLongitud() <= 180, "Longitud válida");
+
     }
 }

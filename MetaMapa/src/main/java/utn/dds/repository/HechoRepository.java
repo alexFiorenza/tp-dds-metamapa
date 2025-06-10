@@ -28,6 +28,5 @@ public class HechoRepository {
                 estado, etiquetas);
 
         return nuevoHecho;
-
     }
 }

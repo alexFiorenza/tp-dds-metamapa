@@ -8,9 +8,16 @@ import java.util.List;
 
 public class ContribuyenteService {
 
-    public Hecho aportarHecho(){
+    // Una opcion que no se si se puede hacer es, pasarle un contribuyente y un paquete de datos (titulo, descripcion, etc)
+    public Hecho aportarHecho(Contribuyente contribuyente, String titulo, String descripcion, String categoria, LocalDate fechaAcontecimiento,
+                              Origen origen, TipoHecho tipo,
+                              double longitud, double latitud, LocalDate fechaCarga,
+                              EstadoHecho estado, List<String> etiquetas){
         HechoRepository hechoRepository = new HechoRepository();
-        Hecho hecho = hechoRepository.nuevoHechoDinamico();  // hay que programar esta (no se como pasarlelos datos del contribuyente)
+
+        Hecho hecho = hechoRepository.nuevoHechoDinamico(contribuyente, titulo, descripcion, categoria, fechaAcontecimiento,
+                origen, tipo, longitud, latitud, fechaCarga, estado, etiquetas);
+
         return hecho;
     }
     /*
