@@ -1,7 +1,9 @@
 package utn.dds.repository;
-import utn.dds.model.Hecho;
+import utn.dds.model.*;
 import utn.dds.model.fuentes.FuenteDeDatos;
 import utn.dds.model.fuentes.estatica.strategies.ProcesadorStrategy;
+
+import java.time.LocalDate;
 import java.util.List;
 
 public class HechoRepository {
@@ -16,9 +18,16 @@ public class HechoRepository {
         throw new UnsupportedOperationException("Metodo no implementado");
     }
 
-    /*
-    public Hecho nuevoHechoDinamico(){
+    public Hecho nuevoHechoDinamico(Contribuyente contribuyente, String titulo, String descripcion, String categoria, LocalDate fechaAcontecimiento,
+                                    Origen origen, TipoHecho tipo,
+                                    double longitud, double latitud, LocalDate fechaCarga,
+                                    EstadoHecho estado, List<String> etiquetas){
+
+        Hecho nuevoHecho = new Hecho(titulo, descripcion, categoria, fechaAcontecimiento,
+                origen, contribuyente, tipo, longitud, latitud, fechaCarga,
+                estado, etiquetas);
+
+        return nuevoHecho;
 
     }
-    */
 }

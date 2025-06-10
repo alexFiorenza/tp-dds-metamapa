@@ -1,5 +1,6 @@
 import org.junit.jupiter.api.Test;
 import utn.dds.model.Hecho;
+import utn.dds.repository.HechoRepository;
 import utn.dds.service.negocio.ContribuyenteService;
 import utn.dds.model.Contribuyente;
 import utn.dds.model.fuentes.estatica.strategies.CSVStrategy;
@@ -66,12 +67,12 @@ public class FuentesDeDatosTest {
                  "Natural", fechaCarga, Origen.CONTRIBUYENTE, TipoHecho.TEXTO, 0, 0, fechaCarga,
                  EstadoHecho.OCULTO, etiquetas); // devuelve un hecho
 
-        // dentro de aportarHecho() seria:
+         // dentro de aportarHecho() seria:
                 // HechoRepository hechoRepository = new HechoRepository();
                 // Hecho hecho = hechoRepository.nuevoHechoDinamico(datos del hecho, datos del contribuyente) -> devuelve un hecho
                 // return hecho;
 
-        // assertNotNull(hecho,'el hecho creado dinamicamente no tendria que ser nulo');
-        // otros tests ... 
+         // assertNotNull(hecho,'el hecho creado dinamicamente no tendria que ser nulo');
+         // otros tests ...
     }
 }
