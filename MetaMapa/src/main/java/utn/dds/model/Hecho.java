@@ -7,7 +7,7 @@ public class Hecho {
     private final String titulo;
     private final String descripcion;
     private final String categoria;
-    private final LocalDate fechaAcontecimiento;
+    private final LocalDate fechaAcontecimiento;    // Para futuras modificaciones (como el tema de horario), deberia ser LocalDateTime
     private final Origen origen;
     private final Contribuyente contribuyente;
     private final TipoHecho tipo;
