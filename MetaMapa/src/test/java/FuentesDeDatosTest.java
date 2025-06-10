@@ -1,6 +1,5 @@
 import org.junit.jupiter.api.Test;
 import utn.dds.model.Hecho;
-import utn.dds.repository.HechoRepository;
 import utn.dds.service.negocio.ContribuyenteService;
 import utn.dds.model.Contribuyente;
 import utn.dds.model.fuentes.estatica.strategies.CSVStrategy;
@@ -13,7 +12,7 @@ import utn.dds.model.EstadoHecho;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -55,7 +54,7 @@ public class FuentesDeDatosTest {
         // Desarrollo del caso
         ContribuyenteService contribuyenteService  = new ContribuyenteService();
         Contribuyente contribuyente = new Contribuyente("Pedro", "Ruiz", 22);
-        LocalDate fechaCarga = LocalDate.now(); // para el test hardcodeado, hay que borrarlo
+        LocalDateTime fechaCarga = LocalDateTime.now(); // para el test hardcodeado, hay que borrarlo
         List<String> etiquetas = List.of("urgente", "transporte"); //para la prueba
 
         Origen origen;

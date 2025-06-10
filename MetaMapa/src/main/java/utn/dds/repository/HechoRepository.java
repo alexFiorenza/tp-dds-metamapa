@@ -3,7 +3,7 @@ import utn.dds.model.*;
 import utn.dds.model.fuentes.FuenteDeDatos;
 import utn.dds.model.fuentes.estatica.strategies.ProcesadorStrategy;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class HechoRepository {
@@ -18,9 +18,9 @@ public class HechoRepository {
         throw new UnsupportedOperationException("Metodo no implementado");
     }
 
-    public Hecho nuevoHechoDinamico(Contribuyente contribuyente, String titulo, String descripcion, String categoria, LocalDate fechaAcontecimiento,
+    public Hecho nuevoHechoDinamico(Contribuyente contribuyente, String titulo, String descripcion, String categoria, LocalDateTime fechaAcontecimiento,
                                     Origen origen, TipoHecho tipo,
-                                    double longitud, double latitud, LocalDate fechaCarga,
+                                    double longitud, double latitud, LocalDateTime fechaCarga,
                                     EstadoHecho estado, List<String> etiquetas){
 
         Hecho nuevoHecho = new Hecho(titulo, descripcion, categoria, fechaAcontecimiento,

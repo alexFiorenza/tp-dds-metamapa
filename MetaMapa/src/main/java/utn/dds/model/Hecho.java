@@ -1,5 +1,5 @@
 package utn.dds.model;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -7,21 +7,21 @@ public class Hecho {
     private final String titulo;
     private final String descripcion;
     private final String categoria;
-    private final LocalDate fechaAcontecimiento;    // Para futuras modificaciones (como el tema de horario), deberia ser LocalDateTime
+    private final LocalDateTime fechaAcontecimiento;
     private final Origen origen;
     private final Contribuyente contribuyente;
     private final TipoHecho tipo;
     private final double longitud;
     private final double latitud;
-    private final LocalDate fechaCarga;
+    private final LocalDateTime fechaCarga;
     private EstadoHecho estado;
     private final List<String> etiquetas;
     private final String uuid; // Esto es para identificar en la base de datos o en memoria en caso de Estatica
 
     // Constructor
-    public Hecho(String titulo, String descripcion, String categoria, LocalDate fechaAcontecimiento,
+    public Hecho(String titulo, String descripcion, String categoria, LocalDateTime fechaAcontecimiento,
                  Origen origen, Contribuyente contribuyente, TipoHecho tipo,
-                 double longitud, double latitud, LocalDate fechaCarga,
+                 double longitud, double latitud, LocalDateTime fechaCarga,
                  EstadoHecho estado, List<String> etiquetas) {
         this.titulo = titulo;
         this.descripcion = descripcion;
@@ -56,7 +56,7 @@ public class Hecho {
         return categoria;
     }
 
-    public LocalDate getFechaAcontecimiento() {
+    public LocalDateTime getFechaAcontecimiento() {
         return fechaAcontecimiento;
     }
 
@@ -80,7 +80,7 @@ public class Hecho {
         return latitud;
     }
 
-    public LocalDate getFechaCarga() {
+    public LocalDateTime getFechaCarga() {
         return fechaCarga;
     }
 
