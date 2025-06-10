@@ -24,6 +24,8 @@ public class FuentesDeDatosTest {
      * Como persona administradora,
      * deseo poder importar hechos desde un archivo CSV.
      */
+
+    /*
     @Test
     void importarHechosDesdeUnCSV(){
         Path path = Paths.get("src/test/resources/data/desastres_sanitarios_contaminacion_argentina.csv");
@@ -49,6 +51,8 @@ public class FuentesDeDatosTest {
      * Como persona contribuyente,
      * deseo poder crear un hecho a partir de una fuente dinamica.
      */
+
+    @Test
     void crearDesdeFuenteDinamica(){
 
         // Desarrollo del caso

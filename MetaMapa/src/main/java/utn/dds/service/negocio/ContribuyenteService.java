@@ -33,5 +33,4 @@ public class ContribuyenteService {
         return hechosRecientes;
     }
 
-
 }

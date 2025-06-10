@@ -11,6 +11,7 @@ public class HechoRepository {
         return procesador.obtenerHechos();
     }
 
+    // programar esta
     public List<Hecho> desdeDinamica(String _uuid){
         // Aca por ejemplo seria obtener desde la base de datos
         // hechos = orm.find("hechos")
@@ -29,4 +30,5 @@ public class HechoRepository {
 
         return nuevoHecho;
     }
+
 }
