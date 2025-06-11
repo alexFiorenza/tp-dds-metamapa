@@ -62,13 +62,12 @@ public class FuentesDeDatosTest {
         // Desarrollo del caso
         Contribuyente contribuyente = new Contribuyente("Pedro", "Ruiz", 22);
         ContribuyenteService contribuyenteService  = new ContribuyenteService(contribuyente);
-        LocalDateTime fechaCarga = LocalDateTime.now(); // para el test hardcodeado, hay que borrarlo
-        List<String> etiquetas = List.of("urgente", "transporte"); //para la prueba
+        LocalDateTime fechaCarga = LocalDateTime.now();
+        List<String> etiquetas = List.of("urgente", "transporte");
 
         Hecho hecho = contribuyenteService.aportarHecho("Ataque en el bosque", "3 muertos",
                 "Natural", LocalDate.now(),TipoHecho.TEXTO, 0, 0, fechaCarga,
                  EstadoHecho.OCULTO, etiquetas); // devuelve un hecho
-
 
         assertNotNull(hecho,"el hecho creado dinamicamente no tendria que ser nulo");
         assertNotNull(hecho.getTitulo(), "El título no debería ser nulo");

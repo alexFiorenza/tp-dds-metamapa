@@ -1,4 +1,5 @@
 import org.junit.jupiter.api.Test;
+import utn.dds.model.Coleccion;
 import utn.dds.model.Hecho;
 import utn.dds.model.criterios.CategoriaStrategy;
 import utn.dds.model.criterios.HechoStrategy;
@@ -25,10 +26,9 @@ public class ColeccionTest {
         List<HechoStrategy> criteriosDePertenencia = new ArrayList<>();
         String titulo ="Desastres sanitarios";
         String descripcion = "Desastres sanitarios en Argentina";
-        ColeccionService coleccionService = new ColeccionService(
-                titulo, descripcion, hechos, criteriosDePertenencia
-        );
-        assertNotNull(coleccionService);
+        ColeccionService coleccionService = new ColeccionService();
+        Coleccion coleccion = coleccionService.nuevaColeccion(titulo, descripcion, hechos, criteriosDePertenencia);
+        assertNotNull(coleccion);
     }
 
 
@@ -46,9 +46,7 @@ public class ColeccionTest {
 
         String titulo ="Desastres sanitarios";
         String descripcion = "Desastres sanitarios en Argentina";
-        ColeccionService coleccionService = new ColeccionService(
-                titulo, descripcion, new ArrayList<>(), criteriosDePertenencia
-        );
+        ColeccionService coleccionService = new ColeccionService();
 
         /*
          * Instancio Servicio Fuente De Datos
@@ -57,16 +55,16 @@ public class ColeccionTest {
         String separador = ",";
         FuenteDeDatosService fuente = new FuenteDeDatosService();
 
-
         /*
-         * Carga de hechos
+         * Creacion de la coleccion con hechos.
          */
-        coleccionService.cargarHechos(fuente.importarDesdeEstatica(new CSVStrategy(path,separador)));
+        List<Hecho> hechosDesdeEstatica = fuente.importarDesdeEstatica(new CSVStrategy(path,separador));
+        Coleccion coleccion = coleccionService.nuevaColeccion(titulo, descripcion, hechosDesdeEstatica, criteriosDePertenencia);
 
         /*
          * Navegar (Verífico que no sean nulos por ejemplo)
          */
-        List<Hecho> hechos = coleccionService.hechos();
+        List<Hecho> hechos = coleccion.getHechos();
         assertFalse(hechos.isEmpty(), "La colección no debería estar vacía");
         for (Hecho hecho : hechos) {
             assertNotNull(hecho, "El hecho no debe ser null");
@@ -84,11 +82,15 @@ public class ColeccionTest {
      */
     @Test
     void navegarHechosConFiltros(){
+        /*
+         * Instancio Servicio Coleccion
+         */
+
+        List<HechoStrategy> criteriosDePertenencia = new ArrayList<>();
+
         String titulo ="Desastres sanitarios";
         String descripcion = "Desastres sanitarios en Argentina";
-        ColeccionService coleccionService = new ColeccionService(
-                titulo, descripcion, new ArrayList<>(), new ArrayList<>()
-        );
+        ColeccionService coleccionService = new ColeccionService();
 
         /*
          * Instancio Servicio Fuente De Datos
@@ -97,11 +99,11 @@ public class ColeccionTest {
         String separador = ",";
         FuenteDeDatosService fuente = new FuenteDeDatosService();
 
-
         /*
-         * Carga de hechos
+         * Creacion de la coleccion con hechos.
          */
-        coleccionService.cargarHechos(fuente.importarDesdeEstatica(new CSVStrategy(path,separador)));
+        List<Hecho> hechosDesdeEstatica = fuente.importarDesdeEstatica(new CSVStrategy(path,separador));
+        Coleccion coleccion = coleccionService.nuevaColeccion(titulo, descripcion, hechosDesdeEstatica, criteriosDePertenencia);
 
         /*
          * Navego aplicando un filtro por Titulo y descripcion
@@ -109,7 +111,7 @@ public class ColeccionTest {
         List<HechoStrategy> filtros = new ArrayList<>();
         filtros.add(new TituloStrategy("jujuy"));
         filtros.add(new CategoriaStrategy("desastre"));
-        List<Hecho> hechos = coleccionService.buscarHechos(filtros);
+        List<Hecho> hechos = coleccion.buscarHechos(filtros);
         assertFalse(hechos.isEmpty(), "La colección no debería estar vacía");
     }
 }

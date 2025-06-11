@@ -38,7 +38,7 @@ public class SolicitudDeEliminacionTest {
 
     /**
      * Como persona administradora,
-     * deseo poder aceptar  la solicitud de eliminación de un
+     * deseo poder aceptar la solicitud de eliminación de un
      * hecho.
      */
     @Test

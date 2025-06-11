@@ -14,14 +14,13 @@ public class SolicitudEliminacionService {
         this.detectorSpam = detectorSpam;
     }
 
-
     public SolicitudEliminacion solicitarEliminacion(String uuidHecho, String texto) {
         SolicitudEliminacion solicitud;
         try{
             if(detectorSpam.esSpam(texto)){
-                solicitud = this.solicitudEliminacionRepository.nuevaSolicitudEliminacion(uuidHecho, texto, EstadoSolicitud.OCULTO);
+                solicitud = this.solicitudEliminacionRepository.create(uuidHecho, texto, EstadoSolicitud.OCULTO);
             }else{
-                solicitud = this.solicitudEliminacionRepository.nuevaSolicitudEliminacion(uuidHecho, texto, EstadoSolicitud.ACTIVO);
+                solicitud = this.solicitudEliminacionRepository.create(uuidHecho, texto, EstadoSolicitud.ACTIVO);
             }
             return solicitud;
         } catch(Exception e){
@@ -30,10 +29,10 @@ public class SolicitudEliminacionService {
     }
 
     public SolicitudEliminacion aceptarSolicitud(String _uuidSolicitud){
-        return this.solicitudEliminacionRepository.aceptarSolicitudEliminacion(_uuidSolicitud);
+        return this.solicitudEliminacionRepository.update(_uuidSolicitud,EstadoSolicitud.ACTIVO);
     }
 
     public SolicitudEliminacion rechazarSolicitud(String _uuidSolicitud){
-        return this.solicitudEliminacionRepository.rechazarSolicitudEliminacion(_uuidSolicitud);
+        return this.solicitudEliminacionRepository.update(_uuidSolicitud,EstadoSolicitud.OCULTO);
     }
 }

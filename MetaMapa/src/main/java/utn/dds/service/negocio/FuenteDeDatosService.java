@@ -23,17 +23,17 @@ public class FuenteDeDatosService {
     --- IMPORTS DESDE DISTINTAS FUENTES. ---
     */
     public List<Hecho>  importarDesdeEstatica(ProcesadorStrategy procesador){
-       return this.hechoRepository.desdeEstatica(procesador);
+       return this.hechoRepository.readEstatica(procesador);
     }
 
     public List<Hecho> importarDesdeDemo(Conexion conexion, URL url){
         FuenteDeDatos fuenteProxy = new FuenteProxyDemo(conexion,url);
-        return this.hechoRepository.desdeProxy(fuenteProxy);
+        return this.hechoRepository.readProxy(fuenteProxy);
     }
 
     public List<Hecho> importarDesdeProxyMetaMapa(String handle){
         FuenteDeDatos fuenteMetaMapa = new FuenteMetaMapa(handle);
-        return this.hechoRepository.desdeProxy(fuenteMetaMapa);
+        return this.hechoRepository.readProxy(fuenteMetaMapa);
     }
 
     public List<Hecho> importarDesdeDinamica(){
@@ -47,7 +47,7 @@ public class FuenteDeDatosService {
                              Origen origen, TipoHecho tipo,
                              double longitud, double latitud, LocalDateTime fechaCarga,
                              EstadoHecho estado, List<String> etiquetas){
-        return this.hechoRepository.persistirHecho(
+        return this.hechoRepository.create(
                 contribuyente, titulo, descripcion, categoria, fechaAcontecimiento,
                 origen, tipo, longitud, latitud, fechaCarga, estado, etiquetas
         );
