@@ -45,13 +45,13 @@ public class Hecho {
         this.descripcion = (String) datos.get("descripcion");
         this.categoria = (String) datos.get("categoria");
         this.fechaAcontecimiento = (LocalDate) datos.get("fecha_contecimiento");
-        this.origen = (Origen) datos.get("origen");
+        this.origen = Origen.MANUAL;
         this.contribuyente = (Contribuyente) datos.get("contribuyente");
         this.tipo = (TipoHecho) datos.get("tipo");
         this.longitud = (Double) datos.get("longitud");
         this.latitud = (Double) datos.get("latitud");
         this.fechaCarga = (LocalDateTime) datos.get("fecha_carga");
-        this.estado = (EstadoHecho) datos.get("estado");
+        this.estado = EstadoHecho.ACTIVO;
         this.etiquetas = (List<String>) datos.get("etiquetas");
         this.uuid = (String) datos.get("uuid");
     }

@@ -1,5 +1,6 @@
 import org.junit.jupiter.api.Test;
 import utn.dds.model.Hecho;
+import utn.dds.model.fuentes.proxy.Conexion;
 import utn.dds.service.negocio.ContribuyenteService;
 import utn.dds.model.Contribuyente;
 import utn.dds.model.fuentes.estatica.strategies.CSVStrategy;
@@ -9,13 +10,17 @@ import utn.dds.model.TipoHecho;
 import utn.dds.model.EstadoHecho;
 
 
-
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import static java.util.Map.entry;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -80,6 +85,43 @@ public class FuentesDeDatosTest {
      */
     @Test
     void importarDesdeFuenteDemo(){
-
+        FuenteDeDatosService fuente = new FuenteDeDatosService();
+        try {
+            URL url = new URL("https://demo/api/hechos");
+            List<Hecho> hechos = fuente.importarDesdeDemo(new ConexionMock(),url);
+            assertNotNull(hechos,"Tengo una lista de hechos");
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
     }
 }
+
+class ConexionMock implements Conexion {
+    @Override
+    public Map<String, Object> obtenerDatos(URL url, LocalDateTime fechaUltimaConsulta) {
+        if (fechaUltimaConsulta == null) {
+            // Mockeo la conexion para que cuando me ejecutan por primera vez (con fecha nula) devuelva algo y la proxima vez devuelva null
+            Map<String, Object> datos = new HashMap<>();
+            datos.put("titulo", "Derrame tóxico en Río Matanza");
+            datos.put("descripcion", "Se detectó un derrame de químicos en las aguas del río.");
+            datos.put("categoria", "Contaminación");
+            datos.put("fecha_contecimiento", LocalDate.of(2023, 6, 12));
+            datos.put("contribuyente", null);  // Aceptado acá
+            datos.put("tipo", TipoHecho.TEXTO);
+            datos.put("longitud", -58.4216);
+            datos.put("latitud", -34.6037);
+            datos.put("fecha_carga", LocalDateTime.now());
+            datos.put("estado", EstadoHecho.ACTIVO);
+            datos.put("etiquetas", List.of("agua", "químicos", "ambiental"));
+            datos.put("uuid", "hecho-0001");
+
+            return datos;
+        }else{
+            return null;
+        }
+    }
+}
+
+
+
+
