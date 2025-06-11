@@ -12,6 +12,7 @@ import utn.dds.model.EstadoHecho;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -25,14 +26,13 @@ public class FuentesDeDatosTest {
      * deseo poder importar hechos desde un archivo CSV.
      */
 
-    /*
     @Test
     void importarHechosDesdeUnCSV(){
         Path path = Paths.get("src/test/resources/data/desastres_sanitarios_contaminacion_argentina.csv");
         String separador = ",";
 
         FuenteDeDatosService fuente = new FuenteDeDatosService();
-        List<Hecho> hechosImportados = fuente.importarDesdeArchivo(new CSVStrategy(path,separador));
+        List<Hecho> hechosImportados = fuente.importarDesdeEstatica(new CSVStrategy(path,separador));
         assertNotNull(hechosImportados, "La lista de hechos no debería ser nula");
         assertFalse(hechosImportados.isEmpty(), "La lista de hechos debería tener elementos");
 
@@ -51,23 +51,17 @@ public class FuentesDeDatosTest {
      * Como persona contribuyente,
      * deseo poder crear un hecho a partir de una fuente dinamica.
      */
-
     @Test
     void crearDesdeFuenteDinamica(){
 
         // Desarrollo del caso
-        ContribuyenteService contribuyenteService  = new ContribuyenteService();
         Contribuyente contribuyente = new Contribuyente("Pedro", "Ruiz", 22);
+        ContribuyenteService contribuyenteService  = new ContribuyenteService(contribuyente);
         LocalDateTime fechaCarga = LocalDateTime.now(); // para el test hardcodeado, hay que borrarlo
         List<String> etiquetas = List.of("urgente", "transporte"); //para la prueba
 
-        Origen origen;
-        TipoHecho tipoHecho;
-        EstadoHecho estadoHecho;
-
-
-        Hecho hecho = contribuyenteService.aportarHecho(contribuyente, "Ataque en el bosque", "3 muertos",
-                "Natural", fechaCarga, Origen.CONTRIBUYENTE, TipoHecho.TEXTO, 0, 0, fechaCarga,
+        Hecho hecho = contribuyenteService.aportarHecho("Ataque en el bosque", "3 muertos",
+                "Natural", LocalDate.now(),TipoHecho.TEXTO, 0, 0, fechaCarga,
                  EstadoHecho.OCULTO, etiquetas); // devuelve un hecho
 
 
@@ -77,6 +71,15 @@ public class FuentesDeDatosTest {
         assertNotNull(hecho.getCategoria(), "La categoría no debería ser nula");
         assertTrue(hecho.getLatitud() >= -90 && hecho.getLatitud() <= 90, "Latitud válida");
         assertTrue(hecho.getLongitud() >= -180 && hecho.getLongitud() <= 180, "Longitud válida");
+
+    }
+
+    /**
+     * Como persona usuaria, quiero poder obtener todos los hechos de una fuente proxy demo configurada
+     * en una colección, con un nivel de antigüedad máximo de una hora.
+     */
+    @Test
+    void importarDesdeFuenteDemo(){
 
     }
 }

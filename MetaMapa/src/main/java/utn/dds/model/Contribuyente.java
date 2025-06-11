@@ -7,10 +7,10 @@ import java.util.List;
 
 
 public class Contribuyente {
-    private List<Hecho> aportes;
-    private String nombre;
-    private String apellido;
-    private int edad;
+    private final List<Hecho> aportes;
+    private final String nombre;
+    private final String apellido;
+    private final int edad;
 
     // Constructor
     public Contribuyente(String nombre, String apellido, Integer edad) {
@@ -18,28 +18,6 @@ public class Contribuyente {
         this.apellido = apellido;
         this.edad = edad;
         this.aportes = new ArrayList<>();
-    }
-
-    // Invoco al servicio
-    ContribuyenteService servicio = new ContribuyenteService();
-
-    public Hecho crearHecho(String titulo, String descripcion, String categoria, LocalDateTime fechaAcontecimiento,
-                           Origen origen, TipoHecho tipo,
-                           double longitud, double latitud, LocalDateTime fechaCarga,
-                           EstadoHecho estado, List<String> etiquetas){
-
-        Hecho nuevoHecho = servicio.aportarHecho(this, titulo, descripcion, categoria, fechaAcontecimiento, origen, tipo,
-                                    longitud, latitud, fechaCarga, estado, etiquetas);
-
-        // Aca habria que poner un if, de si fue aceptado el hecho o fue rechazado
-        // Si fue aceptado, habria que agregarlo a la lista de aportes
-        /*
-        if(fueAceptado()){
-            aportes.add(nuevoHecho)
-        }
-         */
-
-        return nuevoHecho;
     }
 
     // Getters

@@ -1,13 +1,15 @@
 package utn.dds.model;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class Hecho {
     private final String titulo;
     private final String descripcion;
     private final String categoria;
-    private final LocalDateTime fechaAcontecimiento;
+    private final LocalDate fechaAcontecimiento;
     private final Origen origen;
     private final Contribuyente contribuyente;
     private final TipoHecho tipo;
@@ -19,7 +21,7 @@ public class Hecho {
     private final String uuid; // Esto es para identificar en la base de datos o en memoria en caso de Estatica
 
     // Constructor
-    public Hecho(String titulo, String descripcion, String categoria, LocalDateTime fechaAcontecimiento,
+    public Hecho(String titulo, String descripcion, String categoria, LocalDate fechaAcontecimiento,
                  Origen origen, Contribuyente contribuyente, TipoHecho tipo,
                  double longitud, double latitud, LocalDateTime fechaCarga,
                  EstadoHecho estado, List<String> etiquetas) {
@@ -36,6 +38,22 @@ public class Hecho {
         this.estado = estado;
         this.etiquetas = etiquetas;
         this.uuid = UUID.randomUUID().toString();
+    }
+
+    public Hecho(Map<String, Object> datos) {
+        this.titulo = (String) datos.get("titulo");
+        this.descripcion = (String) datos.get("descripcion");
+        this.categoria = (String) datos.get("categoria");
+        this.fechaAcontecimiento = (LocalDate) datos.get("fecha_contecimiento");
+        this.origen = (Origen) datos.get("origen");
+        this.contribuyente = (Contribuyente) datos.get("contribuyente");
+        this.tipo = (TipoHecho) datos.get("tipo");
+        this.longitud = (Double) datos.get("longitud");
+        this.latitud = (Double) datos.get("latitud");
+        this.fechaCarga = (LocalDateTime) datos.get("fecha_carga");
+        this.estado = (EstadoHecho) datos.get("estado");
+        this.etiquetas = (List<String>) datos.get("etiquetas");
+        this.uuid = (String) datos.get("uuid");
     }
 
 
@@ -56,7 +74,7 @@ public class Hecho {
         return categoria;
     }
 
-    public LocalDateTime getFechaAcontecimiento() {
+    public LocalDate getFechaAcontecimiento() {
         return fechaAcontecimiento;
     }
 

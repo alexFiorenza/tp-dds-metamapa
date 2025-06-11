@@ -61,7 +61,7 @@ public class ColeccionTest {
         /*
          * Carga de hechos
          */
-        coleccionService.cargarHechos(fuente.importarDesdeArchivo(new CSVStrategy(path,separador)));
+        coleccionService.cargarHechos(fuente.importarDesdeEstatica(new CSVStrategy(path,separador)));
 
         /*
          * Navegar (Verífico que no sean nulos por ejemplo)
@@ -101,7 +101,7 @@ public class ColeccionTest {
         /*
          * Carga de hechos
          */
-        coleccionService.cargarHechos(fuente.importarDesdeArchivo(new CSVStrategy(path,separador)));
+        coleccionService.cargarHechos(fuente.importarDesdeEstatica(new CSVStrategy(path,separador)));
 
         /*
          * Navego aplicando un filtro por Titulo y descripcion

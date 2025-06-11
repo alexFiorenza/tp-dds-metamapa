@@ -6,6 +6,7 @@ import utn.dds.model.Origen;
 import utn.dds.model.TipoHecho;
 
 import java.io.FileReader;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +44,7 @@ public class CSVStrategy implements ProcesadorStrategy {
                 String categoria = campos[2].trim();
                 double latitud = Double.parseDouble(campos[3].trim());
                 double longitud = Double.parseDouble(campos[4].trim());
-                LocalDateTime fechaDelHecho = LocalDateTime.parse(campos[5].trim(), dateFormatter);
+                LocalDate fechaDelHecho = LocalDate.parse(campos[5].trim(), dateFormatter);
 
                 Hecho hecho = new Hecho(
                         titulo, descripcion,
