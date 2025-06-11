@@ -90,6 +90,12 @@ public class FuentesDeDatosTest {
             URL url = new URL("https://demo/api/hechos");
             List<Hecho> hechos = fuente.importarDesdeDemo(new ConexionMock(),url);
             assertNotNull(hechos,"Tengo una lista de hechos");
+            Hecho primerHecho = hechos.get(0);
+            assertNotNull(primerHecho,"el hecho importado desde la fuente Demo no deberia ser nulo");
+            assertNotNull(primerHecho.getDescripcion(), "La descripción no debería ser nula");
+            assertNotNull(primerHecho.getCategoria(), "La categoría no debería ser nula");
+            assertTrue(primerHecho.getLatitud() >= -90 && primerHecho.getLatitud() <= 90, "Latitud válida");
+            assertTrue(primerHecho.getLongitud() >= -180 && primerHecho.getLatitud() <= 180, "Latitud válida");
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
