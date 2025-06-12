@@ -1,9 +1,7 @@
 package utn.dds.repository;
-import utn.dds.model.DetectorSpam;
 import utn.dds.model.EstadoSolicitud;
 import utn.dds.model.SolicitudEliminacion;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -14,8 +12,7 @@ public class SolicitudEliminacionRepository {
         this.hechoRepository = new  HechoRepository();
     }
 
-
-    public SolicitudEliminacion nuevaSolicitudEliminacion(
+    public SolicitudEliminacion create(
             String _uuidHecho, String texto,
             EstadoSolicitud estadoSolicitud
     ) {
@@ -32,11 +29,18 @@ public class SolicitudEliminacionRepository {
         );
     }
 
-    public SolicitudEliminacion aceptarSolicitudEliminacion(String _uuid){
+    public SolicitudEliminacion update(String _uuid, EstadoSolicitud nuevoEstado){
+        if(nuevoEstado == EstadoSolicitud.OCULTO){
+            return this.rechazarSolicitudEliminacion(_uuid);
+        }else{
+            return this.aceptarSolicitudEliminacion(_uuid);
+        }
+    }
+
+    private SolicitudEliminacion aceptarSolicitudEliminacion(String _uuid){
         // TODO: Proceso de Bases de Datos
         // 1. Obtener Solicitud de eliminacion desde la  Base de Datos -> solicitud =  orm.getById("solicitud",_uuid);
         // 2. Actualizar el estado del hecho usando su Repository -> hechoRepository.ocultar(solicitud.uuidHecho);
-
         // Por ahora devuelvo una solicitud de eliminacion mock
 
         return new SolicitudEliminacion(
@@ -48,7 +52,7 @@ public class SolicitudEliminacionRepository {
         );
     }
 
-    public SolicitudEliminacion rechazarSolicitudEliminacion(String _uuid){
+    private SolicitudEliminacion rechazarSolicitudEliminacion(String _uuid){
         // TODO: Proceso de Bases de Datos
         // 1. Obtener Solicitud de eliminacion desde la  Base de Datos -> solicitud =  orm.getById("solicitud",_uuid);
         // 2. Cambiamos el estado de la solicitud a oculta (ya que se rechazo) -> orm.patch("solicitud",_uuid,{"Estado":"OCULTO"})

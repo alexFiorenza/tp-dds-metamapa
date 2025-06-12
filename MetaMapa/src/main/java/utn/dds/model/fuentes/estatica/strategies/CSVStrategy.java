@@ -7,6 +7,7 @@ import utn.dds.model.TipoHecho;
 
 import java.io.FileReader;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.nio.file.Path;
@@ -51,10 +52,9 @@ public class CSVStrategy implements ProcesadorStrategy {
                         Origen.DATASET, null,
                         TipoHecho.TEXTO,
                         longitud,latitud,
-                        LocalDate.now(),
+                        LocalDateTime.now(),
                         EstadoHecho.ACTIVO,
-                        etiquetas,
-                        null
+                        etiquetas
                 );
                 hechos.add(hecho);
             }

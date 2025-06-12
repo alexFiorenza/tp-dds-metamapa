@@ -3,34 +3,30 @@ package utn.dds.service.negocio;
 import utn.dds.model.Coleccion;
 import utn.dds.model.Hecho;
 import utn.dds.model.criterios.HechoStrategy;
+import utn.dds.repository.ColeccionRepository;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class ColeccionService {
-    private final Coleccion coleccion;
+    private final ColeccionRepository coleccionRepository;
 
-    public ColeccionService(String titulo, String descripcion,
-                            List<Hecho> hechos, List<HechoStrategy> criteriosDePertenencia) {
-        this.coleccion = new Coleccion(titulo, descripcion, hechos, criteriosDePertenencia);
+    public ColeccionService() {
+        this.coleccionRepository = new ColeccionRepository();
     }
 
-    public void cargarHechos(List<Hecho> hechos) {
-        coleccion.setHechos(this.aplicarCriterios(hechos));
+    public Coleccion nuevaColeccion(String titulo, String descripcion, List<Hecho> hechos,List<HechoStrategy> criteriosDePertenencia) {
+        List<Hecho> hechosFiltrados = this.aplicarCriterios(criteriosDePertenencia,hechos);
+        return this.coleccionRepository.create(titulo,descripcion,hechosFiltrados,criteriosDePertenencia);
     }
 
-    private List<Hecho> aplicarCriterios(List<Hecho> hechos){
-        List<HechoStrategy> criteriosDePertenencia = this.coleccion.getCriteriosDePertenencia();
-
+    private List<Hecho> aplicarCriterios(List<HechoStrategy> criteriosDePertenencia,List<Hecho> hechos){
         return hechos.stream()
                 .filter(hecho -> criteriosDePertenencia.stream().allMatch(criterio -> criterio.cumple(hecho)))
                 .collect(Collectors.toList());
     }
 
-    public List<Hecho> hechos() {
-        return List.copyOf(coleccion.getHechos()); // Devuelvo una copia, para que no me modifique la referencia
-    }
-
-    public List<Hecho> buscarHechos(List<HechoStrategy> filtros){
-        return List.copyOf(coleccion.buscarHechos(filtros));
+    public Coleccion obtenerColeccion(String handle){
+        return this.coleccionRepository.read(handle);
     }
 }

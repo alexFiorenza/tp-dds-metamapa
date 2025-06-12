@@ -1,14 +1,16 @@
 package utn.dds.model;
+import utn.dds.service.negocio.ContribuyenteService;
+
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 
 public class Contribuyente {
-    private List<Hecho> aportes;
-    private String nombre;
-    private String apellido;
-    private int edad;
+    private final List<Hecho> aportes;
+    private final String nombre;
+    private final String apellido;
+    private final int edad;
 
     // Constructor
     public Contribuyente(String nombre, String apellido, Integer edad) {
@@ -17,4 +19,23 @@ public class Contribuyente {
         this.edad = edad;
         this.aportes = new ArrayList<>();
     }
+
+    // Getters
+    public String getNombre() {
+        return nombre;
+    }
+
+    public String getApellido() {
+        return apellido;
+    }
+
+    public int getEdad() {
+        return edad;
+    }
+
+    public List<Hecho> getAportes() {
+        return aportes;
+    }
+
+
 }
