@@ -17,6 +17,7 @@ public class FuenteMetaMapa implements FuenteDeDatos {
         this.tipoFuente = TipoFuente.PROXY;
     }
 
+    // Harcodeamos para probar
     @Override
     public List<Hecho> obtenerHechos() {
         List<Hecho> hechos = new ArrayList<Hecho>();
