@@ -1,6 +1,10 @@
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestTemplate;
 import utn.dds.model.Hecho;
+import utn.dds.model.fuentes.TipoFuente;
 import utn.dds.model.fuentes.proxy.Conexion;
+import utn.dds.model.fuentes.proxy.FuenteMetaMapa;
+import utn.dds.service.externo.MetaMapaService;
 import utn.dds.service.negocio.ContribuyenteService;
 import utn.dds.model.Contribuyente;
 import utn.dds.model.fuentes.estatica.strategies.CSVStrategy;
@@ -19,6 +23,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static java.util.Map.entry;
 import static org.junit.jupiter.api.Assertions.*;
@@ -100,6 +105,53 @@ public class FuentesDeDatosTest {
         }
     }
 }
+
+    @Test
+    void importarHechosDeMetaMapas(){
+        FuenteDeDatosService fuente = new FuenteDeDatosService();
+        try {
+            String handle = UUID.randomUUID().toString();
+            List<Hecho> hechos = fuente.importarDesdeProxyMetaMapa(handle);
+            assertNotNull(hechos,"Tengo una lista de hechos");
+            Hecho primerHecho = hechos.get(0);
+            assertNotNull(primerHecho,"el hecho importado desde la fuente Demo no deberia ser nulo");
+            assertNotNull(primerHecho.getDescripcion(), "La descripción no debería ser nula");
+            assertNotNull(primerHecho.getCategoria(), "La categoría no debería ser nula");
+            assertTrue(primerHecho.getLatitud() >= -90 && primerHecho.getLatitud() <= 90, "Latitud válida");
+            assertTrue(primerHecho.getLongitud() >= -180 && primerHecho.getLatitud() <= 180, "Latitud válida");
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+    }
+
+// Prueba Mia,cdespues borrar
+public class FuenteMetaMapaMock extends FuenteMetaMapa {
+
+    public FuenteMetaMapaMock(String handle) {
+        super(handle); // si necesitás mantener compatibilidad
+    }
+
+    @Override
+    public List<Hecho> obtenerHechos() {
+        Hecho hechoMock = new Hecho(
+                "Incendio en reserva",
+                "Fuego controlado en zona forestal",
+                "Incendio",
+                LocalDate.of(2023, 7, 1),
+                Origen.CONTRIBUYENTE,
+                null,
+                TipoHecho.TEXTO,
+                -58.4,
+                -34.6,
+                LocalDateTime.now(),
+                EstadoHecho.ACTIVO,
+                List.of("fuego", "controlado")
+        );
+
+        return List.of(hechoMock);
+    }
+}
+// Hasta aca borrar
 
 class ConexionMock implements Conexion {
     @Override
