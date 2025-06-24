@@ -11,10 +11,10 @@
         <relativePath>../../../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>proxy-metamapa</artifactId>
+    <artifactId>fuente-proxy-metamapa</artifactId>
     <packaging>jar</packaging>
 
-    <name>Proxy MetaMapa</name>
+    <name>Fuente Proxy MetaMapa</name>
     <description>Microservicio proxy para MetaMapa</description>
 
     <dependencies>
@@ -36,10 +36,10 @@
             <artifactId>jackson-databind</artifactId>
         </dependency>
         
-        <!-- Dominio -->
+        <!-- Dominio compartido -->
         <dependency>
             <groupId>utn.dds</groupId>
-            <artifactId>dominio</artifactId>
+            <artifactId>shared</artifactId>
             <version>${project.version}</version>
         </dependency>
         

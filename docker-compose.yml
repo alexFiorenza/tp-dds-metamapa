@@ -49,6 +49,76 @@ services:
     networks:
       - metamapa-network
 
+  # Agregador
+  agregador:
+    build:
+      context: ./apps/agregador
+      dockerfile: Dockerfile
+    ports:
+      - "7005:7005"
+    container_name: metamapa-agregador
+    restart: unless-stopped
+    networks:
+      - metamapa-network
+
+  # MetaMapa
+  metamapa:
+    build:
+      context: ./apps/metamapa
+      dockerfile: Dockerfile
+    ports:
+      - "7006:7006"
+    container_name: metamapa-metamapa
+    restart: unless-stopped
+    networks:
+      - metamapa-network
+
+  # Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./apps/estadisticas/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - "9090:9090"
+    depends_on:
+      - agregador
+      - metamapa
+    networks:
+      - metamapa-network
+
+  # Alertmanager
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    volumes:
+      - ./apps/estadisticas/alertmanager/config.yml:/etc/alertmanager/config.yml
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+    ports:
+      - "9093:9093"
+    depends_on:
+      - prometheus
+    networks:
+      - metamapa-network
+
+  # Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/estadisticas/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./apps/estadisticas/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./apps/estadisticas/grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - prometheus
+    networks:
+      - metamapa-network
+
 networks:
   metamapa-network:
     driver: bridge 
