@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # Fuentes Estáticas
+  fuentes-estatica:
+    build:
+      context: ./apps/fuentes/estatica
+      dockerfile: Dockerfile
+    ports:
+      - "7001:7001"
+    container_name: metamapa-fuentes-estatica
+    restart: unless-stopped
+    networks:
+      - metamapa-network
+
+  # Fuentes Dinámicas
+  fuentes-dinamica:
+    build:
+      context: ./apps/fuentes/dinamica
+      dockerfile: Dockerfile
+    ports:
+      - "7002:7002"
+    container_name: metamapa-fuentes-dinamica
+    restart: unless-stopped
+    networks:
+      - metamapa-network
+
+  # Proxy MetaMapa
+  proxy-metamapa:
+    build:
+      context: ./apps/fuentes/proxy/metamapa
+      dockerfile: Dockerfile
+    ports:
+      - "7003:7003"
+    container_name: metamapa-proxy-metamapa
+    restart: unless-stopped
+    networks:
+      - metamapa-network
+
+  # Proxy Demo
+  proxy-demo:
+    build:
+      context: ./apps/fuentes/proxy/demo
+      dockerfile: Dockerfile
+    ports:
+      - "7004:7004"
+    container_name: metamapa-proxy-demo
+    restart: unless-stopped
+    networks:
+      - metamapa-network
+
+networks:
+  metamapa-network:
+    driver: bridge 
