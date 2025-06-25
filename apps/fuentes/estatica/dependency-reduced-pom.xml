@@ -7,8 +7,8 @@
     <relativePath>../../../pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
-  <artifactId>fuentes-estatica</artifactId>
-  <name>Fuentes Estaticas</name>
+  <artifactId>fuente-estatica</artifactId>
+  <name>Fuente Estatica</name>
   <description>Microservicio de fuentes de datos estáticas</description>
   <build>
     <plugins>

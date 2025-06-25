@@ -7,8 +7,8 @@
     <relativePath>../../../../pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
-  <artifactId>proxy-metamapa</artifactId>
-  <name>Proxy MetaMapa</name>
+  <artifactId>fuente-proxy-metamapa</artifactId>
+  <name>Fuente Proxy MetaMapa</name>
   <description>Microservicio proxy para MetaMapa</description>
   <build>
     <plugins>

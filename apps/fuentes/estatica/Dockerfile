@@ -4,8 +4,8 @@ FROM openjdk:17-jdk-slim
 # Establecer directorio de trabajo
 WORKDIR /app
 
-# Copiar el JAR del microservicio
-COPY target/fuentes-estatica-*.jar app.jar
+# Copiar el JAR del microservicio (que ya incluye los resources)
+COPY target/fuente-estatica-*.jar app.jar
 
 # Exponer el puerto del servicio
 EXPOSE 7001

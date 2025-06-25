@@ -5,7 +5,7 @@ FROM openjdk:17-jdk-slim
 WORKDIR /app
 
 # Copiar el JAR del microservicio
-COPY target/fuentes-dinamica-*.jar app.jar
+COPY target/fuente-dinamica-*.jar app.jar
 
 # Exponer el puerto del servicio
 EXPOSE 7002

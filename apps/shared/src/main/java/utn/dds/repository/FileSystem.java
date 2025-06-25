@@ -13,8 +13,25 @@ public class FileSystem<T> implements IDAO<T> {
 
     @Override
     public InputStream read() {
-        // TODO: Implementar acceso a FileSystem
-        return null;
+        try {
+            // Intentar leer desde el classpath primero
+            String relativePath = url.toString();
+            
+            // Si la ruta contiene src/main/resources/, quitarla para el classpath
+            if (relativePath.startsWith("src/main/resources/")) {
+                relativePath = relativePath.substring("src/main/resources/".length());
+            }
+            
+            InputStream classPathStream = getClass().getClassLoader().getResourceAsStream(relativePath);
+            if (classPathStream != null) {
+                return classPathStream;
+            }
+            
+            // Si no se encuentra en el classpath, intentar como archivo físico
+            return java.nio.file.Files.newInputStream(url);
+        } catch (java.io.IOException e) {
+            throw new RuntimeException("Error al leer archivo: " + url, e);
+        }
     }
 
     @Override

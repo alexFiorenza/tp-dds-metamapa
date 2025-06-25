@@ -36,6 +36,12 @@
             <artifactId>jackson-databind</artifactId>
         </dependency>
         
+        <!-- Jackson JSR310 for LocalDate support -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
+        
         <!-- Dominio compartido -->
         <dependency>
             <groupId>utn.dds</groupId>

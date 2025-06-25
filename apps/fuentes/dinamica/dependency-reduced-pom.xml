@@ -7,8 +7,8 @@
     <relativePath>../../../pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
-  <artifactId>fuentes-dinamica</artifactId>
-  <name>Fuentes Dinamicas</name>
+  <artifactId>fuente-dinamica</artifactId>
+  <name>Fuente Dinamica</name>
   <description>Microservicio de fuentes de datos dinámicas</description>
   <build>
     <plugins>

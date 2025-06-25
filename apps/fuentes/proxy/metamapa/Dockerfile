@@ -5,7 +5,7 @@ FROM openjdk:17-jdk-slim
 WORKDIR /app
 
 # Copiar el JAR del microservicio
-COPY target/proxy-metamapa-*.jar app.jar
+COPY target/fuente-proxy-metamapa-*.jar app.jar
 
 # Exponer el puerto del servicio
 EXPOSE 7003

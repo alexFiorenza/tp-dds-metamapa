@@ -2,49 +2,53 @@ version: '3.8'
 
 services:
   # Fuentes Estáticas
-  fuentes-estatica:
+  fuente-estatica:
     build:
       context: ./apps/fuentes/estatica
       dockerfile: Dockerfile
     ports:
       - "7001:7001"
-    container_name: metamapa-fuentes-estatica
+    container_name: metamapa-fuente-estatica
     restart: unless-stopped
+    environment:
+      - DAO_TYPE=filesystem
+      - PROCESSOR_TYPE=csv
+      - DATA_URL=src/main/resources/data/desastres_naturales_argentina.csv
     networks:
       - metamapa-network
 
   # Fuentes Dinámicas
-  fuentes-dinamica:
+  fuente-dinamica:
     build:
       context: ./apps/fuentes/dinamica
       dockerfile: Dockerfile
     ports:
       - "7002:7002"
-    container_name: metamapa-fuentes-dinamica
+    container_name: metamapa-fuente-dinamica
     restart: unless-stopped
     networks:
       - metamapa-network
 
   # Proxy MetaMapa
-  proxy-metamapa:
+  fuente-proxy-metamapa:
     build:
       context: ./apps/fuentes/proxy/metamapa
       dockerfile: Dockerfile
     ports:
       - "7003:7003"
-    container_name: metamapa-proxy-metamapa
+    container_name: metamapa-fuente-proxy-metamapa
     restart: unless-stopped
     networks:
       - metamapa-network
 
   # Proxy Demo
-  proxy-demo:
+  fuente-proxy-demo:
     build:
       context: ./apps/fuentes/proxy/demo
       dockerfile: Dockerfile
     ports:
       - "7004:7004"
-    container_name: metamapa-proxy-demo
+    container_name: metamapa-fuente-proxy-demo
     restart: unless-stopped
     networks:
       - metamapa-network
@@ -68,17 +72,17 @@ services:
       dockerfile: Dockerfile
     ports:
       - "7006:7006"
-    container_name: metamapa-metamapa
+    container_name: metamapa-administrativo
     restart: unless-stopped
     networks:
       - metamapa-network
 
   # Prometheus
-  prometheus:
+  metric-collector:
     image: prom/prometheus:latest
-    container_name: prometheus
+    container_name: metric-collector
     volumes:
-      - ./apps/estadisticas/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./apps/estadisticas/metric-collector/prometheus.yml:/etc/prometheus/prometheus.yml
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
     ports:
@@ -90,32 +94,32 @@ services:
       - metamapa-network
 
   # Alertmanager
-  alertmanager:
+  gestor-alertas:
     image: prom/alertmanager:latest
-    container_name: alertmanager
+    container_name: gestor-alertas
     volumes:
-      - ./apps/estadisticas/alertmanager/config.yml:/etc/alertmanager/config.yml
+      - ./apps/estadisticas/gestor-alertas/config.yml:/etc/alertmanager/config.yml
     command:
       - '--config.file=/etc/alertmanager/config.yml'
     ports:
       - "9093:9093"
     depends_on:
-      - prometheus
+      - metric-collector
     networks:
       - metamapa-network
 
   # Grafana
-  grafana:
+  dashboard-visualizador:
     image: grafana/grafana:latest
-    container_name: grafana
+    container_name: dashboard-visualizador
     ports:
       - "3000:3000"
     volumes:
-      - ./apps/estadisticas/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
-      - ./apps/estadisticas/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
-      - ./apps/estadisticas/grafana/dashboards:/var/lib/grafana/dashboards
+      - ./apps/estadisticas/dashboard-visualizador/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./apps/estadisticas/dashboard-visualizador/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./apps/estadisticas/dashboard-visualizador/dashboards:/var/lib/grafana/dashboards
     depends_on:
-      - prometheus
+      - metric-collector
     networks:
       - metamapa-network
 
