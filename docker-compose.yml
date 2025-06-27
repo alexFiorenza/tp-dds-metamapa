@@ -41,6 +41,16 @@ services:
     networks:
       - metamapa-network
 
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: metamapa-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - metamapa-network
+
   # Proxy Demo
   fuente-proxy-demo:
     build:
@@ -50,6 +60,8 @@ services:
       - "7004:7004"
     container_name: metamapa-fuente-proxy-demo
     restart: unless-stopped
+    depends_on:
+      - redis
     networks:
       - metamapa-network
 
@@ -103,21 +115,6 @@ services:
       - '--config.file=/etc/alertmanager/config.yml'
     ports:
       - "9093:9093"
-    depends_on:
-      - metric-collector
-    networks:
-      - metamapa-network
-
-  # Grafana
-  dashboard-visualizador:
-    image: grafana/grafana:latest
-    container_name: dashboard-visualizador
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./apps/estadisticas/dashboard-visualizador/provisioning/datasources:/etc/grafana/provisioning/datasources
-      - ./apps/estadisticas/dashboard-visualizador/provisioning/dashboards:/etc/grafana/provisioning/dashboards
-      - ./apps/estadisticas/dashboard-visualizador/dashboards:/var/lib/grafana/dashboards
     depends_on:
       - metric-collector
     networks:
