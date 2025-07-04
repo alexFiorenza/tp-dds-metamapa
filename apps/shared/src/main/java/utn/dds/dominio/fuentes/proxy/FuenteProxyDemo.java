@@ -13,15 +13,16 @@ public class FuenteProxyDemo implements FuenteDeDatos {
     private final URL url;
     private List<Hecho> cacheHechos;
     private LocalDateTime ultimaEjecucion;
-    public static final int TIEMPO_CACHE = 60; // una vez por hora
+    private final int TIEMPO_CACHE ;
     private final TipoFuente tipoFuente;
 
-    public FuenteProxyDemo(Conexion conexion, URL url) {
+    public FuenteProxyDemo(Conexion conexion, URL url,int tiempo_cache) {
         this.conexion = conexion;
         this.url = url;
         this.cacheHechos = List.of();
         this.ultimaEjecucion = null;
         this.tipoFuente = TipoFuente.PROXY;
+        this.TIEMPO_CACHE = tiempo_cache;
     }
 
     @Override

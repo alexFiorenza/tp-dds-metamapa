@@ -4,7 +4,7 @@ import utn.dds.dominio.Hecho;
 import utn.dds.dominio.fuentes.FuenteDeDatos;
 import utn.dds.dominio.fuentes.estatica.FuenteEstatica;
 import utn.dds.dominio.fuentes.estatica.strategies.ProcesadorStrategy;
-import utn.dds.repository.IDAO;
+import utn.dds.daos.IDAO;
 
 import java.io.IOException;
 import java.io.InputStream;

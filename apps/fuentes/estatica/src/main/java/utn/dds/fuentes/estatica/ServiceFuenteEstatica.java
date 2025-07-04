@@ -2,7 +2,7 @@ package utn.dds.fuentes.estatica;
 
 import utn.dds.dominio.Hecho;
 import utn.dds.dominio.fuentes.estatica.strategies.ProcesadorStrategy;
-import utn.dds.repository.IDAO;
+import utn.dds.daos.IDAO;
 
 import java.io.IOException;
 import java.util.List;

@@ -43,14 +43,15 @@ public class ServiceFuenteProxyMetaMapa {
                 }
                 
                 is.close();
-                logger.info("Successfully parsed {} hechos from response", hechos.size());
+                logger.info("Hechos obtenidos: ", hechos.size());
             } else {
-                logger.error("HTTP request failed with status code: {}", responseCode);
+                logger.error("HTTP Request fallo con estado: {}", responseCode);
+
             }
             
             conn.disconnect();
         } catch (Exception e) {
-            logger.error("Error fetching hechos from {}: {}", this.url, e.getMessage(), e);
+            logger.error("Error al obtener hechos de {}: {}", this.url, e.getMessage(), e);
         }
         
         return hechos;

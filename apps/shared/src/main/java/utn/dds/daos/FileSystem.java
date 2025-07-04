@@ -1,4 +1,4 @@
-package utn.dds.repository;
+package utn.dds.daos;
 
 import java.io.InputStream;
 import java.nio.file.Path;

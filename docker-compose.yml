@@ -38,6 +38,8 @@ services:
       - "7003:7003"
     container_name: metamapa-fuente-proxy-metamapa
     restart: unless-stopped
+    environment:
+      - URL = https://56d05c91-ca57-4d58-acd5-6d61368e622a.mock.pstmn.io
     networks:
       - metamapa-network
 

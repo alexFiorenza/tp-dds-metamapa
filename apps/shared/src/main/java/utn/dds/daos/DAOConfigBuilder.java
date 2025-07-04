@@ -1,4 +1,4 @@
-package utn.dds.config;
+package utn.dds.daos;
 
 import java.util.HashMap;
 import java.util.Map;

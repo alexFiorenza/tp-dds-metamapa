@@ -7,8 +7,8 @@ import utn.dds.dominio.Hecho;
 import utn.dds.dominio.fuentes.estatica.strategies.ProcesadorStrategy;
 import utn.dds.dominio.fuentes.estatica.strategies.ProcessorFactory;
 import utn.dds.fuentes.estatica.config.AppConfig;
-import utn.dds.repository.IDAO;
-import utn.dds.repository.DAOFactory;
+import utn.dds.daos.IDAO;
+import utn.dds.daos.DAOFactory;
 
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);

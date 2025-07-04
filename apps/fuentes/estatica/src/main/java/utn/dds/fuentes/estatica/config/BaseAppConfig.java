@@ -1,4 +1,4 @@
-package utn.dds.config;
+package utn.dds.fuentes.estatica.config;
 
 import java.util.HashMap;
 import java.util.Map;
