@@ -1,7 +1,6 @@
 package utn.dds.fuentes.proxy.demo;
 
 import io.javalin.Javalin;
-import io.javalin.http.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

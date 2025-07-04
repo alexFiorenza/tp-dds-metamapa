@@ -48,7 +48,10 @@ public class Hecho {
         this.fechaAcontecimiento = (LocalDate) datos.get("fecha_contecimiento");
         this.origen = Origen.MANUAL;
         this.contribuyente = (Contribuyente) datos.get("contribuyente");
-        this.tipo = (TipoHecho) datos.get("tipo");
+        Object tipoObj = datos.get("tipo");
+        this.tipo = tipoObj instanceof String ? 
+            TipoHecho.valueOf(((String) tipoObj).toUpperCase()) : 
+            (TipoHecho) tipoObj;
         this.longitud = (Double) datos.get("longitud");
         this.latitud = (Double) datos.get("latitud");
         this.fechaCarga = (LocalDateTime) datos.get("fecha_carga");

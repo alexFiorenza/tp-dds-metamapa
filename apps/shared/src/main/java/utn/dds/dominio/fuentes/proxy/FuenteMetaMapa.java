@@ -4,35 +4,31 @@ import utn.dds.dominio.*;
 import utn.dds.dominio.fuentes.FuenteDeDatos;
 import utn.dds.dominio.fuentes.TipoFuente;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.ArrayList;
 
 public class FuenteMetaMapa implements FuenteDeDatos {
     private final TipoFuente tipoFuente;
-    private final String handle;
-    
-    public FuenteMetaMapa(String handle) {
-        this.handle = handle;
+    private String url;
+    private String handle;
+        
+    public FuenteMetaMapa() {
         this.tipoFuente = TipoFuente.PROXY;
+        this.handle = null;
+        this.url = null;
+    }
+    
+    public void setHandle(String handle) {
+        this.handle = handle;
     }
 
-    // Harcodeamos para probar
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
     @Override
     public List<Hecho> obtenerHechos() {
-        List<Hecho> hechos = new ArrayList<Hecho>();
-        LocalDateTime fechaCarga = LocalDateTime.now();
-        List<String> etiquetas = List.of("urgente", "transporte");
-
-        Contribuyente contribuyente = new Contribuyente("Pedro", "Ruiz", 22);
-
-        Hecho hecho = new Hecho("Ataque en el bosque", "3 muertos",
-                "Natural", LocalDate.now(), Origen.CONTRIBUYENTE,contribuyente, TipoHecho.TEXTO, 0, 0, fechaCarga,
-                EstadoHecho.OCULTO, etiquetas);
-        hechos.add(hecho);
-
-        return hechos;
+        return new ArrayList<>();
     }
 
     @Override
