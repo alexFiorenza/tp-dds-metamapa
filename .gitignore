@@ -1,0 +1,180 @@
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# IDE - IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# IDE - Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+
+# IDE - NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# IDE - VS Code
+.vscode/
+
+# OS - Mac
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# OS - Linux
+*~
+
+# OS - Windows
+*.lnk
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+docker-compose.*.yml
+!docker-compose.yml
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Application specific
+# MetaMapa specific ignores
+apps/*/target/
+apps/*/logs/
+apps/*/data/
+apps/*/config/local/
+
+# Microservices specific
+# Fuentes Estáticas
+apps/fuentes/estatica/data/
+apps/fuentes/estatica/logs/
+apps/fuentes/estatica/config/local/
+
+# Fuentes Dinámicas
+apps/fuentes/dinamica/data/
+apps/fuentes/dinamica/logs/
+apps/fuentes/dinamica/config/local/
+
+# Proxy MetaMapa
+apps/fuentes/proxy/metamapa/data/
+apps/fuentes/proxy/metamapa/logs/
+apps/fuentes/proxy/metamapa/config/local/
+
+# Proxy Demo
+apps/fuentes/proxy/demo/data/
+apps/fuentes/proxy/demo/logs/
+apps/fuentes/proxy/demo/config/local/
+
+# Test data and resources
+**/test/resources/data/
+**/test/resources/temp/
+**/test/resources/logs/
+
+# Build artifacts
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Node.js (if any frontend components)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python (if any scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Coverage reports
+coverage/
+*.lcov
+.coverage
+.coverage.*
+
+# Performance monitoring
+.hprof
+
+# Local configuration
+application-local.properties
+application-local.yml
+application-local.yaml
+
+# Secrets and sensitive data
+secrets/
+*.key
+*.pem
+*.p12
+*.jks
+*.keystore
+
+# IDE workspace files
+*.workspace
+*.code-workspace
+
+# Package files
+*.tgz
+*.tar
+*.gz
+
+# Local development files
+local/
+dev/
+development/
