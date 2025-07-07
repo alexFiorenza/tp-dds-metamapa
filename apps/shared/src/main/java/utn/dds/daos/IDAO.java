@@ -7,4 +7,6 @@ public interface IDAO<T> {
     InputStream read();
     List<T> find();
     void save(T object);
+    void saveAll(List<T> objects);
+    void addAll(List<T> objects);
 } 

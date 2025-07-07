@@ -42,6 +42,16 @@ public class S3<T> implements IDAO<T> {
     public void save(T object) {
         // TODO: Implementar guardado en S3
     }
+    
+    @Override
+    public void saveAll(List<T> objects) {
+        // TODO: Implementar guardado en lote en S3
+    }
+    
+    @Override
+    public void addAll(List<T> objects) {
+        // TODO: Implementar agregado en lote en S3
+    }
 
     // Getters para debugging/logging
     public String getEndpoint() {

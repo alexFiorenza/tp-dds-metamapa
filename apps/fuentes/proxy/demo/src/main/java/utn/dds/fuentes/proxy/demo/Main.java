@@ -5,8 +5,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utn.dds.fuentes.proxy.demo.config.AppConfig;
 import utn.dds.fuentes.proxy.demo.controller.ControllerFuenteProxyDemo;
-import utn.dds.daos.IDAO;
-import utn.dds.daos.DAOFactory;
 
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
@@ -18,13 +16,8 @@ public class Main {
             logger.info("Iniciando servicio proxy demo con configuración:");
             logger.info("  - DAO Type: {}", appConfig.getDaoType());
             logger.info("  - Tiempo Cache: {} segundos", appConfig.getTiempoCache());
-            
-            // Verificar si se debe usar persistencia
-            String daoType = appConfig.getDaoType();
-            IDAO<String> dao = DAOFactory.createDAO(daoType, appConfig.getDaoConfig());
 
-            ControllerFuenteProxyDemo controller = new ControllerFuenteProxyDemo(dao);
-            
+            ControllerFuenteProxyDemo controller = new ControllerFuenteProxyDemo(appConfig.getDaoType(), appConfig.getDaoConfig());
 
             Javalin app = Javalin.create(config -> {
                 config.plugins.enableDevLogging();

@@ -44,4 +44,14 @@ public class FileSystem<T> implements IDAO<T> {
     public void save(T object) {
         // TODO: Implementar guardado en FileSystem
     }
+    
+    @Override
+    public void saveAll(List<T> objects) {
+        // TODO: Implementar guardado en lote en FileSystem
+    }
+    
+    @Override
+    public void addAll(List<T> objects) {
+        // TODO: Implementar agregado en lote en FileSystem
+    }
 } 

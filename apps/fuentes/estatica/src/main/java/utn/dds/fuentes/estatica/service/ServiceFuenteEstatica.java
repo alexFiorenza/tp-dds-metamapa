@@ -10,10 +10,16 @@ import utn.dds.daos.IDAO;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 
 public class ServiceFuenteEstatica {
     private final HechoRepository hechoRepository;
     private final ProcesadorStrategy procesador;
+    
+    public ServiceFuenteEstatica(String daoType, Map<String, Object> daoConfig, ProcesadorStrategy procesador) {
+        this.hechoRepository = new HechoRepository(daoType, daoConfig);
+        this.procesador = procesador;
+    }
     
     public ServiceFuenteEstatica(IDAO<Hecho> dao, ProcesadorStrategy procesador) {
         this.hechoRepository = new HechoRepository(dao);

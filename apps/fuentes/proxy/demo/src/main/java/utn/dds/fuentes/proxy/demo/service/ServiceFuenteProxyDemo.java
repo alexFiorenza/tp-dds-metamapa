@@ -9,8 +9,8 @@ import utn.dds.dominio.fuentes.FuenteDeDatos;
 import utn.dds.fuentes.proxy.demo.service.model.conexion.Conexion;
 import utn.dds.fuentes.proxy.demo.service.model.FuenteDemoImpl;
 import utn.dds.fuentes.proxy.demo.persistencia.HechoRepository;
-import utn.dds.daos.IDAO;
 import utn.dds.fuentes.proxy.demo.persistencia.EjecucionRepository;
+import java.util.Map;
 
 public class ServiceFuenteProxyDemo {
     private EjecucionRepository ejecucionRepository;
@@ -18,15 +18,15 @@ public class ServiceFuenteProxyDemo {
     private URL url;
     private FuenteDeDatos fuente;
 
-    public ServiceFuenteProxyDemo(Conexion conexion, IDAO<String> dao) throws MalformedURLException {
+    public ServiceFuenteProxyDemo(Conexion conexion, String daoType, Map<String, Object> daoConfig) throws MalformedURLException {
         try {
             this.url= URI.create("http://example.com/api/hechos").toURL();
         } catch (MalformedURLException | IllegalArgumentException e) {
             throw new RuntimeException("Error al crear URL", e);
         }
 
-        this.ejecucionRepository = new EjecucionRepository(dao);
-        this.hechoRepository = new HechoRepository(dao);
+        this.ejecucionRepository = new EjecucionRepository(daoType, daoConfig);
+        this.hechoRepository = new HechoRepository(daoType, daoConfig);
         this.fuente = new FuenteDemoImpl(conexion, this.url, ejecucionRepository.obtenerUltimaEjecucion());
     }
 

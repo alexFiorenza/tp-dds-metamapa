@@ -35,10 +35,9 @@ public class Main {
             
             // Crear instancias usando factories
             ProcesadorStrategy procesador = ProcessorFactory.createProcessor(appConfig.getProcessorType());
-            IDAO<Hecho> dao = DAOFactory.createDAO(appConfig.getDaoType(), appConfig.getDaoConfig());
             
             // Crear controller con las dependencias necesarias
-            ControllerFuenteEstatica controller = new ControllerFuenteEstatica(dao, procesador);
+            ControllerFuenteEstatica controller = new ControllerFuenteEstatica(appConfig.getDaoType(), appConfig.getDaoConfig(), procesador);
             
             Javalin app = Javalin.create(config -> {
                 config.plugins.enableDevLogging();

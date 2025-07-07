@@ -8,11 +8,16 @@ import utn.dds.fuentes.estatica.service.model.strategies.ProcesadorStrategy;
 import utn.dds.daos.IDAO;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ControllerFuenteEstatica {
     private final ServiceFuenteEstatica estaticaService;
 
+    public ControllerFuenteEstatica(String daoType, Map<String, Object> daoConfig, ProcesadorStrategy procesador) {
+        this.estaticaService = new ServiceFuenteEstatica(daoType, daoConfig, procesador);
+    }
+    
     public ControllerFuenteEstatica(IDAO<Hecho> dao, ProcesadorStrategy procesador) {
         this.estaticaService = new ServiceFuenteEstatica(dao, procesador);
     }
