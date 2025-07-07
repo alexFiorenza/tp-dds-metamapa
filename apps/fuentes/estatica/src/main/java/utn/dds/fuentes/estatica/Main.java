@@ -4,9 +4,10 @@ import io.javalin.Javalin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utn.dds.dominio.Hecho;
-import utn.dds.dominio.fuentes.estatica.strategies.ProcesadorStrategy;
-import utn.dds.dominio.fuentes.estatica.strategies.ProcessorFactory;
 import utn.dds.fuentes.estatica.config.AppConfig;
+import utn.dds.fuentes.estatica.controller.ControllerFuenteEstatica;
+import utn.dds.fuentes.estatica.service.model.strategies.ProcesadorStrategy;
+import utn.dds.fuentes.estatica.service.model.strategies.ProcessorFactory;
 import utn.dds.daos.IDAO;
 import utn.dds.daos.DAOFactory;
 
@@ -36,9 +37,8 @@ public class Main {
             ProcesadorStrategy procesador = ProcessorFactory.createProcessor(appConfig.getProcessorType());
             IDAO<Hecho> dao = DAOFactory.createDAO(appConfig.getDaoType(), appConfig.getDaoConfig());
             
-            // Crear servicio con instancias pre-configuradas
-            ServiceFuenteEstatica estaticaService = new ServiceFuenteEstatica(dao, procesador);
-            ControllerFuenteEstatica controller = new ControllerFuenteEstatica(estaticaService);
+            // Crear controller con las dependencias necesarias
+            ControllerFuenteEstatica controller = new ControllerFuenteEstatica(dao, procesador);
             
             Javalin app = Javalin.create(config -> {
                 config.plugins.enableDevLogging();

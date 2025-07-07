@@ -1,8 +1,9 @@
-package utn.dds.dominio.fuentes.proxy;
+package utn.dds.fuentes.proxy.demo.service.model;
 
 import utn.dds.dominio.Hecho;
 import utn.dds.dominio.fuentes.FuenteDeDatos;
 import utn.dds.dominio.fuentes.TipoFuente;
+import utn.dds.fuentes.proxy.demo.service.model.conexion.Conexion;
 
 import java.net.URL;
 import java.time.LocalDateTime;
@@ -10,17 +11,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class FuenteDemo implements FuenteDeDatos {
+public class FuenteDemoImpl implements FuenteDeDatos {
     private final Conexion conexion;
     private final URL url;
     private LocalDateTime fechaUltimaConsulta;
     private final TipoFuente tipoFuente;
 
-    public FuenteDemo(Conexion conexion, URL url) {
+    public FuenteDemoImpl(Conexion conexion, URL url, LocalDateTime fechaUltimaConsulta) {
         this.conexion = conexion;
         this.url = url;
         this.tipoFuente = TipoFuente.PROXY;
-        this.fechaUltimaConsulta = null;
+        this.fechaUltimaConsulta = fechaUltimaConsulta;
     }
 
     @Override

@@ -1,6 +1,5 @@
 package utn.dds.fuentes.estatica.config;
 
-import utn.dds.fuentes.estatica.config.BaseAppConfig;
 import utn.dds.daos.DAOConfigBuilder;
 
 import java.util.Map;

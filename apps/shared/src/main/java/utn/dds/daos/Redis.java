@@ -44,6 +44,14 @@ public class Redis<T> implements IDAO<T> {
         throw new UnsupportedOperationException("No implementado");
     }
     
+    public void save(String key, String value) {
+        try (Jedis jedis = jedisPool.getResource()) {
+            jedis.set(key, value);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al guardar en Redis", e);
+        }
+    }
+    
     public String findById(String key) {
         try (Jedis jedis = jedisPool.getResource()) {
             String value = jedis.get(key);

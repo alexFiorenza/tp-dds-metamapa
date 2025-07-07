@@ -1,4 +1,4 @@
-package utn.dds.dominio.fuentes.estatica.strategies;
+package utn.dds.fuentes.estatica.service.model.strategies;
 
 public class ProcessorFactory {
     
@@ -10,4 +10,4 @@ public class ProcessorFactory {
                 throw new IllegalArgumentException("Tipo de procesador no soportado: " + type);
         }
     }
-}
+} 
