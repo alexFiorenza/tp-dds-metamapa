@@ -16,12 +16,18 @@ public class AppConfig {
     }
 
     public static AppConfig fromEnvironment() {
-        String daoType = getEnvOrDefault("DAO_TYPE", "none");
+        String daoType = getEnvOrDefault("DAO_TYPE", "filesystem");
         int tiempoCache = Integer.parseInt(getEnvOrDefault("TIEMPO_CACHE", "300")); // 5 minutos por defecto
         
         Map<String, Object> daoConfig = null;
         if (daoType != null && !daoType.trim().isEmpty() && !daoType.equalsIgnoreCase("none")) {
-            daoConfig = DAOConfigBuilder.buildDAOConfig(daoType, null);
+            // Para el proxy demo, usamos rutas específicas a los archivos mock
+            if ("filesystem".equals(daoType)) {
+                daoConfig = new java.util.HashMap<>();
+                // La ruta será configurada individualmente por cada repository
+            } else {
+                daoConfig = DAOConfigBuilder.buildDAOConfig(daoType, null);
+            }
         }
         
         return new AppConfig(daoType, tiempoCache, daoConfig);
@@ -34,10 +40,6 @@ public class AppConfig {
 
     public String getDaoType() {
         return daoType;
-    }
-
-    public int getTiempoCache() {
-        return tiempoCache;
     }
 
     public Map<String, Object> getDaoConfig() {

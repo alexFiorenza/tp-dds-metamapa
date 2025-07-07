@@ -2,34 +2,46 @@ package utn.dds.fuentes.proxy.demo.persistencia;
 
 import utn.dds.daos.IDAO;
 import utn.dds.daos.DAOFactory;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 
 public class EjecucionRepository {
-    private final IDAO<String> dao;
-    private final String ULTIMA_EJECUCION_KEY = "fuente_proxy_demo_ultima_ejecucion";
+    private final IDAO<Object> dao;
+    private final ObjectMapper objectMapper;
     
     public EjecucionRepository(String daoType, Map<String, Object> daoConfig) {
-        this.dao = DAOFactory.createDAO(String.class, daoType, daoConfig);
+        if ("filesystem".equals(daoType)) {
+            Map<String, Object> config = new java.util.HashMap<>();
+            config.put("url", "mocks/ultimaEjecucion.json");
+            this.dao = DAOFactory.createDAO(Object.class, daoType, config);
+        } else {
+            this.dao = DAOFactory.createDAO(Object.class, daoType, daoConfig);
+        }
+        this.objectMapper = new ObjectMapper();
+        this.objectMapper.registerModule(new JavaTimeModule());
     }
 
     public LocalDateTime obtenerUltimaEjecucion() {
-        // Este es un patch medio rapido para que funcione con Redis. Ver bien como hacerlo.
-        if (dao instanceof utn.dds.daos.Redis) {
-            String ultimaEjecucionStr = ((utn.dds.daos.Redis<String>) dao).findById(ULTIMA_EJECUCION_KEY);
-            if (ultimaEjecucionStr != null) {
-                return LocalDateTime.parse(ultimaEjecucionStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        try {
+            List<Object> data = dao.find();
+            if (!data.isEmpty() && data.get(0) instanceof Map) {
+                Map<String, Object> map = (Map<String, Object>) data.get(0);
+                String ejecucionStr = (String) map.get("ejecucion");
+                if (ejecucionStr != null) {
+                    return LocalDateTime.parse(ejecucionStr);
+                }
             }
+        } catch (Exception e) {
+            throw new RuntimeException("Error al obtener última ejecución", e);
         }
-        return null;
+        return LocalDateTime.now().minusDays(1);
     }
 
     public void guardarUltimaEjecucion(LocalDateTime ultimaEjecucion) {
-        // Para EjecucionRepository, usamos el patrón de key específica
-        if (dao instanceof utn.dds.daos.Redis) {
-            ((utn.dds.daos.Redis<String>) dao).save(ULTIMA_EJECUCION_KEY, ultimaEjecucion.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-        }
+        // Para este caso de uso mock, no necesitamos guardar
+        // Los datos están en el archivo JSON estático
     }
 }

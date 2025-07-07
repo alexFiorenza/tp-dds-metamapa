@@ -43,16 +43,6 @@ services:
     networks:
       - metamapa-network
 
-  # Redis Cache
-  redis:
-    image: redis:7-alpine
-    container_name: metamapa-redis
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    networks:
-      - metamapa-network
-
   # Proxy Demo
   fuente-proxy-demo:
     build:
@@ -63,11 +53,7 @@ services:
     container_name: metamapa-fuente-proxy-demo
     restart: unless-stopped
     environment:
-      - DAO_TYPE=redis
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-    depends_on:
-      - redis
+      - DAO_TYPE=filesystem
     networks:
       - metamapa-network
 

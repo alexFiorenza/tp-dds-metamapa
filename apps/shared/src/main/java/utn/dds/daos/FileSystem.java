@@ -3,12 +3,20 @@ package utn.dds.daos;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.List;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 public class FileSystem<T> implements IDAO<T> {
     private Path url;
+    private ObjectMapper objectMapper;
+    private Class<T> clazz;
 
-    public FileSystem(Path url) {
+    public FileSystem(Path url, Class<T> clazz) {
         this.url = url;
+        this.clazz = clazz;
+        this.objectMapper = new ObjectMapper();
+        this.objectMapper.registerModule(new JavaTimeModule());
     }
 
     @Override
@@ -36,8 +44,16 @@ public class FileSystem<T> implements IDAO<T> {
 
     @Override
     public List<T> find() {
-        // TODO: Implementar búsqueda en FileSystem
-        return null;
+        try {
+            InputStream inputStream = read();
+            if (inputStream != null) {
+                return objectMapper.readValue(inputStream, 
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, clazz));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error al deserializar lista desde archivo: " + url, e);
+        }
+        return List.of();
     }
 
     @Override

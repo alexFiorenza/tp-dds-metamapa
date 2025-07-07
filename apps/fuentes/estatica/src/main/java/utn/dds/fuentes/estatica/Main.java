@@ -3,13 +3,10 @@ package utn.dds.fuentes.estatica;
 import io.javalin.Javalin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import utn.dds.dominio.Hecho;
 import utn.dds.fuentes.estatica.config.AppConfig;
 import utn.dds.fuentes.estatica.controller.ControllerFuenteEstatica;
 import utn.dds.fuentes.estatica.service.model.strategies.ProcesadorStrategy;
 import utn.dds.fuentes.estatica.service.model.strategies.ProcessorFactory;
-import utn.dds.daos.IDAO;
-import utn.dds.daos.DAOFactory;
 
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
@@ -33,7 +30,7 @@ public class Main {
                     ((String) appConfig.getDaoConfig().get("accessKey")).substring(0, 3));
             }
             
-            // Crear instancias usando factories
+            // Crear instancias 
             ProcesadorStrategy procesador = ProcessorFactory.createProcessor(appConfig.getProcessorType());
             
             // Crear controller con las dependencias necesarias

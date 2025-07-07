@@ -5,7 +5,6 @@ import utn.dds.dominio.fuentes.FuenteDeDatos;
 import utn.dds.fuentes.estatica.persistencia.HechoRepository;
 import utn.dds.fuentes.estatica.service.model.FuenteEstaticaImpl;
 import utn.dds.fuentes.estatica.service.model.strategies.ProcesadorStrategy;
-import utn.dds.daos.IDAO;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,11 +17,6 @@ public class ServiceFuenteEstatica {
     
     public ServiceFuenteEstatica(String daoType, Map<String, Object> daoConfig, ProcesadorStrategy procesador) {
         this.hechoRepository = new HechoRepository(daoType, daoConfig);
-        this.procesador = procesador;
-    }
-    
-    public ServiceFuenteEstatica(IDAO<Hecho> dao, ProcesadorStrategy procesador) {
-        this.hechoRepository = new HechoRepository(dao);
         this.procesador = procesador;
     }
     

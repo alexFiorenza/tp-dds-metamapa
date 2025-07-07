@@ -15,7 +15,6 @@ public class Main {
             
             logger.info("Iniciando servicio proxy demo con configuración:");
             logger.info("  - DAO Type: {}", appConfig.getDaoType());
-            logger.info("  - Tiempo Cache: {} segundos", appConfig.getTiempoCache());
 
             ControllerFuenteProxyDemo controller = new ControllerFuenteProxyDemo(appConfig.getDaoType(), appConfig.getDaoConfig());
 
@@ -30,7 +29,7 @@ public class Main {
             app.get("/health", ctx -> ctx.result("OK"));
             app.get("/", ctx -> ctx.result("Proxy Demo - MetaMapa"));
             app.get("/hechos", controller::obtenerHechos);
-            app.put("/hechos", controller::actualizarCache);
+            app.put("/hechos", controller::agregarHechos);
 
             app.start(7004);
             

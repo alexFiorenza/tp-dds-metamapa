@@ -21,7 +21,7 @@ public class AppConfig {
     }
 
     public static AppConfig fromEnvironment() {
-        String daoType = getEnvOrDefault("DAO_TYPE", "redis");  // Para dinámicas default Redis
+        String daoType = getEnvOrDefault("DAO_TYPE", "filesystem");  // Para dinámicas default FileSystem
         String processorType = getEnvOrDefault("PROCESSOR_TYPE", "default");
         
         // Configuraciones específicas para fuentes dinámicas

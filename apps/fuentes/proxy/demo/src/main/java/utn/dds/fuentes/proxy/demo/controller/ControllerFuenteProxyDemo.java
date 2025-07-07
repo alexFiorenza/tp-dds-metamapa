@@ -26,7 +26,7 @@ public class ControllerFuenteProxyDemo {
         ctx.json(hechosDTO);
     }
 
-    public void actualizarCache(Context ctx) {
+    public void agregarHechos(Context ctx) {
         this.serviceFuenteProxyDemo.actualizarCache();
         ctx.status(200);
     }
