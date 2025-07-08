@@ -1,20 +1,12 @@
 package utn.dds.fuentes.dinamica;
 
 import io.javalin.http.Context;
-import utn.dds.dominio.Hecho;
-import utn.dds.dominio.SolicitudEliminacion;
-import utn.dds.dto.HechoDTO;
-import utn.dds.fuentes.dinamica.ServiceFuenteDinamica;
-
-import java.util.List;
-import java.util.stream.Collectors;
-import io.javalin.http.Context;
 import utn.dds.dominio.SolicitudEliminacion;
 
-public class ControllerSolicitudes {
-    private final ServiceSolicitudes solicitudesService;
+public class ControllerSolicitudesDinamica {
+    private final ServiceSolicitudesDinamica solicitudesService;
 
-    public ControllerSolicitudes(ServiceSolicitudes solicitudesService){this.solicitudesService = solicitudesService;}
+    public ControllerSolicitudesDinamica(ServiceSolicitudesDinamica solicitudesService){this.solicitudesService = solicitudesService;}
 
     // Esta no se si iria
     public void obtenerSolicitudesDeEliminacion(Context ctx){}

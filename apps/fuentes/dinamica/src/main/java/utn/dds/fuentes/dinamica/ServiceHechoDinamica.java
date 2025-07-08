@@ -2,15 +2,19 @@ package utn.dds.fuentes.dinamica;
 
 import utn.dds.daos.IDAO;
 import utn.dds.dominio.Hecho;
+import utn.dds.dominio.fuentes.FuenteDeDatos;
+import utn.dds.dominio.fuentes.FuenteDinamica;
 
 import java.io.IOException;
 import java.util.List;
 
-public class ServiceFuenteDinamica {
-    private final DinamicaRepository repository;
+public class ServiceHechoDinamica {
+    private final HechoRepository repository;
+    private final FuenteDinamica fuenteDeDatos;
     
-    public ServiceFuenteDinamica(IDAO<Hecho> dao) {
-        this.repository = new DinamicaRepository(dao);
+    public ServiceHechoDinamica(IDAO<Hecho> dao, FuenteDinamica fuenteDeDatos) {
+        this.repository = new HechoRepository(dao);
+        this.fuenteDeDatos = fuenteDeDatos;
     }
     
     public List<Hecho> obtenerHechos() throws IOException {

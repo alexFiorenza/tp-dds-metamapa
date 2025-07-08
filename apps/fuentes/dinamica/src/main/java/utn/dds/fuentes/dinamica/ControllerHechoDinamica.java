@@ -2,17 +2,15 @@ package utn.dds.fuentes.dinamica;
 
 import io.javalin.http.Context;
 import utn.dds.dominio.Hecho;
-import utn.dds.dominio.SolicitudEliminacion;
 import utn.dds.dto.HechoDTO;
-import utn.dds.fuentes.dinamica.ServiceFuenteDinamica;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ControllerFuenteDinamica {
-    private final ServiceFuenteDinamica dinamicaService;
+public class ControllerHechoDinamica {
+    private final ServiceHechoDinamica dinamicaService;
 
-    public ControllerFuenteDinamica(ServiceFuenteDinamica dinamicaService) {
+    public ControllerHechoDinamica(ServiceHechoDinamica dinamicaService) {
         this.dinamicaService = dinamicaService;
     }
 
