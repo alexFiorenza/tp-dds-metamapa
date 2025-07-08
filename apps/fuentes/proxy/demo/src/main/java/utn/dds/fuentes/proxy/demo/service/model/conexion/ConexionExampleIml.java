@@ -7,6 +7,7 @@ import java.util.Map;
 public class ConexionExampleIml implements Conexion {
     @Override
     public Map<String, Object> obtenerDatos(URL url, LocalDateTime fechaUltimaConsulta) {
+        // Devolve un mock de datos por ahora
         return null;
     }
 }

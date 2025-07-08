@@ -15,7 +15,7 @@ public class EjecucionRepository {
     public EjecucionRepository(String daoType, Map<String, Object> daoConfig) {
         if ("filesystem".equals(daoType)) {
             Map<String, Object> config = new java.util.HashMap<>();
-            config.put("url", "mocks/ultimaEjecucion.json");
+            config.put("url", "src/main/resources/mocks/ultimaEjecucion.json");
             this.dao = DAOFactory.createDAO(Object.class, daoType, config);
         } else {
             this.dao = DAOFactory.createDAO(Object.class, daoType, daoConfig);
@@ -41,7 +41,12 @@ public class EjecucionRepository {
     }
 
     public void guardarUltimaEjecucion(LocalDateTime ultimaEjecucion) {
-        // Para este caso de uso mock, no necesitamos guardar
-        // Los datos están en el archivo JSON estático
+        try {
+            Map<String, Object> data = new java.util.HashMap<>();
+            data.put("ejecucion", ultimaEjecucion.toString());
+            dao.save(data);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al guardar última ejecución", e);
+        }
     }
 }

@@ -58,7 +58,20 @@ public class FileSystem<T> implements IDAO<T> {
 
     @Override
     public void save(T object) {
-        // TODO: Implementar guardado en FileSystem
+        try {
+            List<T> objectList = List.of(object);
+            
+            // Crear directorio padre si no existe
+            java.io.File file = url.toFile();
+            java.io.File parentDir = file.getParentFile();
+            if (parentDir != null && !parentDir.exists()) {
+                parentDir.mkdirs();
+            }
+            
+            objectMapper.writeValue(file, objectList);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al guardar objeto en archivo: " + url, e);
+        }
     }
     
     @Override

@@ -27,7 +27,7 @@ public class ControllerFuenteProxyDemo {
     }
 
     public void agregarHechos(Context ctx) {
-        this.serviceFuenteProxyDemo.actualizarCache();
+        this.serviceFuenteProxyDemo.agregarHechos();
         ctx.status(200);
     }
 }

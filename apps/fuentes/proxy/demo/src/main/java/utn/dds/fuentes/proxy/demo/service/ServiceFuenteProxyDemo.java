@@ -2,6 +2,7 @@ package utn.dds.fuentes.proxy.demo.service;
 import java.util.List;
 import java.net.URL;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.net.MalformedURLException;
 import java.net.URI;
 import utn.dds.dominio.Hecho;
@@ -11,8 +12,11 @@ import utn.dds.fuentes.proxy.demo.service.model.FuenteDemoImpl;
 import utn.dds.fuentes.proxy.demo.persistencia.HechoRepository;
 import utn.dds.fuentes.proxy.demo.persistencia.EjecucionRepository;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ServiceFuenteProxyDemo {
+    private static final Logger logger = LoggerFactory.getLogger(ServiceFuenteProxyDemo.class);
     private EjecucionRepository ejecucionRepository;
     private HechoRepository hechoRepository;
     private URL url;
@@ -35,12 +39,21 @@ public class ServiceFuenteProxyDemo {
         return this.hechoRepository.obtener();
     }
 
-    public void actualizarCache(){
+    public void agregarHechos(){
+        LocalDateTime ahora = LocalDateTime.now();
+        String timestamp = ahora.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        
+        logger.info("Iniciando actualización de fuente proxy demo el {}", timestamp);
+        
         // Obtengo nuevos hechos desde la fuente
         List<Hecho> nuevosHechos= this.fuente.obtenerHechos();
-        // Actualizo la cache
-        this.hechoRepository.actualizar(nuevosHechos);
-        // Actualizo la fecha de la última ejecución
-        this.ejecucionRepository.guardarUltimaEjecucion(LocalDateTime.now());
+        if(nuevosHechos != null){
+            this.hechoRepository.actualizar(nuevosHechos);
+            logger.info("✓ Fuente proxy demo actualizada correctamente el {} - {} hechos procesados", timestamp, nuevosHechos.size());
+        } else {
+            logger.info("✓ Cronjob de proxy demo ejecutado correctamente el {} - No hay nuevos hechos", timestamp);
+        }
+        
+        this.ejecucionRepository.guardarUltimaEjecucion(ahora);
     }
 }

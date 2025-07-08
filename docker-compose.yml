@@ -112,6 +112,22 @@ services:
     networks:
       - metamapa-network
 
+  # Scheduler para Proxy Demo
+  scheduler-proxy-demo:
+    build:
+      context: ./apps/scheduler
+      dockerfile: Dockerfile
+    container_name: scheduler-proxy-demo
+    restart: unless-stopped
+    environment:
+      - TARGET_URL=http://fuente-proxy-demo:7004/hechos
+      - HTTP_METHOD=PUT
+      - INTERVAL_SECONDS=3600
+    depends_on:
+      - fuente-proxy-demo
+    networks:
+      - metamapa-network
+
 networks:
   metamapa-network:
     driver: bridge 
