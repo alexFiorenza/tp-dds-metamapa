@@ -1,4 +1,4 @@
-package utn.dds.dominio.fuentes.estatica.strategies;
+package utn.dds.fuentes.estatica.service.model.strategies;
 
 import utn.dds.dominio.Hecho;
 import utn.dds.dominio.Origen;

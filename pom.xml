@@ -30,6 +30,7 @@
         <module>apps/fuentes/proxy/demo</module>
         <module>apps/agregador</module>
         <module>apps/metamapa</module>
+        <module>apps/scheduler</module>
     </modules>
 
     <dependencyManagement>

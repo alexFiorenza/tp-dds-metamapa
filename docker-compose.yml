@@ -43,16 +43,6 @@ services:
     networks:
       - metamapa-network
 
-  # Redis Cache
-  redis:
-    image: redis:7-alpine
-    container_name: metamapa-redis
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    networks:
-      - metamapa-network
-
   # Proxy Demo
   fuente-proxy-demo:
     build:
@@ -62,8 +52,8 @@ services:
       - "7004:7004"
     container_name: metamapa-fuente-proxy-demo
     restart: unless-stopped
-    depends_on:
-      - redis
+    environment:
+      - DAO_TYPE=filesystem
     networks:
       - metamapa-network
 
@@ -119,6 +109,22 @@ services:
       - "9093:9093"
     depends_on:
       - metric-collector
+    networks:
+      - metamapa-network
+
+  # Scheduler para Proxy Demo
+  scheduler-proxy-demo:
+    build:
+      context: ./apps/scheduler
+      dockerfile: Dockerfile
+    container_name: scheduler-proxy-demo
+    restart: unless-stopped
+    environment:
+      - TARGET_URL=http://fuente-proxy-demo:7004/hechos
+      - HTTP_METHOD=PUT
+      - INTERVAL_SECONDS=3600
+    depends_on:
+      - fuente-proxy-demo
     networks:
       - metamapa-network
 

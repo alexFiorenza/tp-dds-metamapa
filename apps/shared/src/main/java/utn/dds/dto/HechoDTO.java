@@ -63,6 +63,23 @@ public class HechoDTO {
         );
     }
 
+    public Hecho toHecho() {
+        return new Hecho(
+            this.titulo,
+            this.descripcion,
+            this.categoria,
+            this.fechaAcontecimiento,
+            this.origen,
+            null, // contribuyente - en el mock es null
+            this.tipo,
+            this.longitud,
+            this.latitud,
+            this.fechaCarga,
+            this.estado,
+            this.etiquetas
+        );
+    }
+
     public String getTitulo() {
         return titulo;
     }

@@ -1,4 +1,4 @@
-package utn.dds.dominio.fuentes.proxy;
+package utn.dds.fuentes.proxy.demo.service.model.conexion;
 
 import java.net.URL;
 import java.time.LocalDateTime;

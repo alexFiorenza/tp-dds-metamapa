@@ -35,13 +35,6 @@ public class DAOConfigBuilder {
         return config;
     }
     
-    public static Map<String, Object> buildRedisConfig() {
-        Map<String, Object> config = new HashMap<>();
-        addIfNotNull(config, "host", getEnvOrDefault("REDIS_HOST", "localhost"));
-        addIfNotNull(config, "port", getEnvOrDefault("REDIS_PORT", "6379"));
-        addIfNotNull(config, "password", System.getenv("REDIS_PASSWORD"));
-        return config;
-    }
     
     public static Map<String, Object> buildDAOConfig(String daoType, String dataUrl) {
         switch (daoType.toLowerCase()) {
@@ -49,8 +42,6 @@ public class DAOConfigBuilder {
                 return buildFileSystemConfig(dataUrl);
             case "s3":
                 return buildS3Config(dataUrl);
-            case "redis":
-                return buildRedisConfig();
             default:
                 throw new IllegalArgumentException("Tipo de DAO no soportado: " + daoType);
         }
