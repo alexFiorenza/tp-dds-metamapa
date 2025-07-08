@@ -1,6 +1,8 @@
 package utn.dds.fuentes.proxy.metamapa;
 
 import io.javalin.Javalin;
+import utn.dds.fuentes.proxy.metamapa.controller.ControllerProxyMetamapa;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,9 +20,8 @@ public class Main {
         logger.info("Iniciando servicio con configuración:");
         logger.info("Metamapa URL: {}", url);
 
-        // Crear servicio con instancias pre-configuradas
-        ServiceFuenteProxyMetaMapa proxyMetamapaService = new ServiceFuenteProxyMetaMapa(url);
-        ControllerProxyMetamapa controller = new ControllerProxyMetamapa(proxyMetamapaService);
+        // Crear controller con la URL necesaria
+        ControllerProxyMetamapa controller = new ControllerProxyMetamapa(url);
         
         Javalin app = Javalin.create(config -> {
             config.plugins.enableDevLogging();

@@ -1,9 +1,9 @@
-package utn.dds.dominio.fuentes.estatica;
+package utn.dds.fuentes.estatica.service.model;
 
 import utn.dds.dominio.Hecho;
 import utn.dds.dominio.fuentes.FuenteDeDatos;
 import utn.dds.dominio.fuentes.TipoFuente;
-import utn.dds.dominio.fuentes.estatica.strategies.ProcesadorStrategy;
+import utn.dds.fuentes.estatica.service.model.strategies.ProcesadorStrategy;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,11 +12,11 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FuenteEstatica implements FuenteDeDatos {
+public class FuenteEstaticaImpl implements FuenteDeDatos {
     private final InputStream input;
     private final ProcesadorStrategy procesador;
 
-    public FuenteEstatica(InputStream input, ProcesadorStrategy procesador) {
+    public FuenteEstaticaImpl(InputStream input, ProcesadorStrategy procesador) {
         this.input = input;
         this.procesador = procesador;
     }
