@@ -22,8 +22,8 @@ public class ServiceSolicitudesDinamica {
     }
 
 
-    public List<SolicitudEliminacion> obtenerSolicitudes(String uuid) throws IOException {
-        return solicitudDinamica.obtenerSolicitudes(uuid);
+    public List<SolicitudEliminacion> obtenerSolicitudes() throws IOException {
+        return solicitudDinamica.obtenerSolicitudes();
     }
 
     public SolicitudEliminacion agregarSolicitud(SolicitudEliminacion solicitud) throws IOException {
