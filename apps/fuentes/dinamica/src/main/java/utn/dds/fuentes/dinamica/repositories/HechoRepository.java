@@ -4,12 +4,11 @@ import utn.dds.daos.DAOFactory;
 import utn.dds.daos.IDAO;
 import utn.dds.dominio.EstadoHecho;
 import utn.dds.dominio.Hecho;
+import utn.dds.dominio.SolicitudEliminacion;
 import utn.dds.dto.HechoDTO;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class HechoRepository {
@@ -31,11 +30,26 @@ public class HechoRepository {
         this.dao = dao;
     }
 
-    public List<Hecho> obtenerHechos() {
+    public List<Hecho> obtenerHechos() throws IOException {
         List<HechoDTO> hechosDTO = dao.find();
         return hechosDTO.stream()
                 .map(HechoDTO::toHecho)
                 .collect(Collectors.toList());
+    }
+
+    public Hecho buscarHecho(String titulo) throws IOException {
+        List<Hecho> hechos = obtenerHechos();
+
+        Optional<Hecho> encontrado = hechos.stream()
+                .filter(s -> s.getTitulo().equals(titulo))
+                .findFirst();
+
+        if (encontrado.isPresent()) {
+            Hecho hechoEncontrado = encontrado.get();
+            return hechoEncontrado;
+        } else {
+            throw new NoSuchElementException("No se encontró el Hecho con titulo: " + titulo);
+        }
     }
 
     // A chequear si es Hecho o HechoDTO

@@ -33,11 +33,17 @@ public class ServiceSolicitudesDinamica {
 
     public void aceptarSolicitud(String uuid) throws IOException {
         // Tenemos que usar el respository de Solicitudes y el de Hecho
-        
-
+        SolicitudEliminacion solicitud = solicitudDinamicaRepo.obtenerSolicitud(uuid);
+        Hecho hecho = repository.buscarHecho(solicitud.getHecho());
+        hecho.ocultar();
     }
 
+    /// //////////////////////////////////////////////////////////////////////////////////
+    ///  Creo que en repository no hay que modificar las solicitudes,  solo buscarlas  ///
+    /// //////////////////////////////////////////////////////////////////////////////////
+
     public void rechazarSolicitud(String uuid) throws IOException {
-        // Tenemos que usar el respository de Solicitudes y el de Hecho
+        // Aca no se hace nada creo
+        //preguntar.........
     }
 }
