@@ -11,7 +11,7 @@ public class ServiceHechoDinamica {
     private final FuenteDinamicaImpl fuenteDeDatos;
     
     public ServiceHechoDinamica(IDAO<Hecho> dao, FuenteDinamicaImpl fuenteDeDatos) {
-        this.repository = new HechoRepository(dao);   // Aca no se porque falla si en teoria permite ue solo se le envie el dao
+        this.repository = new HechoRepository(dao);   // Aca no se porque falla si en teoria permite que solo se le envie el dao
         this.fuenteDeDatos = fuenteDeDatos;
     }
     
