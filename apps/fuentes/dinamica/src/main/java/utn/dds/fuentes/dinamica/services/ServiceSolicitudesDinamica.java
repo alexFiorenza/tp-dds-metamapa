@@ -33,6 +33,7 @@ public class ServiceSolicitudesDinamica {
 
     public void aceptarSolicitud(String uuid) throws IOException {
         // Tenemos que usar el respository de Solicitudes y el de Hecho
+
     }
 
     public void rechazarSolicitud(String uuid) throws IOException {

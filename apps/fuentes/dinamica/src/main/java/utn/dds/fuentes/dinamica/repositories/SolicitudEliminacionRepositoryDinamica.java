@@ -38,10 +38,16 @@ public class SolicitudEliminacionRepositoryDinamica {
 
 
     public void aceptarSolicitud(String uuid){
-
+    // paso a paso
+        // buscar en la dao la solicitud == uuid
+        //cambiarEstado
+        // ver que hacer con esa solicitud
     }
 
     public void rechazarSolicitud(String uuid){
-
+        // paso a paso
+        // buscar en la dao la solicitud == uuid
+        //cambiarEstado
+        // ver que hacer con esa solicitud
     }
 }
