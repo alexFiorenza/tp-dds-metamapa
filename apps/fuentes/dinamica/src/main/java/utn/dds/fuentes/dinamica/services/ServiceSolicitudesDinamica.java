@@ -12,29 +12,28 @@ import java.util.List;
 
 public class ServiceSolicitudesDinamica {
     private final HechoRepository repository;
-    private final SolicitudEliminacionRepositoryDinamica solicitudDinamica;
+    private final SolicitudEliminacionRepositoryDinamica solicitudDinamicaRepo;
     private final DetectorSpam detectorSpam;
 
-    public ServiceSolicitudesDinamica(IDAO<Hecho> dao, SolicitudEliminacionRepositoryDinamica solicitudDinamica, DetectorSpam detectorSpam) {
+    public ServiceSolicitudesDinamica(IDAO<Hecho> dao, SolicitudEliminacionRepositoryDinamica solicitudDinamicaRepo, DetectorSpam detectorSpam) {
         this.repository = new HechoRepository(dao);
-        this.solicitudDinamica = solicitudDinamica;
+        this.solicitudDinamicaRepo = solicitudDinamicaRepo;
         this.detectorSpam = detectorSpam;
     }
 
-
     public List<SolicitudEliminacion> obtenerSolicitudes() throws IOException {
-        return solicitudDinamica.obtenerSolicitudes();
+        return solicitudDinamicaRepo.obtenerSolicitudes();
     }
 
     public SolicitudEliminacion agregarSolicitud(SolicitudEliminacion solicitud) throws IOException {
-        return solicitudDinamica.agregarSolicitud(solicitud);
+        return solicitudDinamicaRepo.agregarSolicitud(solicitud);
     }
 
     public void aceptarSolicitud(String uuid) throws IOException {
-
+        // Tenemos que usar el respository de Solicitudes y el de Hecho
     }
 
     public void rechazarSolicitud(String uuid) throws IOException {
-
+        // Tenemos que usar el respository de Solicitudes y el de Hecho
     }
 }
