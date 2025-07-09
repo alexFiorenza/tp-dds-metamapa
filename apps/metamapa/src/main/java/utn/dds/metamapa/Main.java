@@ -15,6 +15,15 @@ public class Main {
         app.get("/health", ctx -> ctx.result("OK"));
         app.get("/", ctx -> ctx.result("MetaMapa - Servicio principal"));
 
+        //endpoints publicos
+
+        app.get("/hechos", ControllerHechoPublico::obtenerHechos);
+        app.get("/colecciones/:identificador/hechos", ControllerColeccionPublico::obtenerColeccion);
+        app.post("/solicitudes", ControllerSolicitudPublico::agregarSolicitud); //TODO
+
+        //enpoint administrativos
+
+
         logger.info("Servicio MetaMapa iniciado en puerto 7006");
     }
 } 
