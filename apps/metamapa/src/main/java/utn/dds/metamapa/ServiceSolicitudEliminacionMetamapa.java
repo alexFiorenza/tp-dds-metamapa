@@ -3,7 +3,11 @@ package utn.dds.metamapa;
 import utn.dds.dominio.SolicitudEliminacion;
 
 public class ServiceSolicitudEliminacionMetamapa {
-    public void procesarSolicitud(SolicitudEliminacion solicitud) {
-
+    private final RepositorySolicitudEliminacion repositorySolicitudEliminacion;
+    public ServiceSolicitudEliminacionMetamapa(){
+        this.repositorySolicitudEliminacion=new RepositorySolicitudEliminacion();
+    }
+    public void crearSolicitud(SolicitudEliminacion solicitud) {
+        repositorySolicitudEliminacion.create();
     }
 }
