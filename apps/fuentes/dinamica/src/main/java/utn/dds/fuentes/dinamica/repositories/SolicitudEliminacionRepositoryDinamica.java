@@ -1,4 +1,4 @@
-package utn.dds.fuentes.dinamica;
+package utn.dds.fuentes.dinamica.repositories;
 
 import utn.dds.daos.IDAO;
 import utn.dds.dominio.Hecho;

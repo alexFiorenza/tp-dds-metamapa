@@ -3,6 +3,7 @@ package utn.dds.fuentes.dinamica;
 import utn.dds.dominio.Hecho;
 import utn.dds.dominio.fuentes.FuenteDeDatos;
 import utn.dds.dominio.fuentes.TipoFuente;
+import utn.dds.fuentes.dinamica.conexion.Conexion;
 
 import java.net.URL;
 import java.util.ArrayList;

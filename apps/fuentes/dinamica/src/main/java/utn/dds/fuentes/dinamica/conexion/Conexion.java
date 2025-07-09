@@ -1,4 +1,4 @@
-package utn.dds.fuentes.dinamica;
+package utn.dds.fuentes.dinamica.conexion;
 
 import java.net.URL;
 import java.util.Map;

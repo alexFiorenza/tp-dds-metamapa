@@ -1,7 +1,8 @@
-package utn.dds.fuentes.dinamica;
+package utn.dds.fuentes.dinamica.controllers;
 
 import io.javalin.http.Context;
 import utn.dds.dominio.SolicitudEliminacion;
+import utn.dds.fuentes.dinamica.services.ServiceSolicitudesDinamica;
 
 public class ControllerSolicitudesDinamica {
     private final ServiceSolicitudesDinamica solicitudesService;

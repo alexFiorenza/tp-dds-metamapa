@@ -1,8 +1,9 @@
-package utn.dds.fuentes.dinamica;
+package utn.dds.fuentes.dinamica.controllers;
 
 import io.javalin.http.Context;
 import utn.dds.dominio.Hecho;
 import utn.dds.dto.HechoDTO;
+import utn.dds.fuentes.dinamica.services.ServiceHechoDinamica;
 
 import java.util.List;
 import java.util.stream.Collectors;

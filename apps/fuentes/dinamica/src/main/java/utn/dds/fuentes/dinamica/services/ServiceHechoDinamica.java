@@ -1,8 +1,10 @@
-package utn.dds.fuentes.dinamica;
+package utn.dds.fuentes.dinamica.services;
 
 import utn.dds.daos.IDAO;
 import utn.dds.dominio.Hecho;
 import utn.dds.dto.HechoDTO;
+import utn.dds.fuentes.dinamica.FuenteDinamicaImpl;
+import utn.dds.fuentes.dinamica.repositories.HechoRepository;
 
 import java.io.IOException;
 import java.util.List;

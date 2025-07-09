@@ -1,9 +1,11 @@
-package utn.dds.fuentes.dinamica;
+package utn.dds.fuentes.dinamica.services;
 
 import utn.dds.daos.IDAO;
 import utn.dds.dominio.DetectorSpam;
 import utn.dds.dominio.Hecho;
 import utn.dds.dominio.SolicitudEliminacion;
+import utn.dds.fuentes.dinamica.repositories.HechoRepository;
+import utn.dds.fuentes.dinamica.repositories.SolicitudEliminacionRepositoryDinamica;
 
 import java.io.IOException;
 import java.util.List;
