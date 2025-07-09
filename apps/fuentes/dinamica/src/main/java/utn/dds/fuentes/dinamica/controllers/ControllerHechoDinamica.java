@@ -27,7 +27,7 @@ public class ControllerHechoDinamica {
         }
     }
 
-    public void agregarHechos(Context ctx, List<Hecho> hechos) {
+    public void agregarHechos(Context ctx, List<HechoDTO> hechos) {
         try {
             dinamicaService.aportarHechos(hechos);
             ctx.json(hechos);
