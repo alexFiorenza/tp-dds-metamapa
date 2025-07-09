@@ -3,6 +3,8 @@ package utn.dds.fuentes.dinamica;
 import utn.dds.dominio.Hecho;
 import utn.dds.dominio.fuentes.FuenteDeDatos;
 import utn.dds.dominio.fuentes.TipoFuente;
+
+import java.util.ArrayList;
 import java.util.List;
 
 public class FuenteDinamicaImpl implements FuenteDeDatos {
@@ -14,7 +16,9 @@ public class FuenteDinamicaImpl implements FuenteDeDatos {
 
     @Override
     public List<Hecho> obtenerHechos() {
-        return List.of();
+        List<Hecho> hechos = new ArrayList<Hecho>();
+        
+        return hechos;
     }
 
     @Override

@@ -1,14 +1,18 @@
 package utn.dds.fuentes.dinamica;
 
+import utn.dds.daos.DAOFactory;
 import utn.dds.daos.IDAO;
 import utn.dds.dominio.EstadoHecho;
 import utn.dds.dominio.Hecho;
 import utn.dds.dominio.SolicitudEliminacion;
 import utn.dds.dominio.fuentes.FuenteDeDatos;
+import utn.dds.dto.HechoDTO;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class HechoRepository {
     private final IDAO<Hecho> dao;
@@ -28,6 +32,10 @@ public class HechoRepository {
     }
 
     public Hecho cambiarEstado(EstadoHecho estado) throws IOException {
+        return null;
+    }
+
+    public List<Hecho> aportarHechos(List<Hecho> hechos) throws IOException {
         return null;
     }
 } 

@@ -1,0 +1,57 @@
+[
+  {
+    "titulo": "Bomba atomica en el cementerio",
+    "descripcion": "EEUU lanzo una bomba al cementerio de chacarita. Hay mas de 1000 muertos.",
+    "categoria": "Explosion",
+    "fechaAcontecimiento": "2025-06-06",
+    "origen": "DATASET",
+    "contribuyenteNombre": null,
+    "tipo": "TEXTO",
+    "longitud": -66.3816,
+    "latitud": -23.6037,
+    "fechaCarga": "2025-07-03T09:15:23.123456789",
+    "estado": "ACTIVO",
+    "etiquetas": [
+      "bomba",
+      "EEUU"
+    ],
+    "uuid": "3d5f8e07-1ae4-4a5b-8c6d-7e8f9b0c2d2e"
+  },
+  {
+    "titulo": "Tsunami devastador",
+    "descripcion": "Un fuerte tsunami en bolivia trajo caos y destruccion.",
+    "categoria": "Tsunami",
+    "fechaAcontecimiento": "2023-08-15",
+    "origen": "DATASET",
+    "contribuyenteNombre": null,
+    "tipo": "TEXTO",
+    "longitud": -85.2093,
+    "latitud": -12.1858,
+    "fechaCarga": "2025-07-08T14:30:45.987654321",
+    "estado": "ACTIVO",
+    "etiquetas": [
+      "tsunami",
+      "emergencia"
+    ],
+    "uuid": "7a9b2c4d-3e5f-4g6h-7i8j-9k0l1m2n3P4p"
+  },
+  {
+    "titulo": "Impacto de meteorito",
+    "descripcion": "Un meteorito de baja talla azota la peninsula de yugoslavia.",
+    "categoria": "meteorito",
+    "fechaAcontecimiento": "2021-12-11",
+    "origen": "DATASET",
+    "contribuyenteNombre": null,
+    "tipo": "TEXTO",
+    "longitud": -71.3103,
+    "latitud": -41.1335,
+    "fechaCarga": "2025-12-26T16:45:12.456789123",
+    "estado": "ACTIVO",
+    "etiquetas": [
+      "fuego",
+      "meteoro",
+      "impacto"
+    ],
+    "uuid": "8b7c6d5e-4y3g-2h1i-0j9k-8l7m6n5o4p3q"
+  }
+]

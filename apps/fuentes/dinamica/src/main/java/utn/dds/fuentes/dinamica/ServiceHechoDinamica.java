@@ -2,18 +2,16 @@ package utn.dds.fuentes.dinamica;
 
 import utn.dds.daos.IDAO;
 import utn.dds.dominio.Hecho;
-import utn.dds.dominio.fuentes.FuenteDeDatos;
-import utn.dds.dominio.fuentes.FuenteDinamica;
 
 import java.io.IOException;
 import java.util.List;
 
 public class ServiceHechoDinamica {
     private final HechoRepository repository;
-    private final FuenteDinamica fuenteDeDatos;
+    private final FuenteDinamicaImpl fuenteDeDatos;
     
-    public ServiceHechoDinamica(IDAO<Hecho> dao, FuenteDinamica fuenteDeDatos) {
-        this.repository = new HechoRepository(dao);
+    public ServiceHechoDinamica(IDAO<Hecho> dao, FuenteDinamicaImpl fuenteDeDatos) {
+        this.repository = new HechoRepository(dao);   // Aca no se porque falla si en teoria permite ue solo se le envie el dao
         this.fuenteDeDatos = fuenteDeDatos;
     }
     
