@@ -36,8 +36,10 @@ public class ControllerSolicitudesDinamica {
         }
     }
 
+    // Falta codear
     public void aceptarSolicitud(String uuid, Context ctx){
         try {
+            // buscar mediante el uuid la solicitud
             ctx.json(solicitud);
         } catch (Exception e) {
             ctx.status(500).result("Error al aceptar solicitud: " + e.getMessage());
@@ -45,9 +47,10 @@ public class ControllerSolicitudesDinamica {
 
     }
 
+    // Falta codear
     public void rechazarSolicitud(String uuid, Context ctx){
         try {
-            ctx.json(solicitud); // Esto hay que verlo, porque no se si se le enviaria un JSON de la solicitud
+            ctx.json(solicitud);
         } catch (Exception e) {
             ctx.status(500).result("Error al rechazar solicitud: " + e.getMessage());
         }
