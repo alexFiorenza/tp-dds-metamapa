@@ -10,6 +10,8 @@ import utn.dds.dto.SolicitudEliminacionDTO;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class SolicitudEliminacionRepositoryDinamica {
@@ -25,8 +27,19 @@ public class SolicitudEliminacionRepositoryDinamica {
                 .collect(Collectors.toList());
     }
 
-    public List<SolicitudEliminacion> obtenerSolicitud(String uuid){
-        return null;
+    public SolicitudEliminacion obtenerSolicitud(String uuid) throws IOException{
+        List<SolicitudEliminacion> solicitudes = obtenerSolicitudes();
+
+        Optional<SolicitudEliminacion> encontrada = solicitudes.stream()
+                .filter(s -> s.getUuid().equals(uuid))
+                .findFirst();
+
+        if (encontrada.isPresent()) {
+            SolicitudEliminacion solicitud = encontrada.get();
+            return solicitud;
+        } else {
+            throw new NoSuchElementException("No se encontró una solicitud con UUID: " + uuid);
+        }
     }
 
     public SolicitudEliminacion agregarSolicitud(SolicitudEliminacion solicitud) throws IOException {
@@ -37,17 +50,25 @@ public class SolicitudEliminacionRepositoryDinamica {
     }
 
 
-    public void aceptarSolicitud(String uuid){
-    // paso a paso
-        // buscar en la dao la solicitud == uuid
-        //cambiarEstado
-        // ver que hacer con esa solicitud
+    public SolicitudEliminacion aceptarSolicitud(String uuid) throws IOException{
+        SolicitudEliminacion solicitud = obtenerSolicitud(uuid);
+        solicitud.ocultar();
+
+        SolicitudEliminacionDTO solicitudDTO = new SolicitudEliminacionDTO(solicitud.getTexto(), solicitud.getHecho(),
+                solicitud.getFechaSolicitud(), solicitud.getEstado(), solicitud.getUuid());
+        dao.save(solicitudDTO);
+
+        return solicitud;
     }
 
-    public void rechazarSolicitud(String uuid){
-        // paso a paso
-        // buscar en la dao la solicitud == uuid
-        //cambiarEstado
-        // ver que hacer con esa solicitud
+    public SolicitudEliminacion rechazarSolicitud(String uuid) throws IOException{
+        SolicitudEliminacion solicitud = obtenerSolicitud(uuid);
+        solicitud.ocultar();
+
+        SolicitudEliminacionDTO solicitudDTO = new SolicitudEliminacionDTO(solicitud.getTexto(), solicitud.getHecho(),
+                solicitud.getFechaSolicitud(), solicitud.getEstado(), solicitud.getUuid());
+        dao.save(solicitudDTO);
+
+        return solicitud;
     }
 }
