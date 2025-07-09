@@ -4,6 +4,8 @@ import utn.dds.daos.IDAO;
 import utn.dds.dominio.DetectorSpam;
 import utn.dds.dominio.Hecho;
 import utn.dds.dominio.SolicitudEliminacion;
+import utn.dds.dto.HechoDTO;
+import utn.dds.dto.SolicitudEliminacionDTO;
 import utn.dds.fuentes.dinamica.repositories.HechoRepository;
 import utn.dds.fuentes.dinamica.repositories.SolicitudEliminacionRepositoryDinamica;
 
@@ -15,9 +17,9 @@ public class ServiceSolicitudesDinamica {
     private final SolicitudEliminacionRepositoryDinamica solicitudDinamicaRepo;
     private final DetectorSpam detectorSpam;
 
-    public ServiceSolicitudesDinamica(IDAO<Hecho> dao, SolicitudEliminacionRepositoryDinamica solicitudDinamicaRepo, DetectorSpam detectorSpam) {
-        this.repository = new HechoRepository(dao);
-        this.solicitudDinamicaRepo = solicitudDinamicaRepo;
+    public ServiceSolicitudesDinamica(IDAO<HechoDTO> daoHecho, IDAO<SolicitudEliminacionDTO> daoSolicitud, SolicitudEliminacionRepositoryDinamica solicitudDinamicaRepo, DetectorSpam detectorSpam) {
+        this.repository = new HechoRepository(daoHecho);
+        this.solicitudDinamicaRepo = new SolicitudEliminacionRepositoryDinamica(daoSolicitud);
         this.detectorSpam = detectorSpam;
     }
 
