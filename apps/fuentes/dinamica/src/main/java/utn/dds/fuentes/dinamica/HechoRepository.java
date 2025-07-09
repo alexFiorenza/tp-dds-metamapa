@@ -40,6 +40,7 @@ public class HechoRepository {
                 .collect(Collectors.toList());
     }
 
+    // Esta creo que no iria
     public List<Hecho> actualizar(List<Hecho> hechos){
         // Para este caso de uso mock, no necesitamos actualizar
         // Los datos están en el archivo JSON estático

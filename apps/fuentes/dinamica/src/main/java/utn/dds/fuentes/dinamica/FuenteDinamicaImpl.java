@@ -14,6 +14,8 @@ public class FuenteDinamicaImpl implements FuenteDeDatos {
         this.tipoFuente = TipoFuente.DINAMICA;
     }
 
+    // Aca no se que hacer
+
     @Override
     public List<Hecho> obtenerHechos() {
         List<Hecho> hechos = new ArrayList<Hecho>();
