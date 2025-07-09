@@ -52,7 +52,7 @@ public class SolicitudEliminacionRepositoryDinamica {
 
     public SolicitudEliminacion aceptarSolicitud(String uuid) throws IOException{
         SolicitudEliminacion solicitud = obtenerSolicitud(uuid);
-        solicitud.ocultar();
+        solicitud.ocultar();   // Esto no se si se hace aca
 
         SolicitudEliminacionDTO solicitudDTO = new SolicitudEliminacionDTO(solicitud.getTexto(), solicitud.getHecho(),
                 solicitud.getFechaSolicitud(), solicitud.getEstado(), solicitud.getUuid());
