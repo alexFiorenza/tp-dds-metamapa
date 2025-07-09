@@ -22,7 +22,11 @@ public class ServiceHechoDinamica {
         return repository.obtenerHechos();
     }
 
-    public List<Hecho> aportarHechos(List<Hecho> hechos) throws IOException {
-        return repository.aportarHechos(hechos);
+    public List<Hecho> aportarHechos(List<HechoDTO> hechosDTO) throws IOException {
+        return repository.aportarHechos(hechosDTO);
+    }
+
+    public Hecho cambiarEstado(Hecho hecho) throws IOException {
+        return repository.cambiarEstado(hecho);
     }
 }
