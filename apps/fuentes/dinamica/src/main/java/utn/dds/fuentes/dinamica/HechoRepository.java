@@ -15,24 +15,35 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class HechoRepository {
-    private final IDAO<Hecho> dao;
-    private FuenteDeDatos fuente;
+    private final IDAO<HechoDTO> dao;
 
-    public HechoRepository(IDAO<Hecho> dao) { this.dao = dao; }
+    // Esto es una copia del Repository de la proxy demo, hay que cambiarle los valores
 
-    // Hay que codear las funciones, esto seria lo ultimo
-
-    public List<Hecho> obtenerHechos() throws IOException {
-        InputStream data = dao.read();
-        return fuente.obtenerHechos();
+    public HechoRepository(String daoType, Map<String, Object> daoConfig) {
+        if ("filesystem".equals(daoType)) {
+            Map<String, Object> config = new java.util.HashMap<>();
+            config.put("url", "mocks/hechos.json");
+            this.dao = DAOFactory.createDAO(HechoDTO.class, daoType, config);
+        } else {
+            this.dao = DAOFactory.createDAO(HechoDTO.class, daoType, daoConfig);
+        }
     }
 
-    public List<Hecho> aportarHechos(List<Hecho> hechos) throws IOException {
-        return null;
+    public HechoRepository(IDAO<HechoDTO> dao) {
+        this.dao = dao;
     }
 
-    public Hecho cambiarEstado(EstadoHecho estado) throws IOException {
-        return null;
+    public List<Hecho> obtenerHechos() {
+        List<HechoDTO> hechosDTO = dao.find();
+        return hechosDTO.stream()
+                .map(HechoDTO::toHecho)
+                .collect(Collectors.toList());
+    }
+
+    public List<Hecho> actualizar(List<Hecho> hechos){
+        // Para este caso de uso mock, no necesitamos actualizar
+        // Los datos están en el archivo JSON estático
+        return this.obtenerHechos();
     }
 
     public List<Hecho> aportarHechos(List<Hecho> hechos) throws IOException {
