@@ -1,0 +1,57 @@
+[
+  {
+    "titulo": "Inundación histórica en la cuenca del Río Paraná",
+    "descripcion": "Fuertes lluvias provocaron un desborde en el Río Paraná, inundando barrios bajos y obligando a evacuar a más de 2.000 personas.",
+    "categoria": "Inundación",
+    "fechaAcontecimiento": "2022-03-05",
+    "origen": "DATASET",
+    "contribuyenteNombre": null,
+    "tipo": "TEXTO",
+    "longitud": -58.3816,
+    "latitud": -34.6037,
+    "fechaCarga": "2025-06-26T09:15:23.123456789",
+    "estado": "ACTIVO",
+    "etiquetas": [
+      "agua",
+      "evacuación"
+    ],
+    "uuid": "3d5f8e07-1ae4-4a5b-8c6d-7e8f9b0c1d2e"
+  },
+  {
+    "titulo": "Terremoto de magnitud 6.2 en zona montañosa",
+    "descripcion": "Un fuerte sismo sacudió la región montañosa, causando daños en infraestructura y dejando varias personas heridas.",
+    "categoria": "Sismo",
+    "fechaAcontecimiento": "2022-07-15",
+    "origen": "DATASET",
+    "contribuyenteNombre": null,
+    "tipo": "TEXTO",
+    "longitud": -65.2093,
+    "latitud": -24.1858,
+    "fechaCarga": "2025-06-26T14:30:45.987654321",
+    "estado": "ACTIVO",
+    "etiquetas": [
+      "sismo",
+      "emergencia"
+    ],
+    "uuid": "7a9b2c4d-3e5f-4g6h-7i8j-9k0l1m2n3o4p"
+  },
+  {
+    "titulo": "Incendio forestal en reserva natural",
+    "descripcion": "Un incendio forestal afectó más de 500 hectáreas de bosque nativo en la reserva natural, amenazando la flora y fauna local.",
+    "categoria": "Incendio",
+    "fechaAcontecimiento": "2022-11-20",
+    "origen": "DATASET",
+    "contribuyenteNombre": null,
+    "tipo": "TEXTO",
+    "longitud": -71.3103,
+    "latitud": -41.1335,
+    "fechaCarga": "2025-06-26T16:45:12.456789123",
+    "estado": "ACTIVO",
+    "etiquetas": [
+      "fuego",
+      "bosque",
+      "ambiente"
+    ],
+    "uuid": "8b7c6d5e-4f3g-2h1i-0j9k-8l7m6n5o4p3q"
+  }
+]
