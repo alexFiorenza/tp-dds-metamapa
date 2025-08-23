@@ -1,37 +1,39 @@
 package utn.dds.dto;
 
-import utn.dds.dominio.SolicitudEliminacion;
 import utn.dds.dominio.EstadoSolicitud;
+import utn.dds.dominio.SolicitudEliminacion;
 
 import java.time.LocalDateTime;
 
 public class SolicitudEliminacionDTO {
-    private String uuid;
     private String texto;
     private String hecho;
     private LocalDateTime fechaSolicitud;
     private EstadoSolicitud estado;
+    private final String uuid;
 
     // Constructor vacío para deserialización
-    public SolicitudEliminacionDTO() {}
+    public SolicitudEliminacionDTO() {
+        this.uuid = null;
+    }
 
     // Constructor completo
-    public SolicitudEliminacionDTO(String uuid, String texto, String hecho, LocalDateTime fechaSolicitud, EstadoSolicitud estado) {
-        this.uuid = uuid;
+    public SolicitudEliminacionDTO(String texto, String hecho, LocalDateTime fechaSolicitud, EstadoSolicitud estado, String uuid) {
         this.texto = texto;
         this.hecho = hecho;
         this.fechaSolicitud = fechaSolicitud;
         this.estado = estado;
+        this.uuid = uuid;
     }
 
     // Método estático para crear DTO desde entidad de dominio
     public static SolicitudEliminacionDTO fromSolicitudEliminacion(SolicitudEliminacion solicitud) {
         return new SolicitudEliminacionDTO(
-            solicitud.getUuid(),
             solicitud.getTexto(),
             solicitud.getHecho(),
             solicitud.getFechaSolicitud(),
-            solicitud.getEstado()
+            solicitud.getEstado(),
+            solicitud.getUuid()
         );
     }
 
@@ -46,41 +48,38 @@ public class SolicitudEliminacionDTO {
         );
     }
 
-    // Getters y Setters
-    public String getUuid() {
-        return uuid;
-    }
-
-    public void setUuid(String uuid) {
-        this.uuid = uuid;
-    }
-
+    // Getters
     public String getTexto() {
         return texto;
-    }
-
-    public void setTexto(String texto) {
-        this.texto = texto;
     }
 
     public String getHecho() {
         return hecho;
     }
 
-    public void setHecho(String hecho) {
-        this.hecho = hecho;
-    }
-
     public LocalDateTime getFechaSolicitud() {
         return fechaSolicitud;
     }
 
-    public void setFechaSolicitud(LocalDateTime fechaSolicitud) {
-        this.fechaSolicitud = fechaSolicitud;
-    }
-
     public EstadoSolicitud getEstado() {
         return estado;
+    }
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    // Setters
+    public void setTexto(String texto) {
+        this.texto = texto;
+    }
+
+    public void setHecho(String hecho) {
+        this.hecho = hecho;
+    }
+
+    public void setFechaSolicitud(LocalDateTime fechaSolicitud) {
+        this.fechaSolicitud = fechaSolicitud;
     }
 
     public void setEstado(EstadoSolicitud estado) {
