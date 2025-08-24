@@ -19,7 +19,15 @@ public class ControllerFuenteEstatica {
     
     public void obtenerHechos(Context ctx) {
         try {
-            List<Hecho> hechos = estaticaService.obtenerHechos();
+            String path = ctx.queryParam("path");
+            List<Hecho> hechos;
+            
+            if (path != null && !path.trim().isEmpty()) {
+                hechos = estaticaService.obtenerHechos(path);
+            } else {
+                hechos = estaticaService.obtenerHechos();
+            }
+            
             List<HechoDTO> hechosDTO = hechos.stream()
                 .map(HechoDTO::fromHecho)
                 .collect(Collectors.toList());

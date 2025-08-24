@@ -11,6 +11,12 @@ public class DAOConfigBuilder {
         return config;
     }
     
+    public static Map<String, Object> buildFileSystemConfig() {
+        Map<String, Object> config = new HashMap<>();
+        // No se requiere URL para FileSystem cuando se usa con path dinámico
+        return config;
+    }
+    
     public static Map<String, Object> buildS3Config(String dataUrl) {
         // Credenciales requeridas para S3
         String accessKey = System.getenv("S3_ACCESS_KEY");
@@ -35,6 +41,30 @@ public class DAOConfigBuilder {
         return config;
     }
     
+    public static Map<String, Object> buildS3Config() {
+        // Credenciales requeridas para S3
+        String accessKey = System.getenv("S3_ACCESS_KEY");
+        String secretKey = System.getenv("S3_SECRET_KEY");
+        String bucket = System.getenv("S3_BUCKET");
+        String endpoint = System.getenv("S3_ENDPOINT");
+        
+        if (accessKey == null || secretKey == null || bucket == null || endpoint == null) {
+            throw new IllegalArgumentException(
+                "Para S3 se requieren las variables: S3_ACCESS_KEY, S3_SECRET_KEY, S3_BUCKET, S3_ENDPOINT"
+            );
+        }
+        
+        Map<String, Object> config = new HashMap<>();
+        // No se incluye URL para S3 cuando se usa con path dinámico
+        config.put("accessKey", accessKey);
+        config.put("secretKey", secretKey);
+        config.put("bucket", bucket);
+        config.put("endpoint", endpoint);
+        config.put("region", getEnvOrDefault("S3_REGION", "us-east-1"));
+        
+        return config;
+    }
+    
     
     public static Map<String, Object> buildDAOConfig(String daoType, String dataUrl) {
         switch (daoType.toLowerCase()) {
@@ -42,6 +72,17 @@ public class DAOConfigBuilder {
                 return buildFileSystemConfig(dataUrl);
             case "s3":
                 return buildS3Config(dataUrl);
+            default:
+                throw new IllegalArgumentException("Tipo de DAO no soportado: " + daoType);
+        }
+    }
+    
+    public static Map<String, Object> buildDAOConfig(String daoType) {
+        switch (daoType.toLowerCase()) {
+            case "filesystem":
+                return buildFileSystemConfig();
+            case "s3":
+                return buildS3Config();
             default:
                 throw new IllegalArgumentException("Tipo de DAO no soportado: " + daoType);
         }

@@ -5,6 +5,7 @@ import java.util.List;
 
 public interface IDAO<T> {
     InputStream read();
+    InputStream read(String path);
     List<T> find();
     void save(T object);
     void saveAll(List<T> objects);

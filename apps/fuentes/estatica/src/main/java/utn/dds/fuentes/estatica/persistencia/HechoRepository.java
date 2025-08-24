@@ -22,4 +22,8 @@ public class HechoRepository {
     public InputStream leerArchivo() throws IOException {
         return dao.read();
     }
+
+    public InputStream leerArchivo(String path) throws IOException {
+        return dao.read(path);
+    }
 }

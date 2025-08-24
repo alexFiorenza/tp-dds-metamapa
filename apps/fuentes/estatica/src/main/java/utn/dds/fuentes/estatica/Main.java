@@ -19,7 +19,7 @@ public class Main {
             logger.info("Iniciando servicio con configuración:");
             logger.info("  - DAO Type: {}", appConfig.getDaoType());
             logger.info("  - Processor Type: {}", appConfig.getProcessorType());
-            logger.info("  - Data URL: {}", appConfig.getDataUrl());
+            logger.info("  - Servicio configurado para paths dinámicos");
             
             // Logs adicionales para S3
             if (appConfig.getDaoType().equalsIgnoreCase("s3")) {

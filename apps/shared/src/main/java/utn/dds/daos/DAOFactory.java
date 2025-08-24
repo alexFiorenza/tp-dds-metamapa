@@ -9,8 +9,12 @@ public class DAOFactory {
         switch (type.toLowerCase()) {
             case "filesystem":
                 String url = (String) config.get("url");
-                Path path = Paths.get(url);
-                return new FileSystem<>(path, clazz);
+                if (url != null) {
+                    Path path = Paths.get(url);
+                    return new FileSystem<>(path, clazz);
+                } else {
+                    return new FileSystem<>(clazz);
+                }
             case "s3":
                 String s3Url = (String) config.get("url");
                 String accessKey = (String) config.get("accessKey");
@@ -18,7 +22,11 @@ public class DAOFactory {
                 String bucket = (String) config.get("bucket");
                 String endpoint = (String) config.get("endpoint");
                 String region = (String) config.get("region");
-                return new S3<>(s3Url, accessKey, secretKey, bucket, endpoint, region);
+                if (s3Url != null) {
+                    return new S3<>(s3Url, accessKey, secretKey, bucket, endpoint, region);
+                } else {
+                    return new S3<>(accessKey, secretKey, bucket, endpoint, region);
+                }
             default:
                 throw new IllegalArgumentException("Tipo de DAO no soportado: " + type);
         }
