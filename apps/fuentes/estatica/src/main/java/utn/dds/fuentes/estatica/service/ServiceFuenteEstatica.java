@@ -25,4 +25,10 @@ public class ServiceFuenteEstatica {
         FuenteDeDatos fuente = new FuenteEstaticaImpl(data, procesador);
         return fuente.obtenerHechos();
     }
+
+    public List<Hecho> obtenerHechos(String path) throws IOException {
+        InputStream data = hechoRepository.leerArchivo(path);
+        FuenteDeDatos fuente = new FuenteEstaticaImpl(data, procesador);
+        return fuente.obtenerHechos();
+    }
 }

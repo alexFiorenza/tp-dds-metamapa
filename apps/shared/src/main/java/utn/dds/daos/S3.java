@@ -33,8 +33,22 @@ public class S3<T> implements IDAO<T> {
         this(url, null, null, null, null, "us-east-1");
     }
 
+    // Constructor without URL for dynamic path usage
+    public S3(String accessKey, String secretKey, String bucket, String endpoint, String region) {
+        this.url = null;
+        this.accessKey = accessKey;
+        this.secretKey = secretKey;
+        this.bucket = bucket;
+        this.endpoint = endpoint;
+        this.region = region;
+    }
+
     @Override
     public InputStream read() {
+        if (url == null) {
+            throw new IllegalStateException("No se puede usar read() sin path cuando S3 fue inicializado sin URL. Use read(path) en su lugar.");
+        }
+        
         try {
             S3Client s3Client = createS3Client();
             
@@ -49,6 +63,25 @@ public class S3<T> implements IDAO<T> {
             
         } catch (S3Exception e) {
             throw new RuntimeException("Error reading object from S3: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public InputStream read(String path) {
+        try {
+            S3Client s3Client = createS3Client();
+            
+            String objectKey = extractObjectKeyFromPath(path);
+            
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(objectKey)
+                    .build();
+            
+            return s3Client.getObject(getObjectRequest);
+            
+        } catch (S3Exception e) {
+            throw new RuntimeException("Error reading object from S3 with path " + path + ": " + e.getMessage(), e);
         }
     }
     
@@ -86,6 +119,24 @@ public class S3<T> implements IDAO<T> {
                 return url;
             }
             return url.substring(lastSlash + 1);
+        }
+    }
+
+    private String extractObjectKeyFromPath(String path) {
+        if (path == null) {
+            throw new IllegalArgumentException("Path cannot be null");
+        }
+        
+        if (path.startsWith("s3://")) {
+            String pathPart = path.substring(5);
+            int firstSlash = pathPart.indexOf('/');
+            if (firstSlash == -1) {
+                throw new IllegalArgumentException("Invalid S3 URL format: " + path);
+            }
+            return pathPart.substring(firstSlash + 1);
+        } else {
+            // For direct object key paths, return as is
+            return path;
         }
     }
 
