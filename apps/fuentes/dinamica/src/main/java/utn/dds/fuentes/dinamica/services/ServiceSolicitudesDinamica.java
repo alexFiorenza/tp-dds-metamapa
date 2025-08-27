@@ -34,9 +34,12 @@ public class ServiceSolicitudesDinamica {
     public void aceptarSolicitud(String uuid) throws IOException {
         solicitudDinamicaRepo.procesarSolicitud(uuid);
         SolicitudEliminacion solicitud = solicitudDinamicaRepo.obtenerSolicitud(uuid);
+
+        // Buscamos el hecho
         Hecho hecho = repository.buscarHecho(solicitud.getHecho());
 
-        // Hacer algo con el hecho
+        // Ocultamos el hecho
+        repository.cambiarEstado(hecho);
     }
 
     public void rechazarSolicitud(String uuid) throws IOException {
