@@ -27,30 +27,34 @@ public class ControllerSolicitudesDinamica {
         }
     }
 
-    public void agregarSolicitudDeEliminacionDeHecho(Context ctx, SolicitudEliminacion solicitud) {
+    public void agregarSolicitudDeEliminacionDeHecho(Context ctx) {
         try {
-            SolicitudEliminacionDTO solicitudDTO = SolicitudEliminacionDTO.fromSolicitudEliminacion(solicitud);
+            SolicitudEliminacionDTO solicitudDTO = ctx.bodyAsClass(SolicitudEliminacionDTO.class);
+            SolicitudEliminacion solicitud = solicitudDTO.toSolicitudEliminacion();
+            solicitudesService.agregarSolicitud(solicitud);
             ctx.json(solicitudDTO);
         } catch (Exception e) {
             ctx.status(500).result("Error al agregar solicitud de eliminacion: " + e.getMessage());
         }
     }
 
-    // Falta codear
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+    ////// esta parte seria manejada por un administrador, asi que no se si va en controller  ///////
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+
     public void aceptarSolicitud(String uuid, Context ctx){
         try {
-            //siento que falta la logica
+            solicitudesService.aceptarSolicitud(uuid);
             ctx.status(200);
         } catch (Exception e) {
             ctx.status(500).result("Error al aceptar solicitud: " + e.getMessage());
         }
-
     }
 
-    // Falta codear
     public void rechazarSolicitud(String uuid, Context ctx){
         try {
-            //siento que falta la logica
+            solicitudesService.rechazarSolicitud(uuid);
             ctx.status(200);
         } catch (Exception e) {
             ctx.status(500).result("Error al rechazar solicitud: " + e.getMessage());

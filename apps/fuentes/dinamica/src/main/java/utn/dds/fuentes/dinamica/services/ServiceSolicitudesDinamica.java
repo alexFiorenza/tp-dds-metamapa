@@ -17,7 +17,7 @@ public class ServiceSolicitudesDinamica {
     private final SolicitudEliminacionRepositoryDinamica solicitudDinamicaRepo;
     private final DetectorSpam detectorSpam;
 
-    public ServiceSolicitudesDinamica(IDAO<HechoDTO> daoHecho, IDAO<SolicitudEliminacionDTO> daoSolicitud, SolicitudEliminacionRepositoryDinamica solicitudDinamicaRepo, DetectorSpam detectorSpam) {
+    public ServiceSolicitudesDinamica(IDAO<Hecho> daoHecho, IDAO<SolicitudEliminacion> daoSolicitud, DetectorSpam detectorSpam) {
         this.repository = new HechoRepository(daoHecho);
         this.solicitudDinamicaRepo = new SolicitudEliminacionRepositoryDinamica(daoSolicitud);
         this.detectorSpam = detectorSpam;
@@ -32,17 +32,15 @@ public class ServiceSolicitudesDinamica {
     }
 
     public void aceptarSolicitud(String uuid) throws IOException {
-        // Tenemos que usar el respository de Solicitudes y el de Hecho
+        solicitudDinamicaRepo.procesarSolicitud(uuid);
         SolicitudEliminacion solicitud = solicitudDinamicaRepo.obtenerSolicitud(uuid);
         Hecho hecho = repository.buscarHecho(solicitud.getHecho());
-        hecho.ocultar();
+
+        // Hacer algo con el hecho
     }
 
-    /// //////////////////////////////////////////////////////////////////////////////////
-    ///  Creo que en repository no hay que modificar las solicitudes,  solo buscarlas  ///
-    /// //////////////////////////////////////////////////////////////////////////////////
-
     public void rechazarSolicitud(String uuid) throws IOException {
+        solicitudDinamicaRepo.procesarSolicitud(uuid);
         // Aca no se hace nada creo
         //preguntar.........
     }
