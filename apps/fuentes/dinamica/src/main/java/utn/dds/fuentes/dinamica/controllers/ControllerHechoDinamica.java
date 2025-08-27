@@ -27,10 +27,14 @@ public class ControllerHechoDinamica {
         }
     }
 
-    public void agregarHechos(Context ctx, List<HechoDTO> hechos) {
+    public void agregarHechos(Context ctx, List<HechoDTO> hechosDTO) {
         try {
+            // convertir los hechosDTO a hechos normales
+            List<Hecho> hechos = hechosDTO.stream()
+                    .map(HechoDTO::toHecho)
+                    .collect(Collectors.toList());
             dinamicaService.aportarHechos(hechos);
-            ctx.json(hechos);
+            ctx.json(hechosDTO);
         } catch (Exception e) {
             ctx.status(500).result("Error al agregar hechos: " + e.getMessage());
         }

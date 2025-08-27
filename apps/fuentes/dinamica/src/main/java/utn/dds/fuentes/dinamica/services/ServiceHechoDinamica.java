@@ -13,8 +13,8 @@ public class ServiceHechoDinamica {
     private final HechoRepository repository;
     private final FuenteDinamicaImpl fuenteDeDatos;
     
-    public ServiceHechoDinamica(IDAO<HechoDTO> dao, FuenteDinamicaImpl fuenteDeDatos) {
-        this.repository = new HechoRepository(dao);   // Aca no se porque falla si en teoria permite que solo se le envie el dao
+    public ServiceHechoDinamica(IDAO<Hecho> dao, FuenteDinamicaImpl fuenteDeDatos) {
+        this.repository = new HechoRepository(dao);
         this.fuenteDeDatos = fuenteDeDatos;
     }
     
@@ -22,8 +22,8 @@ public class ServiceHechoDinamica {
         return repository.obtenerHechos();
     }
 
-    public List<Hecho> aportarHechos(List<HechoDTO> hechosDTO) throws IOException {
-        return repository.aportarHechos(hechosDTO);
+    public List<Hecho> aportarHechos(List<Hecho> hechos) throws IOException {
+        return repository.aportarHechos(hechos);
     }
 
     public Hecho cambiarEstado(Hecho hecho) throws IOException {

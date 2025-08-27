@@ -12,29 +12,26 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class HechoRepository {
-    private final IDAO<HechoDTO> dao;
-
-    // Esto es una copia del Repository de la proxy demo, hay que cambiarle los valores
+    private final IDAO<Hecho> dao;
 
     public HechoRepository(String daoType, Map<String, Object> daoConfig) {
         if ("filesystem".equals(daoType)) {
             Map<String, Object> config = new java.util.HashMap<>();
             config.put("url", "mocks/hechos.json");
-            this.dao = DAOFactory.createDAO(HechoDTO.class, daoType, config);
+            this.dao = DAOFactory.createDAO(Hecho.class, daoType, config);
         } else {
-            this.dao = DAOFactory.createDAO(HechoDTO.class, daoType, daoConfig);
+            this.dao = DAOFactory.createDAO(Hecho.class, daoType, daoConfig);
         }
     }
 
-    public HechoRepository(IDAO<HechoDTO> dao) {
+    public HechoRepository(IDAO<Hecho> dao) {
         this.dao = dao;
     }
 
+
     public List<Hecho> obtenerHechos() throws IOException {
-        List<HechoDTO> hechosDTO = dao.find();
-        return hechosDTO.stream()
-                .map(HechoDTO::toHecho)
-                .collect(Collectors.toList());
+        List<Hecho> hechos = dao.find();
+        return hechos;
     }
 
     public Hecho buscarHecho(String titulo) throws IOException {
@@ -52,13 +49,10 @@ public class HechoRepository {
         }
     }
 
-    // A chequear si es Hecho o HechoDTO
-    public List<Hecho> aportarHechos(List<HechoDTO> hechosDTO) throws IOException {;
-        List<Hecho> hechos = new ArrayList<>();
-        for (HechoDTO dto : hechosDTO) {
-            Hecho hecho = dto.toHecho();
-            dao.save(dto);
-            hechos.add(hecho);
+    // Falta toquetear esta
+    public List<Hecho> aportarHechos(List<Hecho> hechos) throws IOException {;
+        for (Hecho hecho : hechos) {
+            dao.save(hecho);   // Aca no se porque se guardaria
         }
         return hechos;
     }
