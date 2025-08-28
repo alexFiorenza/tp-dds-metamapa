@@ -33,10 +33,10 @@ public class RegistryController {
         }
     }
     
-    public void obtenerFuentePorUrl(Context ctx) {
+    public void obtenerFuentePorHost(Context ctx) {
         try {
-            String url = ctx.pathParam("url");
-            FuenteDTO fuente = serviceAgregador.obtenerFuentePorUrl(url);
+            String host = ctx.pathParam("host");
+            FuenteDTO fuente = serviceAgregador.obtenerFuentePorHost(host);
             if (fuente != null) {
                 ctx.json(fuente);
             } else {
@@ -49,8 +49,8 @@ public class RegistryController {
     
     public void eliminarFuente(Context ctx) {
         try {
-            String url = ctx.pathParam("url");
-            boolean eliminada = serviceAgregador.eliminarFuente(url);
+            String host = ctx.pathParam("host");
+            boolean eliminada = serviceAgregador.eliminarFuente(host);
             if (eliminada) {
                 ctx.status(200).result("Fuente eliminada exitosamente");
             } else {

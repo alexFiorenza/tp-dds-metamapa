@@ -30,8 +30,8 @@ public class Main {
         
         app.post("/fuentes", registryController::registrar);
         app.get("/fuentes", registryController::obtenerFuentes);
-        app.get("/fuentes/{url}", registryController::obtenerFuentePorUrl);
-        app.delete("/fuentes/{url}", registryController::eliminarFuente);
+        app.get("/fuentes/{host}", registryController::obtenerFuentePorHost);
+        app.delete("/fuentes/{host}", registryController::eliminarFuente);
         
         app.post("/agregacion", controllerAgregador::agregacion);
         app.get("/hechos", controllerAgregador::obtenerHechos);

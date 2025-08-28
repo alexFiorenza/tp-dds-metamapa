@@ -14,6 +14,7 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class ServiceAgregador {
     
@@ -37,24 +38,40 @@ public class ServiceAgregador {
         
         for (FuenteDTO fuente : fuentes) {
             try {
-                List<Hecho> hechosDeEstaFuente = obtenerHechosDesdeFuente(fuente.getUrl());
+                String urlCompleta = construirUrlCompleta(fuente);
+                List<Hecho> hechosDeEstaFuente = obtenerHechosDesdeFuente(urlCompleta, fuente);
                 hechosAgregados.addAll(hechosDeEstaFuente);
             } catch (Exception e) {
-                System.err.println("Error al obtener datos de la fuente: " + fuente.getUrl() + " - " + e.getMessage());
+                System.err.println("Error al obtener datos de la fuente: " + fuente.getHost() + " - " + e.getMessage());
             }
         }
         
         hechoRepository.saveAll(hechosAgregados);
     }
     
-    private List<Hecho> obtenerHechosDesdeFuente(String url) throws Exception {
-        HttpRequest request = HttpRequest.newBuilder()
+    private List<Hecho> obtenerHechosDesdeFuente(String url, FuenteDTO fuente) throws Exception {
+        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofSeconds(30))
-                .header("Accept", "application/json")
-                .GET()
-                .build();
+                .header("Accept", "application/json");
         
+        // Agregar headers personalizados si existen
+        if (fuente.getParams() != null && fuente.getParams().containsKey("headers")) {
+            @SuppressWarnings("unchecked")
+            Map<String, String> headers = (Map<String, String>) fuente.getParams().get("headers");
+            headers.forEach(requestBuilder::header);
+        }
+        
+        // Determinar el método HTTP y body
+        if (fuente.getParams() != null && fuente.getParams().containsKey("body")) {
+            String body = (String) fuente.getParams().get("body");
+            requestBuilder.POST(HttpRequest.BodyPublishers.ofString(body));
+            requestBuilder.header("Content-Type", "application/json");
+        } else {
+            requestBuilder.GET();
+        }
+        
+        HttpRequest request = requestBuilder.build();
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         
         if (response.statusCode() != 200) {
@@ -69,6 +86,38 @@ public class ServiceAgregador {
         }
         
         return hechos;
+    }
+    
+    private String construirUrlCompleta(FuenteDTO fuente) {
+        StringBuilder urlBuilder = new StringBuilder(fuente.getHost());
+        
+        if (fuente.getParams() != null && !fuente.getParams().isEmpty()) {
+            // Manejar path parameters
+            if (fuente.getParams().containsKey("path")) {
+                String path = (String) fuente.getParams().get("path");
+                if (!path.startsWith("/")) {
+                    urlBuilder.append("/");
+                }
+                urlBuilder.append(path);
+            }
+            
+            // Manejar query parameters
+            StringBuilder queryBuilder = new StringBuilder();
+            fuente.getParams().entrySet().forEach(entry -> {
+                if (!"path".equals(entry.getKey()) && !"headers".equals(entry.getKey()) && !"body".equals(entry.getKey())) {
+                    if (queryBuilder.length() > 0) {
+                        queryBuilder.append("&");
+                    }
+                    queryBuilder.append(entry.getKey()).append("=").append(entry.getValue());
+                }
+            });
+            
+            if (queryBuilder.length() > 0) {
+                urlBuilder.append("?").append(queryBuilder.toString());
+            }
+        }
+        
+        return urlBuilder.toString();
     }
     
     public List<Hecho> obtenerHechos() {

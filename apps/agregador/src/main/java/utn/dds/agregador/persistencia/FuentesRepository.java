@@ -50,14 +50,14 @@ public class FuentesRepository implements IDAO<FuenteDTO> {
         saveAll(fuentes);
     }
     
-    public FuenteDTO findByUrl(String url) {
+    public FuenteDTO findByHost(String host) {
         return fuentes.stream()
-                .filter(f -> f.getUrl().equals(url))
+                .filter(f -> f.getHost().equals(host))
                 .findFirst()
                 .orElse(null);
     }
     
-    public boolean removeByUrl(String url) {
-        return fuentes.removeIf(f -> f.getUrl().equals(url));
+    public boolean removeByHost(String host) {
+        return fuentes.removeIf(f -> f.getHost().equals(host));
     }
 }

@@ -14,13 +14,13 @@ public class ServiceRegistry {
     }
     
     public void registrar(FuenteDTO fuente) {
-        if (fuente.getUrl() == null || fuente.getUrl().trim().isEmpty()) {
-            throw new IllegalArgumentException("La URL de la fuente no puede estar vacía");
+        if (fuente.getHost() == null || fuente.getHost().trim().isEmpty()) {
+            throw new IllegalArgumentException("El host de la fuente no puede estar vacío");
         }
         
-        FuenteDTO existente = fuentesRepository.findByUrl(fuente.getUrl());
+        FuenteDTO existente = fuentesRepository.findByHost(fuente.getHost());
         if (existente != null) {
-            throw new IllegalArgumentException("Ya existe una fuente registrada con esa URL");
+            throw new IllegalArgumentException("Ya existe una fuente registrada con ese host");
         }
         
         if (fuente.getUuid() == null) {
@@ -34,11 +34,11 @@ public class ServiceRegistry {
         return fuentesRepository.find();
     }
     
-    public FuenteDTO obtenerFuentePorUrl(String url) {
-        return fuentesRepository.findByUrl(url);
+    public FuenteDTO obtenerFuentePorHost(String host) {
+        return fuentesRepository.findByHost(host);
     }
     
-    public boolean eliminarFuente(String url) {
-        return fuentesRepository.removeByUrl(url);
+    public boolean eliminarFuente(String host) {
+        return fuentesRepository.removeByHost(host);
     }
 }
