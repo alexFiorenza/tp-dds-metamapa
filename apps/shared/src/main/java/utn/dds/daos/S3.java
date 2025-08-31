@@ -3,6 +3,8 @@ package utn.dds.daos;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
@@ -12,6 +14,8 @@ import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
 public class S3<T> implements IDAO<T> {
+    private static final Logger logger = LoggerFactory.getLogger(S3.class);
+    
     private final String url;
     private final String accessKey;
     private final String secretKey;
@@ -26,6 +30,13 @@ public class S3<T> implements IDAO<T> {
         this.bucket = bucket;
         this.endpoint = endpoint;
         this.region = region;
+        
+        logger.info("Inicializando S3 DAO con configuración:");
+        logger.info("  URL: {}", url);
+        logger.info("  Endpoint: {}", endpoint);
+        logger.info("  Bucket: {}", bucket);
+        logger.info("  Region: {}", region);
+        logger.info("  AccessKey: {}", accessKey != null ? "***" + accessKey.substring(Math.max(0, accessKey.length() - 4)) : "null");
     }
 
     // Constructor backward compatible
@@ -41,6 +52,12 @@ public class S3<T> implements IDAO<T> {
         this.bucket = bucket;
         this.endpoint = endpoint;
         this.region = region;
+        
+        logger.info("Inicializando S3 DAO (sin URL) con configuración:");
+        logger.info("  Endpoint: {}", endpoint);
+        logger.info("  Bucket: {}", bucket);
+        logger.info("  Region: {}", region);
+        logger.info("  AccessKey: {}", accessKey != null ? "***" + accessKey.substring(Math.max(0, accessKey.length() - 4)) : "null");
     }
 
     @Override
@@ -81,23 +98,44 @@ public class S3<T> implements IDAO<T> {
             return s3Client.getObject(getObjectRequest);
             
         } catch (S3Exception e) {
+            logger.error("Error S3Exception al leer objeto con path {}: {}", path, e.getMessage(), e);
+            throw new RuntimeException("Error reading object from S3 with path " + path + ": " + e.getMessage(), e);
+        } catch (Exception e) {
+            logger.error("Error general al leer objeto con path {}: {}", path, e.getMessage(), e);
             throw new RuntimeException("Error reading object from S3 with path " + path + ": " + e.getMessage(), e);
         }
     }
     
     private S3Client createS3Client() {
+        logger.info("Creando S3Client con endpoint: {}, región: {}", endpoint, region);
+        
         S3ClientBuilder clientBuilder = S3Client.builder()
                 .region(Region.of(region));
         
         if (accessKey != null && secretKey != null) {
+            logger.info("Configurando credenciales AWS");
             AwsBasicCredentials awsCreds = AwsBasicCredentials.create(accessKey, secretKey);
             clientBuilder.credentialsProvider(StaticCredentialsProvider.create(awsCreds));
         }
         
         if (endpoint != null) {
-            clientBuilder.endpointOverride(URI.create(endpoint));
+            String endpointUrl = endpoint.startsWith("http") ? endpoint : "http://" + endpoint;
+            logger.info("Configurando endpoint: {} -> {}", endpoint, endpointUrl);
+            
+            try {
+                URI endpointUri = URI.create(endpointUrl);
+                logger.info("URI creado correctamente: {}", endpointUri);
+                
+                clientBuilder.endpointOverride(endpointUri)
+                             .forcePathStyle(true); // Necesario para MinIO
+                logger.info("Cliente configurado con forcePathStyle=true");
+            } catch (Exception e) {
+                logger.error("Error al crear URI del endpoint: {}", e.getMessage(), e);
+                throw e;
+            }
         }
         
+        logger.info("Construyendo cliente S3...");
         return clientBuilder.build();
     }
     
