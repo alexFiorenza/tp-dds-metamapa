@@ -50,11 +50,9 @@ public class HechoRepository {
     }
 
     // Falta toquetear esta
-    public List<Hecho> aportarHechos(List<Hecho> hechos) throws IOException {;
-        for (Hecho hecho : hechos) {
-            dao.save(hecho);   // Aca no se porque se guardaria
-        }
-        return hechos;
+    public Hecho aportarHecho(Hecho hecho) throws IOException {;
+        dao.save(hecho);   // Aca no se porque se guardaria
+        return hecho;
     }
 
     public Hecho cambiarEstado(Hecho hecho) throws IOException {
