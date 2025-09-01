@@ -42,14 +42,10 @@ public class Main {
         });
 
         // Pedimos los hechos
-        app.get("/hechos-dinamica", ctx -> {
-            ctx.result(controller::obtenerHechos());
-        });
+        app.get("/hechos-dinamica", controller::obtenerHechos);
 
-        // Agregamos un hecho
-        app.post("/hechos-dinamica", ctx -> {
-            ctx.result(controller::agregarHechos());
-        });
+        // Agregamos un hecho (falta pasarle el hecho a agregar y no se como)
+        app.post("/hechos-dinamica", controller::agregarHecho);
         
         logger.info("Servicio de fuentes dinámicas iniciado en puerto 7002");
     }
