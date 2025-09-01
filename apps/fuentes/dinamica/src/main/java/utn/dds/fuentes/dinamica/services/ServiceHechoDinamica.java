@@ -16,7 +16,7 @@ import java.util.Map;
 
 public class ServiceHechoDinamica {
     private final HechoRepository repository;
-    private final FuenteDinamicaImpl fuenteDeDatos;
+    private final FuenteDinamicaImpl fuenteDeDatos;  // Tengo dudas de si necesitamos la fuenteDinamicaImpl o no
     private final URL url;
     
     public ServiceHechoDinamica(String daoType, Map<String, Object> daoConfig, Conexion conexion) {

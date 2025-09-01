@@ -5,6 +5,7 @@ import utn.dds.daos.IDAO;
 import utn.dds.dominio.Hecho;
 import utn.dds.dto.HechoDTO;
 import utn.dds.fuentes.dinamica.FuenteDinamicaImpl;
+import utn.dds.fuentes.dinamica.conexion.Conexion;
 import utn.dds.fuentes.dinamica.services.ServiceHechoDinamica;
 
 import java.net.MalformedURLException;
@@ -17,8 +18,8 @@ public class ControllerHechoDinamica {
 
 
     // Hay que ver si esta bien implementada
-    public ControllerHechoDinamica(IDAO<Hecho> dao, FuenteDinamicaImpl fuenteDeDatos) throws MalformedURLException {
-        this.dinamicaService = new ServiceHechoDinamica(dao, fuenteDeDatos);
+    public ControllerHechoDinamica(String daoType, Map<String, Object> daoConfig, Conexion conexion) throws MalformedURLException {
+        this.dinamicaService = new ServiceHechoDinamica(daoType, daoConfig, conexion);
     }
 
     public void obtenerHechos(Context ctx) {
