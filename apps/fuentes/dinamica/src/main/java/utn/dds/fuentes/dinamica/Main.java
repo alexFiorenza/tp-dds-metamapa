@@ -15,6 +15,15 @@ public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {
+        AppConfig appConfig = AppConfig.fromEnvironment();
+
+        logger.info("Iniciando servicio fuente dinamica con configuración:");
+        logger.info("  - DAO Type: {}", appConfig.getDaoType());
+        logger.info("  - Processor Type: {}", appConfig.getProcessorType());
+        logger.info("  - API Endpoint: {}", appConfig.getApiEndpoint());
+
+        ControllerHechoDinamica controller = new ControllerHechoDinamica(appConfig.getDaoType(), new FuenteDinamicaImpl()); // falta implementar esto
+
         Javalin app = Javalin.create(config -> {
             config.plugins.enableDevLogging();
         }).start(7002);
