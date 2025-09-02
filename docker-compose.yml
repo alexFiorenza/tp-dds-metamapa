@@ -150,6 +150,22 @@ services:
     networks:
       - metamapa-network
 
+  # Scheduler para Agregador
+  scheduler-agregador:
+    build:
+      context: ./apps/scheduler
+      dockerfile: Dockerfile
+    container_name: scheduler-agregador
+    restart: unless-stopped
+    environment:
+      - TARGET_URL=http://agregador:7005/agregacion
+      - HTTP_METHOD=POST
+      - INTERVAL_SECONDS=60
+    depends_on:
+      - agregador
+    networks:
+      - metamapa-network
+
 volumes:
   minio_data:
 

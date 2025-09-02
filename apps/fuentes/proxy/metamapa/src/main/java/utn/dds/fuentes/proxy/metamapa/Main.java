@@ -24,7 +24,7 @@ public class Main {
         ControllerProxyMetamapa controller = new ControllerProxyMetamapa(url);
         
         Javalin app = Javalin.create(config -> {
-            config.plugins.enableDevLogging();
+            config.bundledPlugins.enableDevLogging();
         }).start(7003);
         
         // Health check

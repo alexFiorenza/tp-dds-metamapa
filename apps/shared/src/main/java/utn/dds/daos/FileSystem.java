@@ -112,7 +112,18 @@ public class FileSystem<T> implements IDAO<T> {
     
     @Override
     public void saveAll(List<T> objects) {
-        // TODO: Implementar guardado en lote en FileSystem
+        try {
+            if (this.url != null) {
+                // Escribir directamente al archivo especificado
+                java.io.File file = this.url.toFile();
+                file.getParentFile().mkdirs(); // Crear directorios si no existen
+                objectMapper.writeValue(file, objects);
+            } else {
+                throw new RuntimeException("No se especificó una URL para guardar el archivo");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error al guardar lista en archivo: " + url, e);
+        }
     }
     
     @Override

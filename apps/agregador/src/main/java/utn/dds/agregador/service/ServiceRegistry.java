@@ -41,4 +41,12 @@ public class ServiceRegistry {
     public boolean eliminarFuente(String host) {
         return fuentesRepository.removeByHost(host);
     }
+    
+    public boolean eliminarFuentePorUuid(UUID uuid) {
+        return fuentesRepository.removeByUuid(uuid);
+    }
+    
+    public FuenteDTO obtenerFuentePorUuid(UUID uuid) {
+        return fuentesRepository.findByUuid(uuid);
+    }
 }

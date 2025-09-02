@@ -19,7 +19,7 @@ public class Main {
             ControllerFuenteProxyDemo controller = new ControllerFuenteProxyDemo(appConfig.getDaoType(), appConfig.getDaoConfig());
 
             Javalin app = Javalin.create(config -> {
-                config.plugins.enableDevLogging();
+                config.bundledPlugins.enableDevLogging();
                 config.jsonMapper(new io.javalin.json.JavalinJackson().updateMapper(mapper -> {
                     mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
                     mapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
