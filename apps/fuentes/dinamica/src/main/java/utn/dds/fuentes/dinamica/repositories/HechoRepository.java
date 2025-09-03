@@ -28,7 +28,6 @@ public class HechoRepository {
         this.dao = dao;
     }
 
-
     public List<Hecho> obtenerHechos() throws IOException {
         List<Hecho> hechos = dao.find();
         return hechos;

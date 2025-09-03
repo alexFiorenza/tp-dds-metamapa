@@ -18,8 +18,8 @@ public class ControllerHechoDinamica {
 
 
     // Hay que ver si esta bien implementada
-    public ControllerHechoDinamica(String daoType, Map<String, Object> daoConfig, Conexion conexion) throws MalformedURLException {
-        this.dinamicaService = new ServiceHechoDinamica(daoType, daoConfig, conexion);
+    public ControllerHechoDinamica(String daoType, Map<String, Object> daoConfig) throws MalformedURLException {
+        this.dinamicaService = new ServiceHechoDinamica(daoType, daoConfig);
     }
 
     public void obtenerHechos(Context ctx) {

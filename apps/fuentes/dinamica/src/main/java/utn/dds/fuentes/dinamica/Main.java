@@ -10,11 +10,13 @@ import utn.dds.fuentes.dinamica.services.ServiceHechoDinamica;
 import utn.dds.fuentes.dinamica.FuenteDinamicaImpl;
 import utn.dds.fuentes.dinamica.config.AppConfig;
 
+import java.net.MalformedURLException;
+
 
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws MalformedURLException {
         AppConfig appConfig = AppConfig.fromEnvironment();
 
         logger.info("Iniciando servicio fuente dinamica con configuración:");
@@ -22,7 +24,7 @@ public class Main {
         logger.info("  - Processor Type: {}", appConfig.getProcessorType());
         logger.info("  - API Endpoint: {}", appConfig.getApiEndpoint());
 
-        ControllerHechoDinamica controller = new ControllerHechoDinamica(appConfig.getDaoType(), new FuenteDinamicaImpl()); // falta implementar esto
+        ControllerHechoDinamica controller = new ControllerHechoDinamica(appConfig.getDaoType(), appConfig.getDaoConfig()); // falta implementar esto
 
         Javalin app = Javalin.create(config -> {
             config.plugins.enableDevLogging();
@@ -45,7 +47,7 @@ public class Main {
         app.get("/hechos-dinamica", controller::obtenerHechos);
 
         // Agregamos un hecho (falta pasarle el hecho a agregar y no se como)
-        app.post("/hechos-dinamica", controller::agregarHecho);
+        // app.post("/hechos-dinamica", controller::agregarHecho);     // Agregar con el hecho en el body
         
         logger.info("Servicio de fuentes dinámicas iniciado en puerto 7002");
     }

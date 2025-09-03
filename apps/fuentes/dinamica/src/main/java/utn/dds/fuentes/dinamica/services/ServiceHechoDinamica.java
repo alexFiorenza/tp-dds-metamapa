@@ -16,10 +16,13 @@ import java.util.Map;
 
 public class ServiceHechoDinamica {
     private final HechoRepository repository;
-    private final FuenteDinamicaImpl fuenteDeDatos;  // Tengo dudas de si necesitamos la fuenteDinamicaImpl o no
-    private final URL url;
+    // private final FuenteDinamicaImpl fuenteDeDatos;  // Tengo dudas de si necesitamos la fuenteDinamicaImpl o no
+    // private final URL url;
     
-    public ServiceHechoDinamica(String daoType, Map<String, Object> daoConfig, Conexion conexion) {
+    public ServiceHechoDinamica(String daoType, Map<String, Object> daoConfig) {
+
+        // Esto es para crear la URL de donde voy a obtener los hechos con FuenteDinamicaImpl
+        /*
         try {
             // Mepa que esto deberia ser el  mock de los hechos que tengo en la carpeta resources
             this.url= URI.create("http://example.com/api/hechos").toURL();
@@ -27,8 +30,10 @@ public class ServiceHechoDinamica {
             throw new RuntimeException("Error al crear URL", e);
         }
 
-        this.repository = new HechoRepository(daoType, daoConfig);
         this.fuenteDeDatos = new FuenteDinamicaImpl(conexion, this.url);
+        */
+
+        this.repository = new HechoRepository(daoType, daoConfig);
     }
 
     // Aca ver si obtengo los hechos desde el repositorio o desde la fuente
