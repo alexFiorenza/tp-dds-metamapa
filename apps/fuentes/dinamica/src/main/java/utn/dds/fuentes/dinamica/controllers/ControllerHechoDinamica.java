@@ -33,11 +33,14 @@ public class ControllerHechoDinamica {
         }
     }
 
-    public void agregarHecho(Context ctx, HechoDTO hechoDTO) {
+    public void agregarHecho(Context ctx) {
         try {
             // convertir el hechoDTO a hecho normal
+            HechoDTO hechoDTO = ctx.bodyValidator(HechoDTO.class)
+                    .get();
             Hecho hecho = hechoDTO.toHecho();   // Esto es por si lo usamos despues
             dinamicaService.aportarHecho(hechoDTO);
+            ctx.status(201);
             ctx.json(hechoDTO);
         } catch (Exception e) {
             ctx.status(500).result("Error al agregar el hecho: " + e.getMessage());

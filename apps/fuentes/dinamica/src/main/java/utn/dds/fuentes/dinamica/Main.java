@@ -47,7 +47,7 @@ public class Main {
         app.get("/hechos-dinamica", controller::obtenerHechos);
 
         // Agregamos un hecho (falta pasarle el hecho a agregar y no se como)
-        // app.post("/hechos-dinamica", controller::agregarHecho);     // Agregar con el hecho en el body
+        app.post("/hechos-dinamica", controller::agregarHecho);
         
         logger.info("Servicio de fuentes dinámicas iniciado en puerto 7002");
     }
