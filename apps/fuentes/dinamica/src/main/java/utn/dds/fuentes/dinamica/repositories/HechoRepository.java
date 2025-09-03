@@ -16,9 +16,11 @@ import java.util.stream.Collectors;
 
 public class HechoRepository {
     private final IDAO<HechoDTO> dao;
+    private static final Logger loggerRepository = LoggerFactory.getLogger(HechoRepository.class);
 
     public HechoRepository(String daoType, Map<String, Object> daoConfig) {
         if ("filesystem".equals(daoType)) {
+            //loggerRepository.info("Estoy dentro de HechoRepository");  -- Logger comentado para debuggeo.
             Map<String, Object> config = new java.util.HashMap<>();
             config.put("url", "mocks/hechos.json");
             this.dao = DAOFactory.createDAO(HechoDTO.class, daoType, config);
@@ -32,6 +34,7 @@ public class HechoRepository {
     }
 
     public List<Hecho> obtenerHechos() throws IOException {
+        //
         List<HechoDTO> hechosDTO = dao.find();
         List<Hecho> hechos = hechosDTO.stream()
                 .map(HechoDTO::toHecho)
