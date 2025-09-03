@@ -6,30 +6,36 @@ import utn.dds.dominio.EstadoHecho;
 import utn.dds.dominio.Hecho;
 import utn.dds.dominio.SolicitudEliminacion;
 import utn.dds.dto.HechoDTO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import utn.dds.fuentes.dinamica.Main;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class HechoRepository {
-    private final IDAO<Hecho> dao;
+    private final IDAO<HechoDTO> dao;
 
     public HechoRepository(String daoType, Map<String, Object> daoConfig) {
         if ("filesystem".equals(daoType)) {
             Map<String, Object> config = new java.util.HashMap<>();
             config.put("url", "mocks/hechos.json");
-            this.dao = DAOFactory.createDAO(Hecho.class, daoType, config);
+            this.dao = DAOFactory.createDAO(HechoDTO.class, daoType, config);
         } else {
-            this.dao = DAOFactory.createDAO(Hecho.class, daoType, daoConfig);
+            this.dao = DAOFactory.createDAO(HechoDTO.class, daoType, daoConfig);
         }
     }
 
-    public HechoRepository(IDAO<Hecho> dao) {
+    public HechoRepository(IDAO<HechoDTO> dao) {
         this.dao = dao;
     }
 
     public List<Hecho> obtenerHechos() throws IOException {
-        List<Hecho> hechos = dao.find();
+        List<HechoDTO> hechosDTO = dao.find();
+        List<Hecho> hechos = hechosDTO.stream()
+                .map(HechoDTO::toHecho)
+                .collect(Collectors.toList());
         return hechos;
     }
 
@@ -49,7 +55,7 @@ public class HechoRepository {
     }
 
     // Falta toquetear esta
-    public Hecho aportarHecho(Hecho hecho) throws IOException {;
+    public HechoDTO aportarHecho(HechoDTO hecho) throws IOException {;
         dao.save(hecho);   // Aca no se porque se guardaria
         return hecho;
     }

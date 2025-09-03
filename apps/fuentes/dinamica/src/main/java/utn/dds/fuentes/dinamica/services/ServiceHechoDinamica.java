@@ -38,10 +38,10 @@ public class ServiceHechoDinamica {
 
     // Aca ver si obtengo los hechos desde el repositorio o desde la fuente
     public List<Hecho> obtenerHechos() throws IOException {
-        return repository.obtenerHechos();
+        return this.repository.obtenerHechos();
     }
 
-    public Hecho aportarHecho(Hecho hecho) throws IOException {
+    public HechoDTO aportarHecho(HechoDTO hecho) throws IOException {
         return repository.aportarHecho(hecho);
     }
 

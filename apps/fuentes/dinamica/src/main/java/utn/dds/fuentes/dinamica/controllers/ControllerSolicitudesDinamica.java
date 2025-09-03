@@ -17,7 +17,7 @@ public class ControllerSolicitudesDinamica {
 
     public void obtenerSolicitudesDeEliminacion(Context ctx){
         try {
-            List<SolicitudEliminacion> solicitudesEliminacion = solicitudesService.obtenerSolicitudes();
+            List<SolicitudEliminacion> solicitudesEliminacion = this.solicitudesService.obtenerSolicitudes();
             List<SolicitudEliminacionDTO> solicitudesDTO = solicitudesEliminacion.stream()
                     .map(SolicitudEliminacionDTO::fromSolicitudEliminacion)
                     .collect(Collectors.toList());

@@ -17,14 +17,14 @@ public class ServiceSolicitudesDinamica {
     private final SolicitudEliminacionRepositoryDinamica solicitudDinamicaRepo;
     private final DetectorSpam detectorSpam;
 
-    public ServiceSolicitudesDinamica(IDAO<Hecho> daoHecho, IDAO<SolicitudEliminacion> daoSolicitud, DetectorSpam detectorSpam) {
+    public ServiceSolicitudesDinamica(IDAO<HechoDTO> daoHecho, IDAO<SolicitudEliminacion> daoSolicitud, DetectorSpam detectorSpam) {
         this.repository = new HechoRepository(daoHecho);
         this.solicitudDinamicaRepo = new SolicitudEliminacionRepositoryDinamica(daoSolicitud);
         this.detectorSpam = detectorSpam;
     }
 
     public List<SolicitudEliminacion> obtenerSolicitudes() throws IOException {
-        return solicitudDinamicaRepo.obtenerSolicitudes();
+        return this.solicitudDinamicaRepo.obtenerSolicitudes();
     }
 
     public SolicitudEliminacion agregarSolicitud(SolicitudEliminacion solicitud) throws IOException {

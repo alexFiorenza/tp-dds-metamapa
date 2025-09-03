@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 public class ControllerHechoDinamica {
     private final ServiceHechoDinamica dinamicaService;
 
-
     // Hay que ver si esta bien implementada
     public ControllerHechoDinamica(String daoType, Map<String, Object> daoConfig) throws MalformedURLException {
         this.dinamicaService = new ServiceHechoDinamica(daoType, daoConfig);
@@ -24,7 +23,7 @@ public class ControllerHechoDinamica {
 
     public void obtenerHechos(Context ctx) {
         try {
-            List<Hecho> hechos = dinamicaService.obtenerHechos();
+            List<Hecho> hechos = this.dinamicaService.obtenerHechos();
             List<HechoDTO> hechosDTO = hechos.stream()
                 .map(HechoDTO::fromHecho)
                 .collect(Collectors.toList());
@@ -37,8 +36,8 @@ public class ControllerHechoDinamica {
     public void agregarHecho(Context ctx, HechoDTO hechoDTO) {
         try {
             // convertir el hechoDTO a hecho normal
-            Hecho hecho = hechoDTO.toHecho();
-            dinamicaService.aportarHecho(hecho);
+            Hecho hecho = hechoDTO.toHecho();   // Esto es por si lo usamos despues
+            dinamicaService.aportarHecho(hechoDTO);
             ctx.json(hechoDTO);
         } catch (Exception e) {
             ctx.status(500).result("Error al agregar el hecho: " + e.getMessage());
