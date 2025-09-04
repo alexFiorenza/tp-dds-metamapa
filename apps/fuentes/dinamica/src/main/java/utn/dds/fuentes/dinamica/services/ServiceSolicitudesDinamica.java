@@ -17,14 +17,14 @@ public class ServiceSolicitudesDinamica {
     private final SolicitudEliminacionRepositoryDinamica solicitudDinamicaRepo;
     private final DetectorSpam detectorSpam;
 
-    public ServiceSolicitudesDinamica(IDAO<HechoDTO> daoHecho, IDAO<SolicitudEliminacionDTO> daoSolicitud, SolicitudEliminacionRepositoryDinamica solicitudDinamicaRepo, DetectorSpam detectorSpam) {
+    public ServiceSolicitudesDinamica(IDAO<HechoDTO> daoHecho, IDAO<SolicitudEliminacion> daoSolicitud, DetectorSpam detectorSpam) {
         this.repository = new HechoRepository(daoHecho);
         this.solicitudDinamicaRepo = new SolicitudEliminacionRepositoryDinamica(daoSolicitud);
         this.detectorSpam = detectorSpam;
     }
 
     public List<SolicitudEliminacion> obtenerSolicitudes() throws IOException {
-        return solicitudDinamicaRepo.obtenerSolicitudes();
+        return this.solicitudDinamicaRepo.obtenerSolicitudes();
     }
 
     public SolicitudEliminacion agregarSolicitud(SolicitudEliminacion solicitud) throws IOException {
@@ -32,17 +32,18 @@ public class ServiceSolicitudesDinamica {
     }
 
     public void aceptarSolicitud(String uuid) throws IOException {
-        // Tenemos que usar el respository de Solicitudes y el de Hecho
+        solicitudDinamicaRepo.procesarSolicitud(uuid);
         SolicitudEliminacion solicitud = solicitudDinamicaRepo.obtenerSolicitud(uuid);
+
+        // Buscamos el hecho
         Hecho hecho = repository.buscarHecho(solicitud.getHecho());
-        hecho.ocultar();
+
+        // Ocultamos el hecho
+        repository.cambiarEstado(hecho);
     }
 
-    /// //////////////////////////////////////////////////////////////////////////////////
-    ///  Creo que en repository no hay que modificar las solicitudes,  solo buscarlas  ///
-    /// //////////////////////////////////////////////////////////////////////////////////
-
     public void rechazarSolicitud(String uuid) throws IOException {
+        solicitudDinamicaRepo.procesarSolicitud(uuid);
         // Aca no se hace nada creo
         //preguntar.........
     }

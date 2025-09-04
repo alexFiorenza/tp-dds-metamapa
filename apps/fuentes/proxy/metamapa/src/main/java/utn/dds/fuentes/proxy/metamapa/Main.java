@@ -1,6 +1,10 @@
 package utn.dds.fuentes.proxy.metamapa;
 
 import io.javalin.Javalin;
+import io.javalin.openapi.*;
+import io.javalin.openapi.plugin.OpenApiPlugin;
+import io.javalin.openapi.plugin.redoc.ReDocPlugin;
+import io.javalin.openapi.plugin.swagger.SwaggerPlugin;
 import utn.dds.fuentes.proxy.metamapa.controller.ControllerProxyMetamapa;
 
 import org.slf4j.Logger;
@@ -8,6 +12,34 @@ import org.slf4j.LoggerFactory;
 
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
+    
+    @OpenApi(
+        summary = "Health check del servicio proxy MetaMapa",
+        operationId = "healthCheck",
+        path = "/health",
+        methods = HttpMethod.GET,
+        tags = {"Health"},
+        responses = {
+            @OpenApiResponse(status = "200", description = "Servicio funcionando correctamente")
+        }
+    )
+    private static void healthCheck(io.javalin.http.Context ctx) {
+        ctx.result("OK");
+    }
+    
+    @OpenApi(
+        summary = "Información del servicio proxy MetaMapa",
+        operationId = "infoServicio",
+        path = "/",
+        methods = HttpMethod.GET,
+        tags = {"Información"},
+        responses = {
+            @OpenApiResponse(status = "200", description = "Información del servicio")
+        }
+    )
+    private static void infoServicio(io.javalin.http.Context ctx) {
+        ctx.result("Proxy MetaMapa - MetaMapa");
+    }
     
     public static void main(String[] args) {
         // Read URL from environment variable
@@ -24,16 +56,43 @@ public class Main {
         ControllerProxyMetamapa controller = new ControllerProxyMetamapa(url);
         
         Javalin app = Javalin.create(config -> {
-            config.plugins.enableDevLogging();
+            config.bundledPlugins.enableDevLogging();
+            config.jsonMapper(new io.javalin.json.JavalinJackson().updateMapper(mapper -> {
+                mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+                mapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+            }));
+            
+            // Configurar OpenAPI Plugin
+            config.registerPlugin(new OpenApiPlugin(openApiConfig -> {
+                openApiConfig
+                    .withDocumentationPath("/openapi")
+                    .withDefinitionConfiguration((version, openApiDefinition) -> {
+                        openApiDefinition
+                            .withInfo(openApiInfo -> {
+                                openApiInfo
+                                    .title("MetaMapa - Proxy MetaMapa API")
+                                    .version("1.0.0")
+                                    .description("API proxy para comunicación con el servicio principal de MetaMapa")
+                                    .contact("Equipo MetaMapa", "http://localhost:7003", "contacto@metamapa.com");
+                            })
+                            .withServer(openApiServer -> {
+                                openApiServer
+                                    .url("http://localhost:7003")
+                                    .description("Servidor de desarrollo");
+                            });
+                    });
+            }));
+            
+            // Registrar Swagger Plugin
+            config.registerPlugin(new SwaggerPlugin());
+            
+            // Registrar ReDoc Plugin  
+            config.registerPlugin(new ReDocPlugin());
+            
         }).start(7003);
         
-        // Health check
-        app.get("/health", ctx -> ctx.result("OK"));
-        
-        // Endpoint principal
-        app.get("/", ctx -> {
-            ctx.result("Proxy MetaMapa - MetaMapa");
-        });
+        app.get("/health", Main::healthCheck);
+        app.get("/", Main::infoServicio);
         
         // Endpoint para obtener datos del proxy
         app.get("/hechos", controller::obtenerHechos);

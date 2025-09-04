@@ -15,16 +15,14 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class SolicitudEliminacionRepositoryDinamica {
-    private final IDAO<SolicitudEliminacionDTO> dao;
+    private final IDAO<SolicitudEliminacion> dao;
     private FuenteDeDatos fuente;
 
-    public SolicitudEliminacionRepositoryDinamica(IDAO<SolicitudEliminacionDTO> dao){ this.dao = dao; }
+    public SolicitudEliminacionRepositoryDinamica(IDAO<SolicitudEliminacion> dao){ this.dao = dao; }
 
     public List<SolicitudEliminacion> obtenerSolicitudes(){
-        List<SolicitudEliminacionDTO> solicitudesDTO = dao.find();
-        return solicitudesDTO.stream()
-                .map(SolicitudEliminacionDTO::toSolicitudEliminacion)
-                .collect(Collectors.toList());
+        List<SolicitudEliminacion> solicitudes = dao.find();
+        return solicitudes;
     }
 
     public SolicitudEliminacion obtenerSolicitud(String uuid) throws IOException{
@@ -43,32 +41,14 @@ public class SolicitudEliminacionRepositoryDinamica {
     }
 
     public SolicitudEliminacion agregarSolicitud(SolicitudEliminacion solicitud) throws IOException {
-            SolicitudEliminacionDTO solicitudDTO = new SolicitudEliminacionDTO(solicitud.getTexto(), solicitud.getHecho(),
-                                                    solicitud.getFechaSolicitud(), solicitud.getEstado(), solicitud.getUuid());
-            dao.save(solicitudDTO);
+        dao.save(solicitud);
         return solicitud;
     }
 
-
-    public SolicitudEliminacion aceptarSolicitud(String uuid) throws IOException{
-        SolicitudEliminacion solicitud = obtenerSolicitud(uuid);
-        solicitud.ocultar();   // Esto no se si se hace aca
-
-        SolicitudEliminacionDTO solicitudDTO = new SolicitudEliminacionDTO(solicitud.getTexto(), solicitud.getHecho(),
-                solicitud.getFechaSolicitud(), solicitud.getEstado(), solicitud.getUuid());
-        dao.save(solicitudDTO);
-
-        return solicitud;
-    }
-
-    public SolicitudEliminacion rechazarSolicitud(String uuid) throws IOException{
+    public SolicitudEliminacion procesarSolicitud(String uuid) throws IOException{
         SolicitudEliminacion solicitud = obtenerSolicitud(uuid);
         solicitud.ocultar();
-
-        SolicitudEliminacionDTO solicitudDTO = new SolicitudEliminacionDTO(solicitud.getTexto(), solicitud.getHecho(),
-                solicitud.getFechaSolicitud(), solicitud.getEstado(), solicitud.getUuid());
-        dao.save(solicitudDTO);
-
+        dao.save(solicitud);
         return solicitud;
     }
 }

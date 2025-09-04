@@ -33,6 +33,31 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
         </dependency>
+        <!-- OpenAPI Plugin -->
+        <dependency>
+            <groupId>io.javalin.community.openapi</groupId>
+            <artifactId>javalin-openapi-plugin</artifactId>
+            <version>${javalin.openapi.version}</version>
+        </dependency>
+        <!-- Swagger Plugin -->
+        <dependency>
+            <groupId>io.javalin.community.openapi</groupId>
+            <artifactId>javalin-swagger-plugin</artifactId>
+            <version>${javalin.openapi.version}</version>
+        </dependency>
+        <!-- ReDoc Plugin -->
+        <dependency>
+            <groupId>io.javalin.community.openapi</groupId>
+            <artifactId>javalin-redoc-plugin</artifactId>
+            <version>${javalin.openapi.version}</version>
+        </dependency>
+        <!-- OpenAPI Annotation Processor -->
+        <dependency>
+            <groupId>io.javalin.community.openapi</groupId>
+            <artifactId>openapi-annotation-processor</artifactId>
+            <version>${javalin.openapi.version}</version>
+            <scope>provided</scope>
+        </dependency>
         <!-- Dominio compartido -->
         <dependency>
             <groupId>utn.dds</groupId>
@@ -49,6 +74,21 @@
 
     <build>
         <plugins>
+            <!-- Configurar el annotation processor para OpenAPI -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <annotationProcessorPath>
+                            <groupId>io.javalin.community.openapi</groupId>
+                            <artifactId>openapi-annotation-processor</artifactId>
+                            <version>${javalin.openapi.version}</version>
+                        </annotationProcessorPath>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
