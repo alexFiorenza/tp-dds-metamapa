@@ -1,5 +1,6 @@
 package utn.dds.fuentes.dinamica.repositories;
 
+import utn.dds.daos.DAOFactory;
 import utn.dds.daos.IDAO;
 import utn.dds.dominio.Hecho;
 import utn.dds.dominio.SolicitudEliminacion;
@@ -8,20 +9,27 @@ import utn.dds.dto.HechoDTO;
 import utn.dds.dto.SolicitudEliminacionDTO;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class SolicitudEliminacionRepositoryDinamica {
-    private final IDAO<SolicitudEliminacion> dao;
-    private FuenteDeDatos fuente;
+    private final IDAO<SolicitudEliminacionDTO> dao;
 
-    public SolicitudEliminacionRepositoryDinamica(IDAO<SolicitudEliminacion> dao){ this.dao = dao; }
+    public SolicitudEliminacionRepositoryDinamica(String daoType, Map<String, Object> daoConfig) {
+        if ("filesystem".equals(daoType)) {
+            Map<String, Object> config = new java.util.HashMap<>();
+            config.put("url", "mocks/solicitudes.json");
+            this.dao = DAOFactory.createDAO(SolicitudEliminacionDTO.class, daoType, config);
+        } else {
+            this.dao = DAOFactory.createDAO(SolicitudEliminacionDTO.class, daoType, daoConfig);
+        }
+    }
 
     public List<SolicitudEliminacion> obtenerSolicitudes(){
-        List<SolicitudEliminacion> solicitudes = dao.find();
+        List<SolicitudEliminacionDTO> solicitudesDTO = this.dao.find();
+        List<SolicitudEliminacion> solicitudes = solicitudesDTO.stream()
+                .map(SolicitudEliminacionDTO::toSolicitudEliminacion)
+                .collect(Collectors.toList());
         return solicitudes;
     }
 
@@ -41,14 +49,16 @@ public class SolicitudEliminacionRepositoryDinamica {
     }
 
     public SolicitudEliminacion agregarSolicitud(SolicitudEliminacion solicitud) throws IOException {
-        dao.save(solicitud);
+        SolicitudEliminacionDTO soliDTO = SolicitudEliminacionDTO.fromSolicitudEliminacion(solicitud);
+        this.dao.save(soliDTO);
         return solicitud;
     }
 
     public SolicitudEliminacion procesarSolicitud(String uuid) throws IOException{
         SolicitudEliminacion solicitud = obtenerSolicitud(uuid);
         solicitud.ocultar();
-        dao.save(solicitud);
+        SolicitudEliminacionDTO soliDTO = SolicitudEliminacionDTO.fromSolicitudEliminacion(solicitud);
+        this.dao.save(soliDTO);
         return solicitud;
     }
 }

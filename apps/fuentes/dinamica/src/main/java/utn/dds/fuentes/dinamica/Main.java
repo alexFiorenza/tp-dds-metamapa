@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utn.dds.daos.IDAO;
 import utn.dds.fuentes.dinamica.controllers.ControllerHechoDinamica;
+import utn.dds.fuentes.dinamica.controllers.ControllerSolicitudesDinamica;
 import utn.dds.fuentes.dinamica.services.ServiceHechoDinamica;
 import utn.dds.fuentes.dinamica.FuenteDinamicaImpl;
 import utn.dds.fuentes.dinamica.config.AppConfig;
@@ -70,7 +71,8 @@ public class Main {
         logger.info("  - Processor Type: {}", appConfig.getProcessorType());
         logger.info("  - API Endpoint: {}", appConfig.getApiEndpoint());
 
-        ControllerHechoDinamica controller = new ControllerHechoDinamica(appConfig.getDaoType(), appConfig.getDaoConfig()); // falta implementar esto
+        ControllerHechoDinamica controller = new ControllerHechoDinamica(appConfig.getDaoType(), appConfig.getDaoConfig());
+        ControllerSolicitudesDinamica controllerSoli = new ControllerSolicitudesDinamica(appConfig.getDaoType(), appConfig.getDaoConfig());
 
         Javalin app = Javalin.create(config -> {
             config.bundledPlugins.enableDevLogging();
@@ -118,6 +120,12 @@ public class Main {
 
         // Agregamos un hecho
         app.post("/hechos", controller::agregarHecho);
+
+        // Obtenemos las solicitudes de eliminación
+        app.get("/solicitudes", controllerSoli::obtenerSolicitudesDeEliminacion);
+
+        // agregamos una solicitud de eliminación
+        app.post("/solicitudes", controllerSoli::agregarSolicitudDeEliminacionDeHecho);
         
         app.start(7002);
         

@@ -11,16 +11,17 @@ import utn.dds.fuentes.dinamica.repositories.SolicitudEliminacionRepositoryDinam
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 public class ServiceSolicitudesDinamica {
     private final HechoRepository repository;
     private final SolicitudEliminacionRepositoryDinamica solicitudDinamicaRepo;
-    private final DetectorSpam detectorSpam;
+    // private final DetectorSpam detectorSpam;
 
-    public ServiceSolicitudesDinamica(IDAO<HechoDTO> daoHecho, IDAO<SolicitudEliminacion> daoSolicitud, DetectorSpam detectorSpam) {
-        this.repository = new HechoRepository(daoHecho);
-        this.solicitudDinamicaRepo = new SolicitudEliminacionRepositoryDinamica(daoSolicitud);
-        this.detectorSpam = detectorSpam;
+    public ServiceSolicitudesDinamica(String daoType, Map<String, Object> daoConfig) {
+        this.repository = new HechoRepository(daoType, daoConfig);
+        this.solicitudDinamicaRepo = new SolicitudEliminacionRepositoryDinamica(daoType, daoConfig);
+        //this.detectorSpam = detectorSpam;
     }
 
     public List<SolicitudEliminacion> obtenerSolicitudes() throws IOException {
@@ -28,22 +29,22 @@ public class ServiceSolicitudesDinamica {
     }
 
     public SolicitudEliminacion agregarSolicitud(SolicitudEliminacion solicitud) throws IOException {
-        return solicitudDinamicaRepo.agregarSolicitud(solicitud);
+        return this.solicitudDinamicaRepo.agregarSolicitud(solicitud);
     }
 
     public void aceptarSolicitud(String uuid) throws IOException {
-        solicitudDinamicaRepo.procesarSolicitud(uuid);
-        SolicitudEliminacion solicitud = solicitudDinamicaRepo.obtenerSolicitud(uuid);
+        this.solicitudDinamicaRepo.procesarSolicitud(uuid);
+        SolicitudEliminacion solicitud = this.solicitudDinamicaRepo.obtenerSolicitud(uuid);
 
         // Buscamos el hecho
-        Hecho hecho = repository.buscarHecho(solicitud.getHecho());
+        Hecho hecho = this.repository.buscarHecho(solicitud.getHecho());
 
         // Ocultamos el hecho
-        repository.cambiarEstado(hecho);
+        this.repository.cambiarEstado(hecho);
     }
 
     public void rechazarSolicitud(String uuid) throws IOException {
-        solicitudDinamicaRepo.procesarSolicitud(uuid);
+        this.solicitudDinamicaRepo.procesarSolicitud(uuid);
         // Aca no se hace nada creo
         //preguntar.........
     }
