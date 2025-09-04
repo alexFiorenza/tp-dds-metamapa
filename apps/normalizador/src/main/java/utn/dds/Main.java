@@ -12,6 +12,7 @@ import utn.dds.dto.HechoDTO;
 // click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
+    static ControllerNormalizador controller = new ControllerNormalizador();
 
 
     public static void main(String[] args) {
@@ -34,6 +35,7 @@ public class Main {
 
                 app.get("/health", ctx -> ctx.result("OK"));
                 app.get("/", ctx -> ctx.result("Fuentes Estáticas - MetaMapa"));
+                app.put("/hechos", controller::Normalizar);
 
 
                 app.start(7099);
