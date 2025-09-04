@@ -69,6 +69,19 @@ services:
     networks:
       - metamapa-network
 
+  # Normalizador
+  normalizador:
+    build:
+      context: ./apps/normalizador
+      dockerfile: Dockerfile
+    ports:
+      - "7099:7099"
+    container_name: metamapa-normalizador
+    restart: unless-stopped
+    networks:
+      - metamapa-network
+
+
   # MetaMapa
   metamapa:
     build:
@@ -128,6 +141,8 @@ services:
     networks:
       - metamapa-network
 
+
+
 networks:
   metamapa-network:
-    driver: bridge 
+    driver: bridge
