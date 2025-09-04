@@ -3,6 +3,7 @@ package utn.dds.fuentes.dinamica.services;
 import utn.dds.daos.IDAO;
 import utn.dds.dominio.Hecho;
 import utn.dds.dto.HechoDTO;
+import utn.dds.dto.RespuestaPaginadaDTO;
 import utn.dds.fuentes.dinamica.FuenteDinamicaImpl;
 import utn.dds.fuentes.dinamica.conexion.Conexion;
 import utn.dds.fuentes.dinamica.repositories.HechoRepository;
@@ -12,6 +13,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 
 public class ServiceHechoDinamica {
@@ -47,5 +49,36 @@ public class ServiceHechoDinamica {
 
     public Hecho cambiarEstado(Hecho hecho) throws IOException {
         return repository.cambiarEstado(hecho);
+    }
+    
+    public RespuestaPaginadaDTO<Hecho> obtenerHechosPaginados(int pagina, int tamanioPagina) throws IOException {
+        // Validaciones
+        if (pagina < 0) {
+            pagina = 0;
+        }
+        if (tamanioPagina <= 0) {
+            tamanioPagina = 10; // Tamaño por defecto
+        }
+        if (tamanioPagina > 100) {
+            tamanioPagina = 100; // Máximo 100 elementos por página
+        }
+        
+        // Obtener todos los hechos
+        List<Hecho> todosLosHechos = repository.obtenerHechos();
+        long totalElementos = todosLosHechos.size();
+        
+        // Calcular índices para la paginación
+        int indiceInicio = pagina * tamanioPagina;
+        int indiceFin = Math.min(indiceInicio + tamanioPagina, (int) totalElementos);
+        
+        // Obtener datos de la página actual
+        List<Hecho> datosPagina;
+        if (indiceInicio >= totalElementos) {
+            datosPagina = new ArrayList<>();
+        } else {
+            datosPagina = todosLosHechos.subList(indiceInicio, indiceFin);
+        }
+        
+        return new RespuestaPaginadaDTO<>(datosPagina, pagina, tamanioPagina, totalElementos);
     }
 }

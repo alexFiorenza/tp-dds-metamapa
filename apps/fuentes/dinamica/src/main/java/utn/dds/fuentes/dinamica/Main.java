@@ -2,6 +2,10 @@ package utn.dds.fuentes.dinamica;
 
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+import io.javalin.openapi.*;
+import io.javalin.openapi.plugin.OpenApiPlugin;
+import io.javalin.openapi.plugin.redoc.ReDocPlugin;
+import io.javalin.openapi.plugin.swagger.SwaggerPlugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utn.dds.daos.IDAO;
@@ -15,6 +19,48 @@ import java.net.MalformedURLException;
 
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
+    
+    @OpenApi(
+        summary = "Health check del servicio fuentes dinámicas",
+        operationId = "healthCheck",
+        path = "/health",
+        methods = HttpMethod.GET,
+        tags = {"Health"},
+        responses = {
+            @OpenApiResponse(status = "200", description = "Servicio funcionando correctamente")
+        }
+    )
+    private static void healthCheck(io.javalin.http.Context ctx) {
+        ctx.result("OK");
+    }
+    
+    @OpenApi(
+        summary = "Información del servicio fuentes dinámicas",
+        operationId = "infoServicio",
+        path = "/",
+        methods = HttpMethod.GET,
+        tags = {"Información"},
+        responses = {
+            @OpenApiResponse(status = "200", description = "Información del servicio")
+        }
+    )
+    private static void infoServicio(io.javalin.http.Context ctx) {
+        ctx.result("Fuentes Dinámicas - MetaMapa");
+    }
+    
+    @OpenApi(
+        summary = "Obtener datos dinámicos disponibles",
+        operationId = "obtenerDatos",
+        path = "/datos",
+        methods = HttpMethod.GET,
+        tags = {"Datos"},
+        responses = {
+            @OpenApiResponse(status = "200", description = "Datos dinámicos disponibles")
+        }
+    )
+    private static void obtenerDatos(io.javalin.http.Context ctx) {
+        ctx.json(new RespuestaDatos("Datos dinámicos disponibles"));
+    }
 
     public static void main(String[] args) throws MalformedURLException {
         AppConfig appConfig = AppConfig.fromEnvironment();
@@ -28,26 +74,52 @@ public class Main {
 
         Javalin app = Javalin.create(config -> {
             config.bundledPlugins.enableDevLogging();
-        }).start(7002);
-        
-        // Health check
-        app.get("/health", ctx -> ctx.result("OK"));
-        
-        // Endpoint principal
-        app.get("/", ctx -> {
-            ctx.result("Fuentes Dinámicas - MetaMapa");
+            config.jsonMapper(new io.javalin.json.JavalinJackson().updateMapper(mapper -> {
+                mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+                mapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+            }));
+            
+            // Configurar OpenAPI Plugin
+            config.registerPlugin(new OpenApiPlugin(openApiConfig -> {
+                openApiConfig
+                    .withDocumentationPath("/openapi")
+                    .withDefinitionConfiguration((version, openApiDefinition) -> {
+                        openApiDefinition
+                            .withInfo(openApiInfo -> {
+                                openApiInfo
+                                    .title("MetaMapa - Fuentes Dinámicas API")
+                                    .version("1.0.0")
+                                    .description("API para acceso a fuentes de datos dinámicas en MetaMapa");
+                            })
+                            .withServer(openApiServer -> {
+                                openApiServer
+                                    .url("http://localhost:7002")
+                                    .description("Servidor de desarrollo");
+                            });
+                    });
+            }));
+            
+            // Registrar Swagger Plugin
+            config.registerPlugin(new SwaggerPlugin());
+            
+            // Registrar ReDoc Plugin
+            config.registerPlugin(new ReDocPlugin());
+            
         });
+        
+        app.get("/health", Main::healthCheck);
+        app.get("/", Main::infoServicio);
         
         // Endpoint para obtener datos dinámicos
-        app.get("/datos", ctx -> {
-            ctx.json(new RespuestaDatos("Datos dinámicos disponibles"));
-        });
+        app.get("/datos", Main::obtenerDatos);
 
         // Pedimos los hechos
-        app.get("/hechos-dinamica", controller::obtenerHechos);
+        app.get("/hechos", controller::obtenerHechos);
 
-        // Agregamos un hecho (falta pasarle el hecho a agregar y no se como)
-        app.post("/hechos-dinamica", controller::agregarHecho);
+        // Agregamos un hecho
+        app.post("/hechos", controller::agregarHecho);
+        
+        app.start(7002);
         
         logger.info("Servicio de fuentes dinámicas iniciado en puerto 7002");
     }
