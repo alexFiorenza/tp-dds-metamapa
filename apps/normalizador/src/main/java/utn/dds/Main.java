@@ -2,13 +2,8 @@ package utn.dds;
 
 
 import io.javalin.Javalin;
-import org.jeasy.rules.api.Facts;
-import org.jeasy.rules.api.RulesEngine;
-import org.jeasy.rules.core.DefaultRulesEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.jeasy.rules.api.Rules;
-import utn.dds.dominio.Hecho;
 import utn.dds.dto.HechoDTO;
 
 
@@ -34,12 +29,6 @@ public class Main {
                 });
 
 
-                Rules rules = new Rules();
-                // Registrar reglas individuales
-                rules.register(new FechaValid());
-                rules.register(new Crotolamo());
-
-
                 app.get("/health", ctx -> ctx.result("OK"));
                 app.get("/", ctx -> ctx.result("Fuentes Estáticas - MetaMapa"));
                 app.put("/normalizar", ctx -> {
@@ -47,11 +36,6 @@ public class Main {
                     HechoDTO hecho = ctx.bodyAsClass(HechoDTO.class);
                     //TODO esto no se si es un DTO o un json, nose como lo recibis
 
-                    Facts facts = new Facts();
-                    facts.put("hecho", hecho);
-
-                    RulesEngine engine = new DefaultRulesEngine();
-                    engine.fire(rules, facts);
 
                     ctx.json(hecho); // devuelve el objeto modificado
                 });
