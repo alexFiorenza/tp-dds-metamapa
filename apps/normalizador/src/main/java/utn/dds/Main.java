@@ -50,7 +50,7 @@ public class Main {
 
     }
 /*
-* ejemplo pruba
+* ejemplo pruba postman post: http://localhost:7099/hechos
 *
 * {
   "titulo": "Incendio en zona de monte",
