@@ -46,6 +46,10 @@ public class ServiceRegistry {
         return fuentesRepository.findByHost(host);
     }
     
+    public List<FuenteDTO> obtenerFuentesPorHost(String host) {
+        return fuentesRepository.findAllByHost(host);
+    }
+    
     public boolean eliminarFuente(String host) {
         return fuentesRepository.removeByHost(host);
     }

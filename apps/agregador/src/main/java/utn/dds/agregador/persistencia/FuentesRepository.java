@@ -55,6 +55,12 @@ public class FuentesRepository {
                 .orElse(null);
     }
     
+    public List<FuenteDTO> findAllByHost(String host) {
+        return dao.find().stream()
+                .filter(f -> f.getHost().equals(host))
+                .collect(java.util.stream.Collectors.toList());
+    }
+    
     public boolean removeByHost(String host) {
         List<FuenteDTO> fuentes = dao.find();
         boolean removed = fuentes.removeIf(f -> f.getHost().equals(host));

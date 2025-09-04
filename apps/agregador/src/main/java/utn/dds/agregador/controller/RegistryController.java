@@ -83,35 +83,30 @@ public class RegistryController {
     }
     
     @OpenApi(
-        summary = "Obtener fuente específica por host",
-        operationId = "obtenerFuentePorHost",
+        summary = "Obtener fuentes por host",
+        operationId = "obtenerFuentesPorHost",
         path = "/fuentes/{host}",
         methods = HttpMethod.GET,
         tags = {"Service Registry"},
         pathParams = {
-            @OpenApiParam(name = "host", description = "Host de la fuente", required = true)
+            @OpenApiParam(name = "host", description = "Host de las fuentes", required = true)
         },
         responses = {
             @OpenApiResponse(
                 status = "200", 
-                description = "Fuente encontrada",
-                content = {@OpenApiContent(from = FuenteDTO.class)}
+                description = "Fuentes encontradas (puede ser lista vacía si no hay coincidencias)",
+                content = {@OpenApiContent(from = FuenteDTO[].class)}
             ),
-            @OpenApiResponse(status = "404", description = "Fuente no encontrada"),
             @OpenApiResponse(status = "500", description = "Error interno del servidor")
         }
     )
     public void obtenerFuentePorHost(Context ctx) {
         try {
             String host = ctx.pathParam("host");
-            FuenteDTO fuente = serviceAgregador.obtenerFuentePorHost(host);
-            if (fuente != null) {
-                ctx.json(fuente);
-            } else {
-                ctx.status(404).result("Fuente no encontrada");
-            }
+            List<FuenteDTO> fuentes = serviceAgregador.obtenerFuentesPorHost(host);
+            ctx.json(fuentes); // Siempre devuelve un array, aunque esté vacío
         } catch (Exception e) {
-            ctx.status(500).result("Error al obtener la fuente");
+            ctx.status(500).result("Error al obtener las fuentes");
         }
     }
     

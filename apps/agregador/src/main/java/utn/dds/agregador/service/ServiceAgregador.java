@@ -2,6 +2,8 @@ package utn.dds.agregador.service;
 
 import utn.dds.agregador.persistencia.HechoRepository;
 import utn.dds.dominio.Hecho;
+import utn.dds.dominio.criterios.EstrategiaDeteccionDuplicados;
+import utn.dds.dominio.criterios.EstrategiaTituloUbicacionFecha;
 import utn.dds.dto.FuenteDTO;
 import utn.dds.dto.HechoDTO;
 import utn.dds.dto.ResultadoAgregacionDTO;
@@ -25,6 +27,7 @@ public class ServiceAgregador {
     private ServiceRegistry serviceRegistry;
     private HttpClient httpClient;
     private ObjectMapper objectMapper;
+    private EstrategiaDeteccionDuplicados estrategiaDeteccionDuplicados;
     
     public ServiceAgregador(HechoRepository hechoRepository, ServiceRegistry serviceRegistry) {
         this.hechoRepository = hechoRepository;
@@ -35,6 +38,29 @@ public class ServiceAgregador {
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
         this.objectMapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        this.estrategiaDeteccionDuplicados = new EstrategiaTituloUbicacionFecha();
+    }
+    
+    private List<Hecho> filtrarDuplicados(List<Hecho> nuevosHechos) {
+        List<Hecho> hechosExistentes = hechoRepository.find();
+        List<Hecho> hechosSinDuplicados = new ArrayList<>();
+        
+        for (Hecho nuevoHecho : nuevosHechos) {
+            boolean esDuplicado = hechosExistentes.stream()
+                .anyMatch(hechoExistente -> estrategiaDeteccionDuplicados.esDuplicado(nuevoHecho, hechoExistente));
+            
+            if (!esDuplicado) {
+                // También verificar contra otros hechos ya agregados en esta sesión
+                boolean esDuplicadoEnSesion = hechosSinDuplicados.stream()
+                    .anyMatch(hechoEnSesion -> estrategiaDeteccionDuplicados.esDuplicado(nuevoHecho, hechoEnSesion));
+                
+                if (!esDuplicadoEnSesion) {
+                    hechosSinDuplicados.add(nuevoHecho);
+                }
+            }
+        }
+        
+        return hechosSinDuplicados;
     }
     
     public ResultadoAgregacionDTO agregacion() {
@@ -57,21 +83,100 @@ public class ServiceAgregador {
             }
         }
         
-        // Guardar todos los hechos obtenidos
-        if (!hechosAgregados.isEmpty()) {
-            hechoRepository.saveAll(hechosAgregados);
+        // Filtrar duplicados antes de guardar
+        List<Hecho> hechosSinDuplicados = filtrarDuplicados(hechosAgregados);
+        
+        // Guardar únicamente hechos sin duplicados
+        if (!hechosSinDuplicados.isEmpty()) {
+            hechoRepository.saveAll(hechosSinDuplicados);
         }
         
         return new ResultadoAgregacionDTO(
             fuentes.size(),
             hechosObtenidos,
-            hechosAgregados.size(),
+            hechosSinDuplicados.size(),
             fechaEjecucion,
             fuentesConError
         );
     }
     
     private List<Hecho> obtenerHechosDesdeFuente(String url, FuenteDTO fuente) throws Exception {
+        // Intentar primero con paginación, si falla usar método simple
+        try {
+            return obtenerHechosPaginadosDesdeFuente(url, fuente);
+        } catch (Exception e) {
+            // Si falla la paginación, intentar método simple
+            System.out.println("Paginación no soportada para " + url + ", usando método simple: " + e.getMessage());
+            return obtenerHechosSimpleDesdeFuente(url, fuente);
+        }
+    }
+    
+    private List<Hecho> obtenerHechosPaginadosDesdeFuente(String baseUrl, FuenteDTO fuente) throws Exception {
+        List<Hecho> todosLosHechos = new ArrayList<>();
+        int pagina = 0;
+        int tamanioPagina = 50; // Tamaño de página para la consulta
+        boolean hayMasPaginas = true;
+        
+        while (hayMasPaginas) {
+            String urlPaginada = construirUrlConPaginacion(baseUrl, pagina, tamanioPagina);
+            
+            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+                    .uri(URI.create(urlPaginada))
+                    .timeout(Duration.ofSeconds(30))
+                    .header("Accept", "application/json");
+            
+            // Agregar headers personalizados si existen
+            if (fuente.getParams() != null && fuente.getParams().containsKey("headers")) {
+                @SuppressWarnings("unchecked")
+                Map<String, String> headers = (Map<String, String>) fuente.getParams().get("headers");
+                headers.forEach(requestBuilder::header);
+            }
+            
+            HttpRequest request = requestBuilder.build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() != 200) {
+                throw new RuntimeException("Error HTTP: " + response.statusCode() + " para URL: " + urlPaginada);
+            }
+            
+            String responseBody = response.body();
+            
+            try {
+                // Intentar parsear como respuesta paginada
+                @SuppressWarnings("unchecked")
+                RespuestaPaginadaDTO<HechoDTO> respuestaPaginada = objectMapper.readValue(responseBody, 
+                    new TypeReference<RespuestaPaginadaDTO<HechoDTO>>() {});
+                
+                // Verificar que realmente es una respuesta paginada válida
+                if (respuestaPaginada.getDatos() == null) {
+                    throw new RuntimeException("Respuesta no contiene estructura paginada válida");
+                }
+                
+                // Convertir HechoDTOs a Hechos
+                for (HechoDTO dto : respuestaPaginada.getDatos()) {
+                    todosLosHechos.add(dto.toHecho());
+                }
+                
+                // Verificar si hay más páginas
+                hayMasPaginas = respuestaPaginada.getDatos().size() == tamanioPagina 
+                              && (pagina + 1) * tamanioPagina < respuestaPaginada.getTotalElementos();
+                pagina++;
+                
+            } catch (Exception parseException) {
+                // Si falla el parseo como respuesta paginada, la fuente no soporta paginación
+                throw new RuntimeException("La fuente no soporta paginación: " + parseException.getMessage());
+            }
+        }
+        
+        return todosLosHechos;
+    }
+    
+    private String construirUrlConPaginacion(String baseUrl, int pagina, int tamanioPagina) {
+        String separador = baseUrl.contains("?") ? "&" : "?";
+        return baseUrl + separador + "pagina=" + pagina + "&tamanio=" + tamanioPagina;
+    }
+    
+    private List<Hecho> obtenerHechosSimpleDesdeFuente(String url, FuenteDTO fuente) throws Exception {
         HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofSeconds(30))
