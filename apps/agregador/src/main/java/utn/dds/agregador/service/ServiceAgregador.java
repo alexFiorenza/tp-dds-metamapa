@@ -4,6 +4,7 @@ import utn.dds.agregador.persistencia.HechoRepository;
 import utn.dds.dominio.Hecho;
 import utn.dds.dto.FuenteDTO;
 import utn.dds.dto.HechoDTO;
+import utn.dds.dto.ResultadoAgregacionDTO;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -12,6 +13,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.URI;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -30,23 +32,42 @@ public class ServiceAgregador {
                 .connectTimeout(Duration.ofSeconds(10))
                 .build();
         this.objectMapper = new ObjectMapper();
+        this.objectMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+        this.objectMapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
     
-    public void agregacion() {
+    public ResultadoAgregacionDTO agregacion() {
+        LocalDateTime fechaEjecucion = LocalDateTime.now();
         List<FuenteDTO> fuentes = serviceRegistry.obtenerTodasLasFuentes();
         List<Hecho> hechosAgregados = new ArrayList<>();
+        List<String> fuentesConError = new ArrayList<>();
+        int hechosObtenidos = 0;
         
         for (FuenteDTO fuente : fuentes) {
             try {
                 String urlCompleta = construirUrlCompleta(fuente);
                 List<Hecho> hechosDeEstaFuente = obtenerHechosDesdeFuente(urlCompleta, fuente);
+                hechosObtenidos += hechosDeEstaFuente.size();
                 hechosAgregados.addAll(hechosDeEstaFuente);
             } catch (Exception e) {
-                System.err.println("Error al obtener datos de la fuente: " + fuente.getHost() + " - " + e.getMessage());
+                String errorMsg = fuente.getHost() + " - " + e.getMessage();
+                fuentesConError.add(errorMsg);
+                System.err.println("Error al obtener datos de la fuente: " + errorMsg);
             }
         }
         
-        hechoRepository.saveAll(hechosAgregados);
+        // Guardar todos los hechos obtenidos
+        if (!hechosAgregados.isEmpty()) {
+            hechoRepository.saveAll(hechosAgregados);
+        }
+        
+        return new ResultadoAgregacionDTO(
+            fuentes.size(),
+            hechosObtenidos,
+            hechosAgregados.size(),
+            fechaEjecucion,
+            fuentesConError
+        );
     }
     
     private List<Hecho> obtenerHechosDesdeFuente(String url, FuenteDTO fuente) throws Exception {
@@ -91,30 +112,69 @@ public class ServiceAgregador {
     private String construirUrlCompleta(FuenteDTO fuente) {
         StringBuilder urlBuilder = new StringBuilder(fuente.getHost());
         
-        if (fuente.getParams() != null && !fuente.getParams().isEmpty()) {
-            // Manejar path parameters
-            if (fuente.getParams().containsKey("path")) {
-                String path = (String) fuente.getParams().get("path");
-                if (!path.startsWith("/")) {
+        if (fuente.getParams() == null || fuente.getParams().isEmpty()) {
+            return urlBuilder.toString();
+        }
+        
+        // 1. Agregar endpoint si existe
+        if (fuente.getParams().containsKey("endpoint")) {
+            String endpoint = (String) fuente.getParams().get("endpoint");
+            if (endpoint != null && !endpoint.trim().isEmpty()) {
+                if (!endpoint.startsWith("/")) {
                     urlBuilder.append("/");
                 }
-                urlBuilder.append(path);
+                urlBuilder.append(endpoint);
             }
-            
-            // Manejar query parameters
-            StringBuilder queryBuilder = new StringBuilder();
-            fuente.getParams().entrySet().forEach(entry -> {
-                if (!"path".equals(entry.getKey()) && !"headers".equals(entry.getKey()) && !"body".equals(entry.getKey())) {
+        }
+        
+        // 2. Agregar path parameters si existen
+        if (fuente.getParams().containsKey("pathParams")) {
+            @SuppressWarnings("unchecked")
+            java.util.List<String> pathParams = (java.util.List<String>) fuente.getParams().get("pathParams");
+            if (pathParams != null) {
+                for (String param : pathParams) {
+                    if (!urlBuilder.toString().endsWith("/")) {
+                        urlBuilder.append("/");
+                    }
+                    urlBuilder.append(param);
+                }
+            }
+        }
+        
+        // 3. Construir query parameters
+        StringBuilder queryBuilder = new StringBuilder();
+        
+        // 3a. Query parameters explícitos
+        if (fuente.getParams().containsKey("queryParams")) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> queryParams = (Map<String, Object>) fuente.getParams().get("queryParams");
+            if (queryParams != null) {
+                for (Map.Entry<String, Object> entry : queryParams.entrySet()) {
                     if (queryBuilder.length() > 0) {
                         queryBuilder.append("&");
                     }
                     queryBuilder.append(entry.getKey()).append("=").append(entry.getValue());
                 }
-            });
-            
-            if (queryBuilder.length() > 0) {
-                urlBuilder.append("?").append(queryBuilder.toString());
             }
+        }
+        
+        // 3b. Parámetros legacy (compatibilidad hacia atrás)
+        // Cualquier parámetro que no sea especial se convierte en query param
+        for (Map.Entry<String, Object> entry : fuente.getParams().entrySet()) {
+            String key = entry.getKey();
+            if (!"endpoint".equals(key) && !"pathParams".equals(key) && 
+                !"queryParams".equals(key) && !"headers".equals(key) && !"body".equals(key)) {
+                
+                if (queryBuilder.length() > 0) {
+                    queryBuilder.append("&");
+                }
+                queryBuilder.append(key).append("=").append(entry.getValue());
+            }
+        }
+        
+        // 4. Agregar query string si hay parámetros
+        if (queryBuilder.length() > 0) {
+            urlBuilder.append("?").append(queryBuilder.toString());
         }
         
         return urlBuilder.toString();

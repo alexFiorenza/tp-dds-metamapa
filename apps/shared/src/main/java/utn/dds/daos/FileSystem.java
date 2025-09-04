@@ -81,10 +81,12 @@ public class FileSystem<T> implements IDAO<T> {
     @Override
     public List<T> find() {
         try {
-            InputStream inputStream = read();
-            if (inputStream != null) {
-                return objectMapper.readValue(inputStream, 
-                    objectMapper.getTypeFactory().constructCollectionType(List.class, clazz));
+            if (this.url != null) {
+                java.io.File file = this.url.toFile();
+                if (file.exists()) {
+                    return objectMapper.readValue(file, 
+                        objectMapper.getTypeFactory().constructCollectionType(List.class, clazz));
+                }
             }
         } catch (Exception e) {
             throw new RuntimeException("Error al deserializar lista desde archivo: " + url, e);

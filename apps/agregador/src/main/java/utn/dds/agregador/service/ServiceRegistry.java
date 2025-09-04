@@ -3,6 +3,7 @@ package utn.dds.agregador.service;
 import utn.dds.agregador.persistencia.FuentesRepository;
 import utn.dds.dto.FuenteDTO;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class ServiceRegistry {
@@ -18,10 +19,17 @@ public class ServiceRegistry {
             throw new IllegalArgumentException("El host de la fuente no puede estar vacío");
         }
         
-        FuenteDTO existente = fuentesRepository.findByHost(fuente.getHost());
-        if (existente != null) {
-            throw new IllegalArgumentException("Ya existe una fuente registrada con ese host");
+        // Verificar si ya existe una fuente con el mismo host y parámetros
+        List<FuenteDTO> fuentesExistentes = fuentesRepository.find();
+        boolean duplicado = fuentesExistentes.stream().anyMatch(f -> 
+            f.getHost().equals(fuente.getHost()) && 
+            sonParametrosIguales(f.getParams(), fuente.getParams())
+        );
+        
+        if (duplicado) {
+            throw new IllegalArgumentException("Ya existe una fuente registrada con el mismo host y parámetros");
         }
+        
         
         if (fuente.getUuid() == null) {
             fuente.setUuid(UUID.randomUUID());
@@ -48,5 +56,20 @@ public class ServiceRegistry {
     
     public FuenteDTO obtenerFuentePorUuid(UUID uuid) {
         return fuentesRepository.findByUuid(uuid);
+    }
+    
+    private boolean sonParametrosIguales(Map<String, Object> params1, Map<String, Object> params2) {
+        // Si ambos son null, son iguales
+        if (params1 == null && params2 == null) {
+            return true;
+        }
+        
+        // Si uno es null y el otro no, no son iguales
+        if (params1 == null || params2 == null) {
+            return false;
+        }
+        
+        // Comparar usando equals del Map
+        return params1.equals(params2);
     }
 }

@@ -14,7 +14,7 @@ public class HechoRepository {
     public HechoRepository(String daoType, Map<String, Object> daoConfig) {
         if ("filesystem".equals(daoType)) {
             Map<String, Object> config = new java.util.HashMap<>();
-            config.put("url", "mocks/hechos.json");
+            config.put("url", "src/main/resources/mocks/hechos.json");
             this.dao = DAOFactory.createDAO(HechoDTO.class, daoType, config);
         } else {
             this.dao = DAOFactory.createDAO(HechoDTO.class, daoType, daoConfig);

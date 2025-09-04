@@ -22,7 +22,7 @@ public class FuentesRepository {
         if ("filesystem".equals(daoType)) {
             // Para filesystem, usar configuración específica
             Map<String, Object> config = new HashMap<>();
-            config.put("url", "mocks/fuentes.json");
+            config.put("url", "src/main/resources/mocks/fuentes.json");
             this.dao = DAOFactory.createDAO(FuenteDTO.class, daoType, config);
         } else {
             // Para otros tipos de DAO, usar la configuración provista
@@ -43,12 +43,9 @@ public class FuentesRepository {
         // ya que el DAO no tiene métodos específicos para búsqueda por campo
         List<FuenteDTO> fuentes = dao.find();
         
-        // Verificar si ya existe una fuente con el mismo host
-        boolean exists = fuentes.stream().anyMatch(f -> f.getHost().equals(fuente.getHost()));
-        if (!exists) {
-            fuentes.add(fuente);
-            dao.saveAll(fuentes);
-        }
+        // Agregar la fuente (la validación de duplicados se hace en el service)
+        fuentes.add(fuente);
+        dao.saveAll(fuentes);
     }
     
     public FuenteDTO findByHost(String host) {

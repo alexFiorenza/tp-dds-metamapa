@@ -4,6 +4,7 @@ import io.javalin.http.Context;
 import utn.dds.agregador.service.ServiceAgregador;
 import io.javalin.openapi.*;
 import utn.dds.dominio.Hecho;
+import utn.dds.dto.ResultadoAgregacionDTO;
 
 public class ControllerAgregador {
     
@@ -21,14 +22,18 @@ public class ControllerAgregador {
         tags = {"Agregación"},
         description = "Procesa todas las fuentes registradas y agrega nuevos hechos al repositorio",
         responses = {
-            @OpenApiResponse(status = "200", description = "Agregación completada exitosamente"),
+            @OpenApiResponse(
+                status = "200", 
+                description = "Agregación completada exitosamente con información detallada del proceso",
+                content = {@OpenApiContent(from = ResultadoAgregacionDTO.class)}
+            ),
             @OpenApiResponse(status = "500", description = "Error durante el proceso de agregación")
         }
     )
     public void agregacion(Context ctx) {
         try {
-            serviceAgregador.agregacion();
-            ctx.status(200).result("Agregación completada exitosamente");
+            ResultadoAgregacionDTO resultado = serviceAgregador.agregacion();
+            ctx.status(200).json(resultado);
         } catch (Exception e) {
             ctx.status(500).result("Error durante el proceso de agregación: " + e.getMessage());
         }
