@@ -26,6 +26,8 @@ services:
       - "7002:7002"
     container_name: metamapa-fuente-dinamica
     restart: unless-stopped
+    environment:
+      - DAO_TYPE=filesystem
     networks:
       - metamapa-network
 
