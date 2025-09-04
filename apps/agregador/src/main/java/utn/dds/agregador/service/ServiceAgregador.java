@@ -5,6 +5,7 @@ import utn.dds.dominio.Hecho;
 import utn.dds.dto.FuenteDTO;
 import utn.dds.dto.HechoDTO;
 import utn.dds.dto.ResultadoAgregacionDTO;
+import utn.dds.dto.RespuestaPaginadaDTO;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -180,7 +181,33 @@ public class ServiceAgregador {
         return urlBuilder.toString();
     }
     
-    public List<Hecho> obtenerHechos() {
-        return hechoRepository.find();
+    public RespuestaPaginadaDTO<Hecho> obtenerHechosPaginados(int pagina, int tamanioPagina) {
+        // Validaciones
+        if (pagina < 0) {
+            pagina = 0;
+        }
+        if (tamanioPagina <= 0) {
+            tamanioPagina = 10; // Tamaño por defecto
+        }
+        if (tamanioPagina > 100) {
+            tamanioPagina = 100; // Máximo 100 elementos por página
+        }
+        
+        List<Hecho> todosLosHechos = hechoRepository.find();
+        long totalElementos = todosLosHechos.size();
+        
+        // Calcular índices para la paginación
+        int indiceInicio = pagina * tamanioPagina;
+        int indiceFin = Math.min(indiceInicio + tamanioPagina, (int) totalElementos);
+        
+        // Obtener datos de la página actual
+        List<Hecho> datosPagina;
+        if (indiceInicio >= totalElementos) {
+            datosPagina = new ArrayList<>();
+        } else {
+            datosPagina = todosLosHechos.subList(indiceInicio, indiceFin);
+        }
+        
+        return new RespuestaPaginadaDTO<>(datosPagina, pagina, tamanioPagina, totalElementos);
     }
 }

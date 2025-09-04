@@ -5,6 +5,7 @@ import utn.dds.agregador.service.ServiceAgregador;
 import io.javalin.openapi.*;
 import utn.dds.dominio.Hecho;
 import utn.dds.dto.ResultadoAgregacionDTO;
+import utn.dds.dto.RespuestaPaginadaDTO;
 
 public class ControllerAgregador {
     
@@ -40,26 +41,44 @@ public class ControllerAgregador {
     }
     
     @OpenApi(
-        summary = "Obtener todos los hechos agregados",
+        summary = "Obtener hechos agregados con paginación",
         operationId = "obtenerHechos",
         path = "/hechos",
         methods = HttpMethod.GET,
         tags = {"Agregación"},
-        description = "Obtiene la lista completa de hechos procesados y almacenados",
+        description = "Obtiene hechos procesados y almacenados con soporte de paginación. Si no se especifican parámetros de paginación, devuelve la primera página con 10 elementos.",
+        queryParams = {
+            @OpenApiParam(
+                name = "pagina",
+                description = "Número de página (comenzando desde 0). Por defecto: 0",
+                required = false,
+                type = Integer.class
+            ),
+            @OpenApiParam(
+                name = "tamanioPagina", 
+                description = "Cantidad de elementos por página (min: 1, max: 100). Por defecto: 10",
+                required = false,
+                type = Integer.class
+            )
+        },
         responses = {
             @OpenApiResponse(
-                status = "200", 
-                description = "Lista de hechos obtenida exitosamente",
-                content = {@OpenApiContent(from = Hecho[].class)}
+                status = "200",
+                description = "Hechos paginados obtenidos exitosamente",
+                content = {@OpenApiContent(from = RespuestaPaginadaDTO.class)}
             ),
             @OpenApiResponse(status = "500", description = "Error al obtener los hechos")
         }
     )
     public void obtenerHechos(Context ctx) {
         try {
-            ctx.json(serviceAgregador.obtenerHechos());
+            int pagina = ctx.queryParamAsClass("pagina", Integer.class).getOrDefault(0);
+            int tamanioPagina = ctx.queryParamAsClass("tamanioPagina", Integer.class).getOrDefault(10);
+            
+            RespuestaPaginadaDTO<Hecho> respuesta = serviceAgregador.obtenerHechosPaginados(pagina, tamanioPagina);
+            ctx.json(respuesta);
         } catch (Exception e) {
-            ctx.status(500).result("Error al obtener los hechos");
+            ctx.status(500).result("Error al obtener los hechos: " + e.getMessage());
         }
     }
 }
