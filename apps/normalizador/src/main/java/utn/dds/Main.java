@@ -35,7 +35,7 @@ public class Main {
 
                 app.get("/health", ctx -> ctx.result("OK"));
                 app.get("/", ctx -> ctx.result("Fuentes Estáticas - MetaMapa"));
-                app.put("/hechos", controller::Normalizar);
+                app.post("/hechos", controller::normalizar);
 
 
                 app.start(7099);
@@ -49,3 +49,23 @@ public class Main {
         }
 
     }
+/*
+* ejemplo pruba
+*
+* {
+  "titulo": "Incendio en zona de monte",
+  "descripcion": "Se reporta un foco de fuego en las afueras de la ciudad",
+  "categoria": "fire",
+  "fechaAcontecimiento": "2025-08-28",
+  "origen": "MANUAL",
+  "contribuyenteNombre": "Juan Pérez",
+  "tipo": "TEXTO",
+  "longitud": -58.3816,
+  "latitud": -34.6037,
+  "fechaCarga": "2025-08-28T16:00:00",
+  "estado": "ACTIVO",
+  "etiquetas": ["emergencia", "incendio"],
+  "uuid": "123e4567-e89b-12d3-a456-426614174000"
+}
+*
+* */
