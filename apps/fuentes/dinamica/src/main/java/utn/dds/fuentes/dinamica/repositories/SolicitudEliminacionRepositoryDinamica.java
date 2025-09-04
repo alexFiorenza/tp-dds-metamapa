@@ -18,7 +18,7 @@ public class SolicitudEliminacionRepositoryDinamica {
     public SolicitudEliminacionRepositoryDinamica(String daoType, Map<String, Object> daoConfig) {
         if ("filesystem".equals(daoType)) {
             Map<String, Object> config = new java.util.HashMap<>();
-            config.put("url", "mocks/solicitudes.json");
+            config.put("url", "src/main/resources/mocks/solicitudes.json");
             this.dao = DAOFactory.createDAO(SolicitudEliminacionDTO.class, daoType, config);
         } else {
             this.dao = DAOFactory.createDAO(SolicitudEliminacionDTO.class, daoType, daoConfig);
