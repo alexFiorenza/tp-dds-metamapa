@@ -1,6 +1,10 @@
 package utn.dds.fuentes.estatica;
 
 import io.javalin.Javalin;
+import io.javalin.openapi.plugin.OpenApiPlugin;
+import io.javalin.openapi.plugin.swagger.SwaggerPlugin;
+import io.javalin.openapi.plugin.redoc.ReDocPlugin;
+import io.javalin.openapi.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utn.dds.fuentes.estatica.config.AppConfig;
@@ -10,6 +14,34 @@ import utn.dds.fuentes.estatica.service.model.strategies.ProcessorFactory;
 
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
+    
+    @OpenApi(
+        summary = "Health check del servicio fuentes estáticas",
+        operationId = "healthCheck",
+        path = "/health",
+        methods = HttpMethod.GET,
+        tags = {"Health"},
+        responses = {
+            @OpenApiResponse(status = "200", description = "Servicio funcionando correctamente")
+        }
+    )
+    private static void healthCheck(io.javalin.http.Context ctx) {
+        ctx.result("OK");
+    }
+    
+    @OpenApi(
+        summary = "Información del servicio fuentes estáticas",
+        operationId = "infoServicio",
+        path = "/",
+        methods = HttpMethod.GET,
+        tags = {"Información"},
+        responses = {
+            @OpenApiResponse(status = "200", description = "Información del servicio")
+        }
+    )
+    private static void infoServicio(io.javalin.http.Context ctx) {
+        ctx.result("Fuentes Estáticas - MetaMapa");
+    }
     
     public static void main(String[] args) {
         try {
@@ -37,16 +69,43 @@ public class Main {
             ControllerFuenteEstatica controller = new ControllerFuenteEstatica(appConfig.getDaoType(), appConfig.getDaoConfig(), procesador);
             
             Javalin app = Javalin.create(config -> {
-                config.plugins.enableDevLogging();
+                config.bundledPlugins.enableDevLogging();
                 config.jsonMapper(new io.javalin.json.JavalinJackson().updateMapper(mapper -> {
                     mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
                     mapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
                 }));
                 
+                // Configurar OpenAPI Plugin
+                config.registerPlugin(new OpenApiPlugin(openApiConfig -> {
+                    openApiConfig
+                        .withDocumentationPath("/openapi")
+                        .withDefinitionConfiguration((version, openApiDefinition) -> {
+                            openApiDefinition
+                                .withInfo(openApiInfo -> {
+                                    openApiInfo
+                                        .title("MetaMapa - Fuentes Estáticas API")
+                                        .version("1.0.0")
+                                        .description("API para acceso a fuentes de datos estáticas (CSV) en MetaMapa")
+                                        .contact("Equipo MetaMapa", "http://localhost:7001", "contacto@metamapa.com");
+                                })
+                                .withServer(openApiServer -> {
+                                    openApiServer
+                                        .url("http://localhost:7001")
+                                        .description("Servidor de desarrollo");
+                                });
+                        });
+                }));
+                
+                // Registrar Swagger Plugin
+                config.registerPlugin(new SwaggerPlugin());
+                
+                // Registrar ReDoc Plugin
+                config.registerPlugin(new ReDocPlugin());
+                
             });
             
-            app.get("/health", ctx -> ctx.result("OK"));
-            app.get("/", ctx -> ctx.result("Fuentes Estáticas - MetaMapa"));
+            app.get("/health", Main::healthCheck);
+            app.get("/", Main::infoServicio);
             app.get("/hechos", controller::obtenerHechos);
             
             app.start(7001);

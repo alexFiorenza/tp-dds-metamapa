@@ -57,9 +57,10 @@ public class HechoRepository {
         }
     }
 
-    // Falta toquetear esta
-    public HechoDTO aportarHecho(HechoDTO hecho) throws IOException {;
-        dao.save(hecho);   // Aca no se porque se guardaria
+    public HechoDTO aportarHecho(HechoDTO hecho) throws IOException {
+        // Asignar fecha de carga actual automáticamente
+        hecho.setFechaCarga(java.time.LocalDateTime.now());
+        dao.save(hecho);
         return hecho;
     }
 

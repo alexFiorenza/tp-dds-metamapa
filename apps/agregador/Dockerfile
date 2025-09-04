@@ -7,6 +7,9 @@ WORKDIR /app
 # Copiar el JAR del microservicio
 COPY target/agregador-*.jar app.jar
 
+# Copiar recursos como archivos separados
+COPY src/main/resources/ src/main/resources/
+
 # Exponer el puerto del servicio
 EXPOSE 7005
 
