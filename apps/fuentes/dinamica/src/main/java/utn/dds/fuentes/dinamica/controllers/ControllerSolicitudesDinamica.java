@@ -4,6 +4,7 @@ import io.javalin.http.Context;
 import utn.dds.dominio.Hecho;
 import utn.dds.dominio.SolicitudEliminacion;
 import utn.dds.dto.HechoDTO;
+import utn.dds.dto.RespuestaPaginadaDTO;
 import utn.dds.dto.SolicitudEliminacionDTO;
 import utn.dds.fuentes.dinamica.Main;
 import utn.dds.fuentes.dinamica.services.ServiceHechoDinamica;
@@ -27,17 +28,34 @@ public class ControllerSolicitudesDinamica {
     public void obtenerSolicitudesDeEliminacion(Context ctx){
         try {
             loggerSolicitudes.info("-----------Obteniendo Solicitudes de Eliminación-----------");
-            List<SolicitudEliminacion> solicitudesEliminacion = this.solicitudesService.obtenerSolicitudes();
+            String paginaParam = ctx.queryParam("pagina");
+            String tamanioParam = ctx.queryParam("tamanio");
 
-            loggerSolicitudes.info("Tamaño solicitud eliminacion es: " + solicitudesEliminacion.size());
+            // Siempre usar paginación, con valores por defecto si no se especifican
+            int pagina = paginaParam != null ? Integer.parseInt(paginaParam) : 0;
+            int tamanio = tamanioParam != null ? Integer.parseInt(tamanioParam) : 10;
 
-            List<SolicitudEliminacionDTO> solicitudesDTO = solicitudesEliminacion.stream()
+            RespuestaPaginadaDTO<SolicitudEliminacion> respuestaPaginada = solicitudesService.obtenerSolicitudesPaginadas(pagina, tamanio);
+
+            // Convertir las Solicitudes a DTO
+            List<SolicitudEliminacionDTO> SolicitudesDTO = respuestaPaginada.getDatos().stream()
                     .map(SolicitudEliminacionDTO::fromSolicitudEliminacion)
                     .collect(Collectors.toList());
-            ctx.json(solicitudesDTO);
-            loggerSolicitudes.info("Se obtuvieron exitosamente las solicitudes de eliminación");
+
+
+            // Crear respuesta paginada con DTOs
+            RespuestaPaginadaDTO<SolicitudEliminacionDTO> respuestaDTOPaginada = new RespuestaPaginadaDTO<>(
+                    SolicitudesDTO,
+                    respuestaPaginada.getPagina(),
+                    respuestaPaginada.getTamanioPagina(),
+                    respuestaPaginada.getTotalElementos()
+            );
+
+            ctx.json(respuestaDTOPaginada);
+        } catch (NumberFormatException e) {
+            ctx.status(400).result("Error en parámetros de paginación: " + e.getMessage());
         } catch (Exception e) {
-            ctx.status(500).result("Error al obtener solicitudes de eliminacion: " + e.getMessage());
+            ctx.status(500).result("Error al obtener hechos: " + e.getMessage());
         }
     }
 
@@ -76,5 +94,6 @@ public class ControllerSolicitudesDinamica {
             ctx.status(500).result("Error al rechazar solicitud: " + e.getMessage());
         }
     }
+
 }
 

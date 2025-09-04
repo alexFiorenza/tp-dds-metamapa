@@ -26,7 +26,7 @@ public class SolicitudEliminacionRepositoryDinamica {
     }
 
     public List<SolicitudEliminacion> obtenerSolicitudes(){
-        List<SolicitudEliminacionDTO> solicitudesDTO = this.dao.find();
+        List<SolicitudEliminacionDTO> solicitudesDTO = dao.find();
         List<SolicitudEliminacion> solicitudes = solicitudesDTO.stream()
                 .map(SolicitudEliminacionDTO::toSolicitudEliminacion)
                 .collect(Collectors.toList());
