@@ -59,7 +59,7 @@ public class HechoRepository {
 
     public HechoDTO aportarHecho(HechoDTO hecho) throws IOException {
         // Asignar fecha de carga actual automáticamente
-        hecho.setFechaCarga(java.time.LocalDate.now());
+        hecho.setFechaCarga(java.time.LocalDateTime.now());
         dao.save(hecho);
         return hecho;
     }
