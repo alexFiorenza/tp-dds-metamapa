@@ -22,7 +22,7 @@ public class HechoRepository {
         if ("filesystem".equals(daoType)) {
             //loggerRepository.info("Estoy dentro de HechoRepository");  -- Logger comentado para debuggeo.
             Map<String, Object> config = new java.util.HashMap<>();
-            config.put("url", "mocks/hechos.json");
+            config.put("url", "src/main/resources/mocks/hechos.json");
             this.dao = DAOFactory.createDAO(HechoDTO.class, daoType, config);
         } else {
             this.dao = DAOFactory.createDAO(HechoDTO.class, daoType, daoConfig);
