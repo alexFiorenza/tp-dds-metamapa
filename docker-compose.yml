@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   # MinIO S3 Compatible Storage
@@ -93,6 +93,18 @@ services:
     networks:
       - metamapa-network
 
+  # Normalizador
+  normalizador:
+    build:
+      context: ./apps/normalizador
+      dockerfile: Dockerfile
+    ports:
+      - "7099:7099"
+    container_name: metamapa-normalizador
+    restart: unless-stopped
+    networks:
+      - metamapa-network
+
   # MetaMapa
   metamapa:
     build:
@@ -112,7 +124,7 @@ services:
     volumes:
       - ./apps/estadisticas/metric-collector/prometheus.yml:/etc/prometheus/prometheus.yml
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
+      - "--config.file=/etc/prometheus/prometheus.yml"
     ports:
       - "9090:9090"
     depends_on:
@@ -128,7 +140,7 @@ services:
     volumes:
       - ./apps/estadisticas/gestor-alertas/config.yml:/etc/alertmanager/config.yml
     command:
-      - '--config.file=/etc/alertmanager/config.yml'
+      - "--config.file=/etc/alertmanager/config.yml"
     ports:
       - "9093:9093"
     depends_on:
@@ -151,7 +163,6 @@ services:
       - fuente-proxy-demo
     networks:
       - metamapa-network
-
   # Scheduler para Agregador
   scheduler-agregador:
     build:
@@ -170,7 +181,3 @@ services:
 
 volumes:
   minio_data:
-
-networks:
-  metamapa-network:
-    driver: bridge 

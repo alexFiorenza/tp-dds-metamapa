@@ -32,6 +32,7 @@
         <module>apps/agregador</module>
         <module>apps/metamapa</module>
         <module>apps/scheduler</module>
+        <module>apps/normalizador</module>
     </modules>
 
     <dependencyManagement>
