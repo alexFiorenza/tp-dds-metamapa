@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   # MinIO S3 Compatible Storage
   minio:
@@ -181,3 +179,7 @@ services:
 
 volumes:
   minio_data:
+
+networks:
+  metamapa-network:
+    driver: bridge
