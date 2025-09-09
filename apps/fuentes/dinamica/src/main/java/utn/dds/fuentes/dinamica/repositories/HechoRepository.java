@@ -6,6 +6,9 @@ import utn.dds.dominio.EstadoHecho;
 import utn.dds.dominio.Hecho;
 import utn.dds.dominio.SolicitudEliminacion;
 import utn.dds.dto.HechoDTO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import utn.dds.fuentes.dinamica.Main;
 
 import java.io.IOException;
 import java.util.*;
@@ -13,13 +16,13 @@ import java.util.stream.Collectors;
 
 public class HechoRepository {
     private final IDAO<HechoDTO> dao;
-
-    // Esto es una copia del Repository de la proxy demo, hay que cambiarle los valores
+    private static final Logger loggerRepository = LoggerFactory.getLogger(HechoRepository.class);
 
     public HechoRepository(String daoType, Map<String, Object> daoConfig) {
         if ("filesystem".equals(daoType)) {
+            //loggerRepository.info("Estoy dentro de HechoRepository");  -- Logger comentado para debuggeo.
             Map<String, Object> config = new java.util.HashMap<>();
-            config.put("url", "mocks/hechos.json");
+            config.put("url", "src/main/resources/mocks/hechos.json");
             this.dao = DAOFactory.createDAO(HechoDTO.class, daoType, config);
         } else {
             this.dao = DAOFactory.createDAO(HechoDTO.class, daoType, daoConfig);
@@ -31,10 +34,12 @@ public class HechoRepository {
     }
 
     public List<Hecho> obtenerHechos() throws IOException {
+        //
         List<HechoDTO> hechosDTO = dao.find();
-        return hechosDTO.stream()
+        List<Hecho> hechos = hechosDTO.stream()
                 .map(HechoDTO::toHecho)
                 .collect(Collectors.toList());
+        return hechos;
     }
 
     public Hecho buscarHecho(String titulo) throws IOException {
@@ -52,15 +57,11 @@ public class HechoRepository {
         }
     }
 
-    // A chequear si es Hecho o HechoDTO
-    public List<Hecho> aportarHechos(List<HechoDTO> hechosDTO) throws IOException {;
-        List<Hecho> hechos = new ArrayList<>();
-        for (HechoDTO dto : hechosDTO) {
-            Hecho hecho = dto.toHecho();
-            dao.save(dto);
-            hechos.add(hecho);
-        }
-        return hechos;
+    public HechoDTO aportarHecho(HechoDTO hecho) throws IOException {
+        // Asignar fecha de carga actual automáticamente
+        hecho.setFechaCarga(java.time.LocalDateTime.now());
+        dao.save(hecho);
+        return hecho;
     }
 
     public Hecho cambiarEstado(Hecho hecho) throws IOException {

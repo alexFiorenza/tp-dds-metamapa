@@ -17,8 +17,8 @@ public class AppConfig extends BaseAppConfig {
         String processorType = getEnvOrDefault("PROCESSOR_TYPE", "csv");
         String dataUrl = getEnvOrDefault("DATA_URL", "src/main/resources/data/desastres_naturales_argentina.csv");
         
-        // Usar el builder compartido para crear la configuración del DAO
-        Map<String, Object> daoConfig = DAOConfigBuilder.buildDAOConfig(daoType, dataUrl);
+        // Crear la configuración del DAO sin URL para permitir paths dinámicos
+        Map<String, Object> daoConfig = DAOConfigBuilder.buildDAOConfig(daoType);
         
         return new AppConfig(daoType, processorType, dataUrl, daoConfig);
     }
