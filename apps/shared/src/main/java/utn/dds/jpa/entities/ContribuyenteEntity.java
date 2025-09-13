@@ -1,25 +1,30 @@
-package utn.dds.dominio;
+package utn.dds.jpa.entities;
 
+import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Contribuyente {
+@Entity
+@Table(name = "contribuyentes")
+public class ContribuyenteEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private List<Hecho> aportes;
+
+    @OneToMany(mappedBy = "contribuyente", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<HechoEntity> aportes;
+
+    @Column(name = "nombre", nullable = false)
     private String nombre;
+
+    @Column(name = "apellido", nullable = false)
     private String apellido;
+
+    @Column(name = "edad")
     private int edad;
 
-    public Contribuyente() {
+    public ContribuyenteEntity() {
         this.aportes = new ArrayList<>();
-    }
-
-    // Constructor
-    public Contribuyente(String nombre, String apellido, Integer edad) {
-        this();
-        this.nombre = nombre;
-        this.apellido = apellido;
-        this.edad = edad;
     }
 
     // Getters
@@ -39,7 +44,7 @@ public class Contribuyente {
         return edad;
     }
 
-    public List<Hecho> getAportes() {
+    public List<HechoEntity> getAportes() {
         return aportes;
     }
 
@@ -60,7 +65,7 @@ public class Contribuyente {
         this.edad = edad;
     }
 
-    public void setAportes(List<Hecho> aportes) {
+    public void setAportes(List<HechoEntity> aportes) {
         this.aportes = aportes;
     }
-} 
+}

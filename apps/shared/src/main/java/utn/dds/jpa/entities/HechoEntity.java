@@ -1,76 +1,75 @@
-package utn.dds.dominio;
+package utn.dds.jpa.entities;
+
+import jakarta.persistence.*;
+import utn.dds.dominio.EstadoHecho;
+import utn.dds.dominio.Origen;
+import utn.dds.dominio.TipoHecho;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
-public class Hecho {
+@Entity
+@Table(name = "hechos")
+public class HechoEntity {
+    @Id
+    @Column(name = "uuid")
     private String uuid;
+
+    @Column(name = "titulo", nullable = false)
     private String titulo;
+
+    @Column(name = "descripcion")
     private String descripcion;
+
+    @Column(name = "categoria")
     private String categoria;
+
+    @Column(name = "fecha_acontecimiento")
     private LocalDate fechaAcontecimiento;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "origen")
     private Origen origen;
-    private Contribuyente contribuyente;
+
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "contribuyente_id")
+    private ContribuyenteEntity contribuyente;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo")
     private TipoHecho tipo;
+
+    @Column(name = "longitud")
     private double longitud;
+
+    @Column(name = "latitud")
     private double latitud;
+
+    @Column(name = "fecha_carga")
     private LocalDateTime fechaCarga;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado")
     private EstadoHecho estado;
+
+    @ElementCollection
+    @CollectionTable(name = "hecho_etiquetas", joinColumns = @JoinColumn(name = "hecho_uuid"))
+    @Column(name = "etiqueta")
     private List<String> etiquetas;
 
-    public Hecho() {
+    public HechoEntity() {
         this.uuid = UUID.randomUUID().toString();
     }
 
-    // Constructor
-    public Hecho(String titulo, String descripcion, String categoria, LocalDate fechaAcontecimiento,
-                 Origen origen, Contribuyente contribuyente, TipoHecho tipo,
-                 double longitud, double latitud, LocalDateTime fechaCarga,
-                 EstadoHecho estado, List<String> etiquetas) {
-        this();
-        this.titulo = titulo;
-        this.descripcion = descripcion;
-        this.categoria = categoria;
-        this.fechaAcontecimiento = fechaAcontecimiento;
-        this.origen = origen;
-        this.contribuyente = contribuyente;
-        this.tipo = tipo;
-        this.longitud = longitud;
-        this.latitud = latitud;
-        this.fechaCarga = fechaCarga;
-        this.estado = estado;
-        this.etiquetas = etiquetas;
-    }
-
-    public Hecho(Map<String, Object> datos) {
-        this.uuid = (String) datos.getOrDefault("uuid", UUID.randomUUID().toString());
-        this.titulo = (String) datos.get("titulo");
-        this.descripcion = (String) datos.get("descripcion");
-        this.categoria = (String) datos.get("categoria");
-        this.fechaAcontecimiento = (LocalDate) datos.get("fecha_contecimiento");
-        this.origen = Origen.MANUAL;
-        this.contribuyente = (Contribuyente) datos.get("contribuyente");
-        Object tipoObj = datos.get("tipo");
-        this.tipo = tipoObj instanceof String ? 
-            TipoHecho.valueOf(((String) tipoObj).toUpperCase()) : 
-            (TipoHecho) tipoObj;
-        this.longitud = (Double) datos.get("longitud");
-        this.latitud = (Double) datos.get("latitud");
-        this.fechaCarga = (LocalDateTime) datos.get("fecha_carga");
-        this.estado = EstadoHecho.ACTIVO;
-        this.etiquetas = (List<String>) datos.get("etiquetas");
-    }
-
     // Getters
-    public String getTitulo() {
-        return titulo;
-    }
-
     public String getUuid() {
         return uuid;
+    }
+
+    public String getTitulo() {
+        return titulo;
     }
 
     public String getDescripcion() {
@@ -89,7 +88,7 @@ public class Hecho {
         return origen;
     }
 
-    public Contribuyente getContribuyente() {
+    public ContribuyenteEntity getContribuyente() {
         return contribuyente;
     }
 
@@ -142,7 +141,7 @@ public class Hecho {
         this.origen = origen;
     }
 
-    public void setContribuyente(Contribuyente contribuyente) {
+    public void setContribuyente(ContribuyenteEntity contribuyente) {
         this.contribuyente = contribuyente;
     }
 
@@ -169,13 +168,4 @@ public class Hecho {
     public void setEtiquetas(List<String> etiquetas) {
         this.etiquetas = etiquetas;
     }
-
-    // Acciones
-    public void ocultar() {
-        this.estado = EstadoHecho.OCULTO;
-    }
-
-    public void activar() {
-        this.estado = EstadoHecho.ACTIVO;
-    }
-} 
+}

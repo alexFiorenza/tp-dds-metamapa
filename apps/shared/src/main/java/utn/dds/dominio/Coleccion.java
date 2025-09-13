@@ -8,20 +8,26 @@ import java.util.UUID;
 
 public class Coleccion {
 
-    private final String titulo;
+    private String handle;
+    private String titulo;
     private String descripcion;
     private List<Hecho> hechos;
     private List<HechoStrategy> criteriosDePertenencia;
-    private String handle;
+
+    public Coleccion() {
+        this.handle = UUID.randomUUID().toString();
+        this.hechos = new ArrayList<>();
+        this.criteriosDePertenencia = new ArrayList<>();
+    }
 
     // Constructor
     public Coleccion(String titulo, String descripcion,
                      List<Hecho> hechos, List<HechoStrategy> criteriosDePertenencia) {
+        this();
         this.titulo = titulo;
         this.descripcion = descripcion;
         this.hechos = hechos;
         this.criteriosDePertenencia = criteriosDePertenencia;
-        this.handle = UUID.randomUUID().toString();
     }
 
     public List<Hecho> buscarHechos(List<HechoStrategy> filtros) {
@@ -44,8 +50,16 @@ public class Coleccion {
     }
 
     // Getters
+    public String getHandle() {
+        return handle;
+    }
+
     public String getTitulo(){
         return titulo;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
     }
 
     public List<HechoStrategy> getCriteriosDePertenencia(){
@@ -57,7 +71,23 @@ public class Coleccion {
     }
 
     // Setters
+    public void setHandle(String handle) {
+        this.handle = handle;
+    }
+
+    public void setTitulo(String titulo) {
+        this.titulo = titulo;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
     public void setHechos(List<Hecho> hechos){
         this.hechos = hechos;
+    }
+
+    public void setCriteriosDePertenencia(List<HechoStrategy> criteriosDePertenencia) {
+        this.criteriosDePertenencia = criteriosDePertenencia;
     }
 } 
