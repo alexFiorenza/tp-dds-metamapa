@@ -12,6 +12,7 @@
         <class>utn.dds.jpa.entities.HechoEntity</class>
         <class>utn.dds.jpa.entities.ContribuyenteEntity</class>
         <class>utn.dds.jpa.entities.ColeccionEntity</class>
+        <class>utn.dds.jpa.entities.FuenteEntity</class>
         
         <properties>
             <!-- Configuración de la base de datos -->

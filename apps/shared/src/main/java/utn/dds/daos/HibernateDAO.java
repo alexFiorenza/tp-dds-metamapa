@@ -240,6 +240,19 @@ public class HibernateDAO<T> implements IDAO<T> {
         }
     }
 
+    public <R> R executeQuery(java.util.function.Function<EntityManager, R> queryFunction) {
+        EntityManager em = entityManagerFactory.createEntityManager();
+        try {
+            logger.debug("Ejecutando consulta personalizada");
+            return queryFunction.apply(em);
+        } catch (Exception e) {
+            logger.error("Error al ejecutar consulta personalizada: {}", e.getMessage(), e);
+            throw new RuntimeException("Error al ejecutar consulta personalizada", e);
+        } finally {
+            em.close();
+        }
+    }
+
     public void close() {
         if (entityManagerFactory != null && entityManagerFactory.isOpen()) {
             logger.info("Cerrando EntityManagerFactory");
