@@ -17,13 +17,13 @@ public class HechoEntity {
     @Column(name = "uuid")
     private String uuid;
 
-    @Column(name = "titulo", nullable = false)
+    @Column(name = "titulo", nullable = false, length = 500)
     private String titulo;
 
-    @Column(name = "descripcion")
+    @Column(name = "descripcion", length = 2000)
     private String descripcion;
 
-    @Column(name = "categoria")
+    @Column(name = "categoria", length = 500)
     private String categoria;
 
     @Column(name = "fecha_acontecimiento")
