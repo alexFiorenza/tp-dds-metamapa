@@ -14,18 +14,13 @@ public class AppConfig {
     }
 
     public static AppConfig fromEnvironment() {
-        String daoType = getEnvOrDefault("DAO_TYPE", "filesystem");
-        
+        String daoType = getEnvOrDefault("DAO_TYPE", "hibernate");
+
         Map<String, Object> daoConfig = null;
         if (daoType != null && !daoType.trim().isEmpty() && !daoType.equalsIgnoreCase("none")) {
-            if ("filesystem".equals(daoType)) {
-                daoConfig = new java.util.HashMap<>();
-                // La ruta será configurada individualmente por cada repository
-            } else {
-                daoConfig = DAOConfigBuilder.buildDAOConfig(daoType, null);
-            }
+            daoConfig = DAOConfigBuilder.buildDAOConfig(daoType, null);
         }
-        
+
         return new AppConfig(daoType, daoConfig);
     }
 

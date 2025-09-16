@@ -28,7 +28,7 @@ public class DAOFactory {
                     return new S3<>(accessKey, secretKey, bucket, endpoint, region);
                 }
             case "hibernate":
-                return new HibernateDAO<>(clazz, config);
+                return new Hibernate<>(clazz, config);
             default:
                 throw new IllegalArgumentException("Tipo de DAO no soportado: " + type);
         }

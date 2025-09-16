@@ -49,9 +49,9 @@ public class Main {
 
     public static void main(String[] args) {
         AppConfig appConfig = AppConfig.fromEnvironment();
-        
-        FuentesRepository fuentesRepository = new FuentesRepository(appConfig.getDaoType(), appConfig.getDaoConfig());
-        HechoRepository hechoRepository = new HechoRepository(appConfig.getDaoType(), appConfig.getDaoConfig());
+
+        FuentesRepository fuentesRepository = new FuentesRepository(appConfig.getDaoConfig());
+        HechoRepository hechoRepository = new HechoRepository(appConfig.getDaoConfig());
         ServiceRegistry serviceRegistry = new ServiceRegistry(fuentesRepository);
         ServiceAgregador serviceAgregador = new ServiceAgregador(hechoRepository, serviceRegistry);
         RegistryController registryController = new RegistryController(serviceRegistry);

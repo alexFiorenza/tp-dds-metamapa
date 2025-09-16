@@ -2,6 +2,7 @@ package utn.dds.daos;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityGraph;
 import jakarta.persistence.Persistence;
 import jakarta.persistence.TypedQuery;
 import org.slf4j.Logger;
@@ -11,53 +12,53 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
-public class HibernateDAO<T> implements IDAO<T> {
-    private static final Logger logger = LoggerFactory.getLogger(HibernateDAO.class);
+public class Hibernate<T> implements IDAO<T> {
+    private static final Logger logger = LoggerFactory.getLogger(Hibernate.class);
     
     private final Class<T> entityClass;
     private final EntityManagerFactory entityManagerFactory;
     private final String persistenceUnitName;
 
-    public HibernateDAO(Class<T> entityClass, Map<String, Object> config) {
+    public Hibernate(Class<T> entityClass, Map<String, Object> config) {
         this.entityClass = entityClass;
         this.persistenceUnitName = (String) config.getOrDefault("persistenceUnit", "metamapa-db");
         
         try {
-            logger.info("Inicializando HibernateDAO para entidad: {}", entityClass.getSimpleName());
+            logger.info("Inicializando Hibernate para entidad: {}", entityClass.getSimpleName());
             logger.info("Usando persistence unit: {}", persistenceUnitName);
             
             this.entityManagerFactory = Persistence.createEntityManagerFactory(persistenceUnitName, config);
             logger.info("EntityManagerFactory creado exitosamente");
         } catch (Exception e) {
             logger.error("Error al crear EntityManagerFactory: {}", e.getMessage(), e);
-            throw new RuntimeException("Error al inicializar HibernateDAO", e);
+            throw new RuntimeException("Error al inicializar Hibernate", e);
         }
     }
 
-    public HibernateDAO(Class<T> entityClass, String persistenceUnitName) {
+    public Hibernate(Class<T> entityClass, String persistenceUnitName) {
         this.entityClass = entityClass;
         this.persistenceUnitName = persistenceUnitName;
         
         try {
-            logger.info("Inicializando HibernateDAO para entidad: {}", entityClass.getSimpleName());
+            logger.info("Inicializando Hibernate para entidad: {}", entityClass.getSimpleName());
             logger.info("Usando persistence unit: {}", persistenceUnitName);
             
             this.entityManagerFactory = Persistence.createEntityManagerFactory(persistenceUnitName);
             logger.info("EntityManagerFactory creado exitosamente");
         } catch (Exception e) {
             logger.error("Error al crear EntityManagerFactory: {}", e.getMessage(), e);
-            throw new RuntimeException("Error al inicializar HibernateDAO", e);
+            throw new RuntimeException("Error al inicializar Hibernate", e);
         }
     }
 
     @Override
     public InputStream read() {
-        throw new UnsupportedOperationException("HibernateDAO no soporta operaciones de InputStream. Use find() para obtener entidades.");
+        throw new UnsupportedOperationException("Hibernate no soporta operaciones de InputStream. Use find() para obtener entidades.");
     }
 
     @Override
     public InputStream read(String path) {
-        throw new UnsupportedOperationException("HibernateDAO no soporta operaciones de InputStream. Use find() para obtener entidades.");
+        throw new UnsupportedOperationException("Hibernate no soporta operaciones de InputStream. Use find() para obtener entidades.");
     }
 
     @Override
