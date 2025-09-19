@@ -2,7 +2,6 @@ package utn.dds.dto;
 
 import utn.dds.dominio.EstadoHecho;
 import utn.dds.dominio.Hecho;
-import utn.dds.dominio.Origen;
 import utn.dds.dominio.TipoHecho;
 
 import java.time.LocalDate;
@@ -14,7 +13,7 @@ public class HechoDTO {
     private String descripcion;
     private String categoria;
     private LocalDate fechaAcontecimiento;
-    private Origen origen;
+    private String origen;
     private String contribuyenteNombre;
     private TipoHecho tipo;
     private double longitud;
@@ -27,7 +26,7 @@ public class HechoDTO {
     public HechoDTO() {}
 
     public HechoDTO(String titulo, String descripcion, String categoria, LocalDate fechaAcontecimiento,
-                    Origen origen, String contribuyenteNombre, TipoHecho tipo,
+                    String origen, String contribuyenteNombre, TipoHecho tipo,
                     double longitud, double latitud, LocalDateTime fechaCarga,
                     EstadoHecho estado, List<String> etiquetas, String uuid) {
         this.titulo = titulo;
@@ -112,11 +111,11 @@ public class HechoDTO {
         this.fechaAcontecimiento = fechaAcontecimiento;
     }
 
-    public Origen getOrigen() {
+    public String getOrigen() {
         return origen;
     }
 
-    public void setOrigen(Origen origen) {
+    public void setOrigen(String origen) {
         this.origen = origen;
     }
 

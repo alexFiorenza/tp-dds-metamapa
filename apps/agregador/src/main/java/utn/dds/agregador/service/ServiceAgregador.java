@@ -152,9 +152,11 @@ public class ServiceAgregador {
                     throw new RuntimeException("Respuesta no contiene estructura paginada válida");
                 }
                 
-                // Convertir HechoDTOs a Hechos
+                // Convertir HechoDTOs a Hechos y sobrescribir origen
                 for (HechoDTO dto : respuestaPaginada.getDatos()) {
-                    todosLosHechos.add(dto.toHecho());
+                    Hecho hecho = dto.toHecho();
+                    hecho.setOrigen(fuente.getUuid().toString());
+                    todosLosHechos.add(hecho);
                 }
                 
                 // Verificar si hay más páginas
@@ -209,9 +211,11 @@ public class ServiceAgregador {
         
         List<Hecho> hechos = new ArrayList<>();
         for (HechoDTO dto : hechosDTO) {
-            hechos.add(dto.toHecho());
+            Hecho hecho = dto.toHecho();
+            hecho.setOrigen(fuente.getUuid().toString());
+            hechos.add(hecho);
         }
-        
+
         return hechos;
     }
     

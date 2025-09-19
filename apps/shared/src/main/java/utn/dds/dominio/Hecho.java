@@ -12,7 +12,7 @@ public class Hecho {
     private String descripcion;
     private String categoria;
     private LocalDate fechaAcontecimiento;
-    private Origen origen;
+    private String origen;
     private Contribuyente contribuyente;
     private TipoHecho tipo;
     private double longitud;
@@ -27,7 +27,7 @@ public class Hecho {
 
     // Constructor
     public Hecho(String titulo, String descripcion, String categoria, LocalDate fechaAcontecimiento,
-                 Origen origen, Contribuyente contribuyente, TipoHecho tipo,
+                 String origen, Contribuyente contribuyente, TipoHecho tipo,
                  double longitud, double latitud, LocalDateTime fechaCarga,
                  EstadoHecho estado, List<String> etiquetas) {
         this();
@@ -51,7 +51,7 @@ public class Hecho {
         this.descripcion = (String) datos.get("descripcion");
         this.categoria = (String) datos.get("categoria");
         this.fechaAcontecimiento = (LocalDate) datos.get("fecha_contecimiento");
-        this.origen = Origen.MANUAL;
+        this.origen = (String) datos.get("origen");
         this.contribuyente = (Contribuyente) datos.get("contribuyente");
         Object tipoObj = datos.get("tipo");
         this.tipo = tipoObj instanceof String ? 
@@ -85,7 +85,7 @@ public class Hecho {
         return fechaAcontecimiento;
     }
 
-    public Origen getOrigen() {
+    public String getOrigen() {
         return origen;
     }
 
@@ -138,7 +138,7 @@ public class Hecho {
         this.fechaAcontecimiento = fechaAcontecimiento;
     }
 
-    public void setOrigen(Origen origen) {
+    public void setOrigen(String origen) {
         this.origen = origen;
     }
 

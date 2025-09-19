@@ -29,9 +29,8 @@ public class HechoEntity {
     @Column(name = "fecha_acontecimiento")
     private LocalDate fechaAcontecimiento;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "origen")
-    private Origen origen;
+    @Column(name = "origen", length = 500)
+    private String origen;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "contribuyente_id")
@@ -54,7 +53,7 @@ public class HechoEntity {
     @Column(name = "estado")
     private EstadoHecho estado;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "hecho_etiquetas", joinColumns = @JoinColumn(name = "hecho_uuid"))
     @Column(name = "etiqueta")
     private List<String> etiquetas;
@@ -84,7 +83,7 @@ public class HechoEntity {
         return fechaAcontecimiento;
     }
 
-    public Origen getOrigen() {
+    public String getOrigen() {
         return origen;
     }
 
@@ -137,7 +136,7 @@ public class HechoEntity {
         this.fechaAcontecimiento = fechaAcontecimiento;
     }
 
-    public void setOrigen(Origen origen) {
+    public void setOrigen(String origen) {
         this.origen = origen;
     }
 
