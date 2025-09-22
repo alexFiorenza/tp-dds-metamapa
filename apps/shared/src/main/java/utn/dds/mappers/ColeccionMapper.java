@@ -26,8 +26,12 @@ public class ColeccionMapper {
             );
         }
 
-        // Los criteriosDePertenencia no se persisten, se inicializan vacíos
-        // Se pueden cargar/configurar por separado según la lógica de negocio
+        // Convertir criterios de pertenencia de entity a domain
+        if (entity.getCriteriosDePertenencia() != null) {
+            coleccion.setCriteriosDePertenencia(
+                CriterioMapper.toDomainList(entity.getCriteriosDePertenencia())
+            );
+        }
 
         return coleccion;
     }
@@ -51,7 +55,12 @@ public class ColeccionMapper {
             );
         }
 
-        // Los criteriosDePertenencia no se persisten
+        // Convertir criterios de pertenencia de domain a entity
+        if (domain.getCriteriosDePertenencia() != null) {
+            entity.setCriteriosDePertenencia(
+                CriterioMapper.toEntityList(domain.getCriteriosDePertenencia(), domain.getHandle())
+            );
+        }
 
         return entity;
     }

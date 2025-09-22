@@ -21,7 +21,7 @@ public class ServiceHechoMetamapa {
         RespuestaPaginadaDTO<Hecho> respuestaHechos = this.hechoRepository.obtenerConFiltros(filtros, pagina, tamanioPagina);
 
         // Convertir a DTO
-        List<HechoDTO> hechosDTO = respuestaHechos.getElementos().stream()
+        List<HechoDTO> hechosDTO = respuestaHechos.getDatos().stream()
                 .map(HechoDTO::fromHecho)
                 .collect(Collectors.toList());
 

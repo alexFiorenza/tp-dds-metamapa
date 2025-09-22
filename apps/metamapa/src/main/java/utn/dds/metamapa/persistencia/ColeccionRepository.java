@@ -4,12 +4,15 @@ import utn.dds.daos.IDAO;
 import utn.dds.daos.DAOFactory;
 import utn.dds.daos.Hibernate;
 import utn.dds.dominio.Coleccion;
+import utn.dds.dominio.Hecho;
+import utn.dds.dominio.criterios.HechoStrategy;
 import utn.dds.jpa.entities.ColeccionEntity;
 import utn.dds.mappers.ColeccionMapper;
 
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 public class ColeccionRepository {
@@ -48,6 +51,26 @@ public class ColeccionRepository {
             return entity != null ? ColeccionMapper.toDomain(entity) : null;
         }
         return null;
+    }
+
+    public List<Hecho> obtenerHechos(String handle) {
+        Coleccion coleccion = obtenerPorId(handle);
+        if (coleccion == null) {
+            return new ArrayList<>();
+        }
+
+        List<Hecho> todosLosHechos = coleccion.getHechos();
+        List<HechoStrategy> criterios = coleccion.getCriteriosDePertenencia();
+
+        // Si no hay criterios, devolver todos los hechos
+        if (criterios == null || criterios.isEmpty()) {
+            return todosLosHechos;
+        }
+
+        // Aplicar criterios de pertenencia automáticamente
+        return todosLosHechos.stream()
+                .filter(hecho -> criterios.stream().allMatch(criterio -> criterio.cumple(hecho)))
+                .collect(Collectors.toList());
     }
 
     public void crear(Coleccion coleccion) {

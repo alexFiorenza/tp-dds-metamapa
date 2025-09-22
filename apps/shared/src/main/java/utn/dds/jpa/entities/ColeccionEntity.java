@@ -27,9 +27,23 @@ public class ColeccionEntity {
     )
     private List<HechoEntity> hechos;
 
+    @ManyToMany(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "coleccion_fuentes",
+        joinColumns = @JoinColumn(name = "coleccion_handle"),
+        inverseJoinColumns = @JoinColumn(name = "fuente_uuid")
+    )
+    private List<FuenteEntity> fuentes;
+
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @JoinColumn(name = "id_coleccion")
+    private List<CriterioEntity> criteriosDePertenencia;
+
     public ColeccionEntity() {
         this.handle = UUID.randomUUID().toString();
         this.hechos = new ArrayList<>();
+        this.fuentes = new ArrayList<>();
+        this.criteriosDePertenencia = new ArrayList<>();
     }
 
     // Getters
@@ -49,6 +63,14 @@ public class ColeccionEntity {
         return hechos;
     }
 
+    public List<FuenteEntity> getFuentes() {
+        return fuentes;
+    }
+
+    public List<CriterioEntity> getCriteriosDePertenencia() {
+        return criteriosDePertenencia;
+    }
+
     // Setters
     public void setHandle(String handle) {
         this.handle = handle;
@@ -64,5 +86,13 @@ public class ColeccionEntity {
 
     public void setHechos(List<HechoEntity> hechos) {
         this.hechos = hechos;
+    }
+
+    public void setFuentes(List<FuenteEntity> fuentes) {
+        this.fuentes = fuentes;
+    }
+
+    public void setCriteriosDePertenencia(List<CriterioEntity> criteriosDePertenencia) {
+        this.criteriosDePertenencia = criteriosDePertenencia;
     }
 }
