@@ -43,7 +43,7 @@ public class CSVStrategy implements ProcesadorStrategy {
             List<String> etiquetas = new ArrayList<>();
             return new Hecho(
                 titulo, descripcion, categoria, fechaDelHecho,
-                Origen.DATASET, null, TipoHecho.TEXTO,
+                null, null, TipoHecho.TEXTO,
                 longitud, latitud, LocalDateTime.now(),
                 EstadoHecho.ACTIVO, etiquetas
             );

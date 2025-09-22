@@ -2,87 +2,160 @@ package utn.dds.agregador.persistencia;
 
 import utn.dds.daos.IDAO;
 import utn.dds.daos.DAOFactory;
+import utn.dds.daos.Hibernate;
 import utn.dds.dto.FuenteDTO;
+import utn.dds.jpa.entities.FuenteEntity;
+import utn.dds.mappers.FuenteMapper;
 import java.util.List;
 import java.util.UUID;
 import java.util.Map;
 import java.util.HashMap;
-import java.io.InputStream;
+import java.util.stream.Collectors;
+import jakarta.persistence.EntityGraph;
+import jakarta.persistence.EntityManager;
 
 public class FuentesRepository {
-    
-    private IDAO<FuenteDTO> dao;
-    
+
+    private IDAO<FuenteEntity> dao;
+
     public FuentesRepository() {
-        // Constructor por defecto que usa configuración por defecto
-        this("filesystem", new HashMap<>());
+        this(new HashMap<>());
     }
-    
-    public FuentesRepository(String daoType, Map<String, Object> daoConfig) {
-        if ("filesystem".equals(daoType)) {
-            // Para filesystem, usar configuración específica
-            Map<String, Object> config = new HashMap<>();
-            config.put("url", "src/main/resources/mocks/fuentes.json");
-            this.dao = DAOFactory.createDAO(FuenteDTO.class, daoType, config);
-        } else {
-            // Para otros tipos de DAO, usar la configuración provista
-            this.dao = DAOFactory.createDAO(FuenteDTO.class, daoType, daoConfig);
-        }
+
+    public FuentesRepository(Map<String, Object> daoConfig) {
+        Map<String, Object> hibernateConfig = new HashMap<>(daoConfig);
+
+        // Configurar valores por defecto desde variables de entorno
+        hibernateConfig.putIfAbsent("jakarta.persistence.jdbc.url",
+            System.getenv().getOrDefault("DB_URL", "jdbc:postgresql://localhost:5432/metamapa_db"));
+        hibernateConfig.putIfAbsent("jakarta.persistence.jdbc.user",
+            System.getenv().getOrDefault("DB_USER", "metamapa"));
+        hibernateConfig.putIfAbsent("jakarta.persistence.jdbc.password",
+            System.getenv().getOrDefault("DB_PASSWORD", "metamapa123"));
+        hibernateConfig.putIfAbsent("persistenceUnit", "metamapa-db");
+
+        this.dao = DAOFactory.createDAO(FuenteEntity.class, "hibernate", hibernateConfig);
     }
     
     public List<FuenteDTO> find() {
-        return dao.find();
+        if (dao instanceof Hibernate) {
+            Hibernate<FuenteEntity> hibernateDAO = (Hibernate<FuenteEntity>) dao;
+            return hibernateDAO.executeQuery(em -> {
+                EntityGraph<FuenteEntity> entityGraph = createEntityGraphWithParams(em);
+
+                return em.createQuery("SELECT DISTINCT f FROM FuenteEntity f", FuenteEntity.class)
+                         .setHint("jakarta.persistence.fetchgraph", entityGraph)
+                         .getResultList()
+                         .stream()
+                         .map(FuenteMapper::toDomain)
+                         .collect(Collectors.toList());
+            });
+        }
+        return null;
     }
     
     public void save(FuenteDTO fuente) {
         if (fuente.getUuid() == null) {
             fuente.setUuid(UUID.randomUUID());
         }
-        
-        // Para el repositorio de fuentes, necesitamos manejar la lista completa
-        // ya que el DAO no tiene métodos específicos para búsqueda por campo
-        List<FuenteDTO> fuentes = dao.find();
-        
-        // Agregar la fuente (la validación de duplicados se hace en el service)
-        fuentes.add(fuente);
-        dao.saveAll(fuentes);
+
+        FuenteEntity entity = FuenteMapper.toEntity(fuente);
+        dao.save(entity);
     }
     
     public FuenteDTO findByHost(String host) {
-        return dao.find().stream()
-                .filter(f -> f.getHost().equals(host))
-                .findFirst()
-                .orElse(null);
+        if (dao instanceof Hibernate) {
+            Hibernate<FuenteEntity> hibernateDAO = (Hibernate<FuenteEntity>) dao;
+            return hibernateDAO.executeQuery(em -> {
+                EntityGraph<FuenteEntity> entityGraph = createEntityGraphWithParams(em);
+
+                List<FuenteEntity> results = em.createQuery("SELECT DISTINCT f FROM FuenteEntity f WHERE f.host = :host", FuenteEntity.class)
+                        .setParameter("host", host)
+                        .setHint("jakarta.persistence.fetchgraph", entityGraph)
+                        .getResultList();
+                return results.isEmpty() ? null : FuenteMapper.toDomain(results.get(0));
+            });
+        }
+        return null;
     }
-    
+
     public List<FuenteDTO> findAllByHost(String host) {
-        return dao.find().stream()
-                .filter(f -> f.getHost().equals(host))
-                .collect(java.util.stream.Collectors.toList());
+        if (dao instanceof Hibernate) {
+            Hibernate<FuenteEntity> hibernateDAO = (Hibernate<FuenteEntity>) dao;
+            return hibernateDAO.executeQuery(em -> {
+                EntityGraph<FuenteEntity> entityGraph = createEntityGraphWithParams(em);
+
+                return em.createQuery("SELECT DISTINCT f FROM FuenteEntity f WHERE f.host = :host", FuenteEntity.class)
+                        .setParameter("host", host)
+                        .setHint("jakarta.persistence.fetchgraph", entityGraph)
+                        .getResultList()
+                        .stream()
+                        .map(FuenteMapper::toDomain)
+                        .collect(Collectors.toList());
+            });
+        }
+        return null;
     }
     
     public boolean removeByHost(String host) {
-        List<FuenteDTO> fuentes = dao.find();
-        boolean removed = fuentes.removeIf(f -> f.getHost().equals(host));
-        if (removed) {
-            dao.saveAll(fuentes);
+        if (dao instanceof Hibernate) {
+            Hibernate<FuenteEntity> hibernateDAO = (Hibernate<FuenteEntity>) dao;
+            return hibernateDAO.executeQuery(em -> {
+                EntityGraph<FuenteEntity> entityGraph = createEntityGraphWithParams(em);
+
+                List<FuenteEntity> toRemove = em.createQuery("SELECT DISTINCT f FROM FuenteEntity f WHERE f.host = :host", FuenteEntity.class)
+                        .setParameter("host", host)
+                        .setHint("jakarta.persistence.fetchgraph", entityGraph)
+                        .getResultList();
+
+                boolean removed = !toRemove.isEmpty();
+                for (FuenteEntity entity : toRemove) {
+                    hibernateDAO.delete(entity);
+                }
+                return removed;
+            });
         }
-        return removed;
+        return false;
     }
-    
+
     public boolean removeByUuid(UUID uuid) {
-        List<FuenteDTO> fuentes = dao.find();
-        boolean removed = fuentes.removeIf(f -> f.getUuid().equals(uuid));
-        if (removed) {
-            dao.saveAll(fuentes);
+        if (dao instanceof Hibernate) {
+            Hibernate<FuenteEntity> hibernateDAO = (Hibernate<FuenteEntity>) dao;
+            FuenteEntity entity = hibernateDAO.findById(uuid.toString());
+            if (entity != null) {
+                hibernateDAO.delete(entity);
+                return true;
+            }
         }
-        return removed;
+        return false;
     }
-    
+
     public FuenteDTO findByUuid(UUID uuid) {
-        return dao.find().stream()
-                .filter(f -> f.getUuid().equals(uuid))
-                .findFirst()
-                .orElse(null);
+        if (dao instanceof Hibernate) {
+            Hibernate<FuenteEntity> hibernateDAO = (Hibernate<FuenteEntity>) dao;
+            return hibernateDAO.executeQuery(em -> {
+                EntityGraph<FuenteEntity> entityGraph = createEntityGraphWithParams(em);
+
+                List<FuenteEntity> results = em.createQuery("SELECT DISTINCT f FROM FuenteEntity f WHERE f.uuid = :uuid", FuenteEntity.class)
+                        .setParameter("uuid", uuid.toString())
+                        .setHint("jakarta.persistence.fetchgraph", entityGraph)
+                        .getResultList();
+                return results.isEmpty() ? null : FuenteMapper.toDomain(results.get(0));
+            });
+        }
+        return null;
+    }
+
+    private EntityGraph<FuenteEntity> createEntityGraphWithParams(jakarta.persistence.EntityManager em) {
+        EntityGraph<FuenteEntity> entityGraph = em.createEntityGraph(FuenteEntity.class);
+        entityGraph.addAttributeNodes("params");
+        return entityGraph;
+    }
+
+    public void close() {
+        if (dao instanceof Hibernate) {
+            Hibernate<FuenteEntity> hibernateDAO = (Hibernate<FuenteEntity>) dao;
+            hibernateDAO.close();
+        }
     }
 }

@@ -2,55 +2,70 @@ package utn.dds.agregador.persistencia;
 
 import utn.dds.daos.IDAO;
 import utn.dds.daos.DAOFactory;
-import utn.dds.dto.HechoDTO;
+import utn.dds.daos.Hibernate;
 import utn.dds.dominio.Hecho;
+import utn.dds.jpa.entities.HechoEntity;
+import utn.dds.mappers.HechoMapper;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 
 public class HechoRepository {
-    
-    private IDAO<HechoDTO> dao;
-    
+
+    private IDAO<HechoEntity> dao;
+
     public HechoRepository() {
-        // Constructor por defecto que usa configuración por defecto
-        this("filesystem", new HashMap<>());
+        this(new HashMap<>());
     }
-    
-    public HechoRepository(String daoType, Map<String, Object> daoConfig) {
-        if ("filesystem".equals(daoType)) {
-            // Para filesystem, usar configuración específica
-            Map<String, Object> config = new HashMap<>();
-            config.put("url", "src/main/resources/mocks/hechos.json");
-            this.dao = DAOFactory.createDAO(HechoDTO.class, daoType, config);
-        } else {
-            // Para otros tipos de DAO, usar la configuración provista
-            this.dao = DAOFactory.createDAO(HechoDTO.class, daoType, daoConfig);
-        }
+
+    public HechoRepository(Map<String, Object> daoConfig) {
+        Map<String, Object> hibernateConfig = new HashMap<>(daoConfig);
+
+        // Configurar valores por defecto desde variables de entorno
+        hibernateConfig.putIfAbsent("jakarta.persistence.jdbc.url",
+            System.getenv().getOrDefault("DB_URL", "jdbc:postgresql://localhost:5432/metamapa_db"));
+        hibernateConfig.putIfAbsent("jakarta.persistence.jdbc.user",
+            System.getenv().getOrDefault("DB_USER", "metamapa"));
+        hibernateConfig.putIfAbsent("jakarta.persistence.jdbc.password",
+            System.getenv().getOrDefault("DB_PASSWORD", "metamapa123"));
+        hibernateConfig.putIfAbsent("persistenceUnit", "metamapa-db");
+
+        this.dao = DAOFactory.createDAO(HechoEntity.class, "hibernate", hibernateConfig);
     }
     
     public List<Hecho> find() {
-        List<HechoDTO> hechosDTO = dao.find();
-        return hechosDTO.stream()
-                .map(HechoDTO::toHecho)
+        List<HechoEntity> entities = dao.find();
+        return entities.stream()
+                .map(HechoMapper::toDomain)
                 .collect(Collectors.toList());
     }
     
     public void save(Hecho hecho) {
-        // Convertir Hecho a HechoDTO y agregarlo a la lista
-        List<HechoDTO> hechosDTO = dao.find();
-        hechosDTO.add(HechoDTO.fromHecho(hecho));
-        dao.saveAll(hechosDTO);
+        HechoEntity entity = HechoMapper.toEntity(hecho);
+        dao.save(entity);
     }
     
     public void saveAll(List<Hecho> hechos) {
-        // Obtener hechos existentes y agregar los nuevos
-        List<HechoDTO> hechosDTO = dao.find();
-        List<HechoDTO> nuevosHechosDTO = hechos.stream()
-                .map(HechoDTO::fromHecho)
+        List<HechoEntity> entities = hechos.stream()
+                .map(HechoMapper::toEntity)
                 .collect(Collectors.toList());
-        hechosDTO.addAll(nuevosHechosDTO);
-        dao.saveAll(hechosDTO);
+        dao.saveAll(entities);
+    }
+
+    public Hecho findById(String uuid) {
+        if (dao instanceof Hibernate) {
+            Hibernate<HechoEntity> hibernateDAO = (Hibernate<HechoEntity>) dao;
+            HechoEntity entity = hibernateDAO.findById(uuid);
+            return entity != null ? HechoMapper.toDomain(entity) : null;
+        }
+        return null;
+    }
+
+    public void close() {
+        if (dao instanceof Hibernate) {
+            Hibernate<HechoEntity> hibernateDAO = (Hibernate<HechoEntity>) dao;
+            hibernateDAO.close();
+        }
     }
 }

@@ -16,6 +16,39 @@ services:
     networks:
       - metamapa-network
 
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: metamapa-postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-metamapa_db}
+      - POSTGRES_USER=${POSTGRES_USER:-metamapa}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-metamapa123}
+    restart: unless-stopped
+    networks:
+      - metamapa-network
+
+  # pgAdmin
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: metamapa-pgadmin
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:-admin@metamapa.com}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD:-admin123}
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - metamapa-network
+
   # Fuentes Estáticas
   fuente-estatica:
     build:
@@ -26,7 +59,7 @@ services:
     container_name: metamapa-fuente-estatica
     restart: unless-stopped
     environment:
-      - DAO_TYPE=s3
+      - DAO_TYPE=${FUENTE_ESTATICA_DAO_TYPE:-s3}
       - PROCESSOR_TYPE=csv
       - S3_ENDPOINT=${S3_ENDPOINT}
       - S3_ACCESS_KEY=${MINIO_ACCESS_KEY}
@@ -47,7 +80,7 @@ services:
     container_name: metamapa-fuente-dinamica
     restart: unless-stopped
     environment:
-      - DAO_TYPE=filesystem
+      - DAO_TYPE=${FUENTE_DINAMICA_DAO_TYPE:-filesystem}
     networks:
       - metamapa-network
 
@@ -75,7 +108,7 @@ services:
     container_name: metamapa-fuente-proxy-demo
     restart: unless-stopped
     environment:
-      - DAO_TYPE=filesystem
+      - DAO_TYPE=${FUENTE_PROXY_DEMO_DAO_TYPE:-filesystem}
     networks:
       - metamapa-network
 
@@ -88,6 +121,13 @@ services:
       - "7005:7005"
     container_name: metamapa-agregador
     restart: unless-stopped
+    environment:
+      - DAO_TYPE=${AGREGADOR_DAO_TYPE:-hibernate}
+      - DB_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-metamapa_db}
+      - DB_USER=${POSTGRES_USER:-metamapa}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-metamapa123}
+    depends_on:
+      - postgres
     networks:
       - metamapa-network
 
@@ -179,6 +219,8 @@ services:
 
 volumes:
   minio_data:
+  postgres_data:
+  pgadmin_data:
 
 networks:
   metamapa-network:
