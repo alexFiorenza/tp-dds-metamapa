@@ -1,6 +1,7 @@
 package utn.dds.metamapa.controller;
 
 import io.javalin.http.Context;
+import io.javalin.openapi.*;
 import utn.dds.metamapa.service.ServiceColeccion;
 import utn.dds.dominio.Coleccion;
 import utn.dds.dominio.Hecho;
@@ -19,6 +20,16 @@ public class ControllerColeccionAdministrativo {
         this.serviceColeccion = new ServiceColeccion(daoType, daoConfig);
     }
 
+    @OpenApi(
+        summary = "Obtener todas las colecciones",
+        operationId = "obtenerColecciones",
+        path = "/administrador/coleccion",
+        methods = HttpMethod.GET,
+        tags = {"Administrador - Colecciones"},
+        responses = {
+            @OpenApiResponse(status = "200", description = "Lista de colecciones", content = @OpenApiContent(from = ColeccionDTO[].class))
+        }
+    )
     public void obtenerColecciones(Context ctx) {
         List<Coleccion> colecciones = this.serviceColeccion.obtenerColecciones();
         List<ColeccionDTO> coleccionesDTO = colecciones.stream()
@@ -27,6 +38,18 @@ public class ControllerColeccionAdministrativo {
         ctx.json(coleccionesDTO);
     }
 
+    @OpenApi(
+        summary = "Obtener colección por ID",
+        operationId = "obtenerColeccionPorId",
+        path = "/administrador/coleccion/{id}",
+        methods = HttpMethod.GET,
+        tags = {"Administrador - Colecciones"},
+        pathParams = @OpenApiParam(name = "id", description = "ID de la colección"),
+        responses = {
+            @OpenApiResponse(status = "200", description = "Colección encontrada", content = @OpenApiContent(from = ColeccionDTO.class)),
+            @OpenApiResponse(status = "404", description = "Colección no encontrada")
+        }
+    )
     public void obtenerColeccionPorId(Context ctx) {
         String id = ctx.pathParam("id");
         Coleccion coleccion = this.serviceColeccion.obtenerColeccionPorId(id);
@@ -38,6 +61,18 @@ public class ControllerColeccionAdministrativo {
         }
     }
 
+    @OpenApi(
+        summary = "Crear nueva colección",
+        operationId = "crearColeccion",
+        path = "/administrador/coleccion",
+        methods = HttpMethod.POST,
+        tags = {"Administrador - Colecciones"},
+        requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = Coleccion.class)),
+        responses = {
+            @OpenApiResponse(status = "201", description = "Colección creada exitosamente"),
+            @OpenApiResponse(status = "400", description = "Error al crear colección")
+        }
+    )
     public void crearColeccion(Context ctx) {
         try {
             Coleccion nuevaColeccion = ctx.bodyAsClass(Coleccion.class);
@@ -48,6 +83,19 @@ public class ControllerColeccionAdministrativo {
         }
     }
 
+    @OpenApi(
+        summary = "Actualizar colección existente",
+        operationId = "actualizarColeccion",
+        path = "/administrador/coleccion/{id}",
+        methods = HttpMethod.PUT,
+        tags = {"Administrador - Colecciones"},
+        pathParams = @OpenApiParam(name = "id", description = "ID de la colección"),
+        requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = Coleccion.class)),
+        responses = {
+            @OpenApiResponse(status = "200", description = "Colección actualizada exitosamente"),
+            @OpenApiResponse(status = "400", description = "Error al actualizar colección")
+        }
+    )
     public void actualizarColeccion(Context ctx) {
         try {
             String id = ctx.pathParam("id");
@@ -59,6 +107,18 @@ public class ControllerColeccionAdministrativo {
         }
     }
 
+    @OpenApi(
+        summary = "Eliminar colección",
+        operationId = "eliminarColeccion",
+        path = "/administrador/coleccion/{id}",
+        methods = HttpMethod.DELETE,
+        tags = {"Administrador - Colecciones"},
+        pathParams = @OpenApiParam(name = "id", description = "ID de la colección"),
+        responses = {
+            @OpenApiResponse(status = "200", description = "Colección eliminada exitosamente"),
+            @OpenApiResponse(status = "400", description = "Error al eliminar colección")
+        }
+    )
     public void eliminarColeccion(Context ctx) {
         try {
             String id = ctx.pathParam("id");
@@ -69,6 +129,18 @@ public class ControllerColeccionAdministrativo {
         }
     }
 
+    @OpenApi(
+        summary = "Buscar hechos en colección",
+        operationId = "buscarHechosEnColeccion",
+        path = "/administrador/coleccion/{id}/hechos",
+        methods = HttpMethod.GET,
+        tags = {"Administrador - Colecciones"},
+        pathParams = @OpenApiParam(name = "id", description = "ID de la colección"),
+        responses = {
+            @OpenApiResponse(status = "200", description = "Lista de hechos encontrados", content = @OpenApiContent(from = HechoDTO[].class)),
+            @OpenApiResponse(status = "400", description = "Error al buscar hechos")
+        }
+    )
     public void buscarHechosEnColeccion(Context ctx) {
         try {
             String id = ctx.pathParam("id");

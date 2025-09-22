@@ -13,6 +13,7 @@
         <class>utn.dds.jpa.entities.ContribuyenteEntity</class>
         <class>utn.dds.jpa.entities.ColeccionEntity</class>
         <class>utn.dds.jpa.entities.FuenteEntity</class>
+        <class>utn.dds.jpa.entities.SolicitudEliminacionEntity</class>
         
         <properties>
             <!-- Configuración de la base de datos -->

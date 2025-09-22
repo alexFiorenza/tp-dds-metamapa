@@ -12,7 +12,7 @@ public class ServiceColeccion {
     private final ColeccionRepository coleccionRepository;
 
     public ServiceColeccion(String daoType, Map<String, Object> daoConfig) {
-        this.coleccionRepository = new ColeccionRepository(daoType, daoConfig);
+        this.coleccionRepository = new ColeccionRepository(daoConfig);
     }
 
     public List<Coleccion> obtenerColecciones() {

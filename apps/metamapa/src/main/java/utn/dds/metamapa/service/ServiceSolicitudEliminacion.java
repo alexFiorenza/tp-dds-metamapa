@@ -9,7 +9,7 @@ public class ServiceSolicitudEliminacion {
     private final SolicitudEliminacionRepository solicitudEliminacionRepository;
 
     public ServiceSolicitudEliminacion(String daoType, Map<String, Object> daoConfig) {
-        this.solicitudEliminacionRepository = new SolicitudEliminacionRepository(daoType, daoConfig);
+        this.solicitudEliminacionRepository = new SolicitudEliminacionRepository(daoConfig);
     }
 
     public void crearSolicitud(SolicitudEliminacion solicitud) {
