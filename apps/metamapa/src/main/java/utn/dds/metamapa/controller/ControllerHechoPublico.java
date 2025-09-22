@@ -5,8 +5,6 @@ import io.javalin.openapi.*;
 import utn.dds.metamapa.service.ServiceHechoMetamapa;
 import utn.dds.dominio.Hecho;
 import utn.dds.dominio.criterios.HechoStrategy;
-import utn.dds.dominio.criterios.CategoriaStrategy;
-import utn.dds.dominio.criterios.TituloStrategy;
 import utn.dds.dto.HechoDTO;
 import utn.dds.dto.RespuestaPaginadaDTO;
 
@@ -31,6 +29,14 @@ public class ControllerHechoPublico {
         queryParams = {
             @OpenApiParam(name = "categoria", description = "Filtrar por categoría"),
             @OpenApiParam(name = "titulo", description = "Filtrar por título"),
+            @OpenApiParam(name = "descripcion", description = "Filtrar por descripción"),
+            @OpenApiParam(name = "origen", description = "Filtrar por origen"),
+            @OpenApiParam(name = "fechaAcontecimiento", description = "Filtrar por fecha de acontecimiento (formato: YYYY-MM-DD)"),
+            @OpenApiParam(name = "longitud", description = "Filtrar por longitud exacta", type = Double.class),
+            @OpenApiParam(name = "latitud", description = "Filtrar por latitud exacta", type = Double.class),
+            @OpenApiParam(name = "estado", description = "Filtrar por estado (ACTIVO, OCULTO)"),
+            @OpenApiParam(name = "fechaCarga", description = "Filtrar por fecha de carga (formato: YYYY-MM-DDTHH:mm:ss)"),
+            @OpenApiParam(name = "etiquetas", description = "Filtrar por etiquetas (separadas por comas)"),
             @OpenApiParam(
                 name = "pagina",
                 description = "Número de página (comenzando desde 0). Por defecto: 0",
@@ -51,28 +57,25 @@ public class ControllerHechoPublico {
     )
     public void obtenerHechos(Context ctx) {
         try {
-            // Obtener parámetros de filtros
-            String categoria = ctx.queryParam("categoria");
-            String titulo = ctx.queryParam("titulo");
+            // Obtener parámetros de paginación
             int pagina = ctx.queryParamAsClass("pagina", Integer.class).getOrDefault(0);
             int tamanioPagina = ctx.queryParamAsClass("tamanioPagina", Integer.class).getOrDefault(10);
 
-            // Crear filtros basados en los parámetros
-            List<HechoStrategy> filtros = new ArrayList<>();
-
-            if (categoria != null && !categoria.isEmpty()) {
-                filtros.add(new CategoriaStrategy(categoria));
+            // Validar tamaño de página
+            if (tamanioPagina > 100) {
+                tamanioPagina = 100;
             }
 
-            if (titulo != null && !titulo.isEmpty()) {
-                filtros.add(new TituloStrategy(titulo));
-            }
+            // Crear filtros usando el Factory
+            List<HechoStrategy> filtros = FiltroFactory.crearFiltros(ctx);
 
-            RespuestaPaginadaDTO<HechoDTO> respuesta = this.serviceHecho.obtenerHechosPaginados(filtros, pagina, tamanioPagina);
+            RespuestaPaginadaDTO<HechoDTO> respuesta = this.serviceHecho.obtenerHechos(filtros, pagina, tamanioPagina);
             ctx.json(respuesta);
 
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).result("Error en parámetros: " + e.getMessage());
         } catch (Exception e) {
-            ctx.status(400).result("Error al buscar hechos: " + e.getMessage());
+            ctx.status(500).result("Error interno: " + e.getMessage());
         }
     }
 
