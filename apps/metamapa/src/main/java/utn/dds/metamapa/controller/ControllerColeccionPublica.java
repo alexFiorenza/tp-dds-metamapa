@@ -41,8 +41,7 @@ public class ControllerColeccionPublica {
             Coleccion coleccion = this.serviceColeccion.obtenerColeccionPorId(identificador);
 
             if (coleccion != null) {
-                ColeccionDTO coleccionDTO = ColeccionDTO.fromColeccionBasic(coleccion);
-                ctx.json(coleccionDTO);
+                ctx.json(coleccion); // Por ahora usar la entidad de dominio directamente
             } else {
                 ctx.status(404).result("Colección no encontrada");
             }

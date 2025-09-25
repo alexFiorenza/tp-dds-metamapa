@@ -7,7 +7,9 @@ import utn.dds.dominio.Coleccion;
 import utn.dds.dominio.Hecho;
 import utn.dds.dominio.criterios.HechoStrategy;
 import utn.dds.dto.ColeccionDTO;
+import utn.dds.dto.ColeccionCreateDTO;
 import utn.dds.dto.HechoDTO;
+import utn.dds.dto.RespuestaPaginadaDTO;
 
 import java.util.List;
 import java.util.Map;
@@ -26,16 +28,19 @@ public class ControllerColeccionAdministrativo {
         path = "/administrador/coleccion",
         methods = HttpMethod.GET,
         tags = {"Administrador - Colecciones"},
+        queryParams = {
+            @OpenApiParam(name = "page", description = "Número de página (default: 0)"),
+            @OpenApiParam(name = "size", description = "Tamaño de página (default: 10, max: 100)")
+        },
         responses = {
-            @OpenApiResponse(status = "200", description = "Lista de colecciones", content = @OpenApiContent(from = ColeccionDTO[].class))
+            @OpenApiResponse(status = "200", description = "Lista paginada de colecciones", content = @OpenApiContent(from = RespuestaPaginadaDTO.class))
         }
     )
     public void obtenerColecciones(Context ctx) {
-        List<Coleccion> colecciones = this.serviceColeccion.obtenerColecciones();
-        List<ColeccionDTO> coleccionesDTO = colecciones.stream()
-            .map(ColeccionDTO::fromColeccionBasic)
-            .collect(Collectors.toList());
-        ctx.json(coleccionesDTO);
+        int page = ctx.queryParamAsClass("page", Integer.class).getOrDefault(0);
+        int size = ctx.queryParamAsClass("size", Integer.class).getOrDefault(10);
+        RespuestaPaginadaDTO<ColeccionDTO> respuesta = this.serviceColeccion.obtenerColeccionesPaginado(page, size);
+        ctx.json(respuesta);
     }
 
     @OpenApi(
@@ -54,8 +59,7 @@ public class ControllerColeccionAdministrativo {
         String id = ctx.pathParam("id");
         Coleccion coleccion = this.serviceColeccion.obtenerColeccionPorId(id);
         if (coleccion != null) {
-            ColeccionDTO coleccionDTO = ColeccionDTO.fromColeccion(coleccion);
-            ctx.json(coleccionDTO);
+            ctx.json(coleccion); // Por ahora usar la entidad de dominio directamente
         } else {
             ctx.status(404).result("Colección no encontrada");
         }
@@ -67,7 +71,30 @@ public class ControllerColeccionAdministrativo {
         path = "/administrador/coleccion",
         methods = HttpMethod.POST,
         tags = {"Administrador - Colecciones"},
-        requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = Coleccion.class)),
+        requestBody = @OpenApiRequestBody(
+            content = @OpenApiContent(
+                from = ColeccionCreateDTO.class,
+                example = "{\n" +
+                    "  \"titulo\": \"Eventos Deportivos Buenos Aires\",\n" +
+                    "  \"descripcion\": \"Colección de eventos deportivos que ocurrieron en la ciudad de Buenos Aires durante 2024\",\n" +
+                    "  \"fuentesIds\": [\"fuente-gov-ar-123\", \"fuente-deportes-456\", \"fuente-estadios-789\"],\n" +
+                    "  \"criteriosDePertenencia\": [\n" +
+                    "    {\n" +
+                    "      \"tipo\": \"categoria\",\n" +
+                    "      \"categoria\": \"DEPORTES\"\n" +
+                    "    },\n" +
+                    "    {\n" +
+                    "      \"tipo\": \"etiquetas\",\n" +
+                    "      \"etiquetas\": \"buenos aires,argentina,evento\"\n" +
+                    "    },\n" +
+                    "    {\n" +
+                    "      \"tipo\": \"estado\",\n" +
+                    "      \"estado\": \"CONFIRMADO\"\n" +
+                    "    }\n" +
+                    "  ]\n" +
+                    "}"
+            )
+        ),
         responses = {
             @OpenApiResponse(status = "201", description = "Colección creada exitosamente"),
             @OpenApiResponse(status = "400", description = "Error al crear colección")
@@ -75,8 +102,8 @@ public class ControllerColeccionAdministrativo {
     )
     public void crearColeccion(Context ctx) {
         try {
-            Coleccion nuevaColeccion = ctx.bodyAsClass(Coleccion.class);
-            this.serviceColeccion.crearColeccion(nuevaColeccion);
+            ColeccionCreateDTO coleccionCreateDTO = ctx.bodyAsClass(ColeccionCreateDTO.class);
+            this.serviceColeccion.crearColeccion(coleccionCreateDTO);
             ctx.status(201).result("Colección creada exitosamente");
         } catch (Exception e) {
             ctx.status(400).result("Error al crear colección: " + e.getMessage());

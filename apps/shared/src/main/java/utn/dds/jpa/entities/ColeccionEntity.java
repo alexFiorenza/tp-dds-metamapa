@@ -19,7 +19,7 @@ public class ColeccionEntity {
     @Column(name = "descripcion")
     private String descripcion;
 
-    @ManyToMany(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "coleccion_hechos",
         joinColumns = @JoinColumn(name = "coleccion_handle"),
@@ -27,7 +27,7 @@ public class ColeccionEntity {
     )
     private List<HechoEntity> hechos;
 
-    @ManyToMany(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "coleccion_fuentes",
         joinColumns = @JoinColumn(name = "coleccion_handle"),
@@ -36,7 +36,7 @@ public class ColeccionEntity {
     private List<FuenteEntity> fuentes;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-    @JoinColumn(name = "id_coleccion")
+    @JoinColumn(name = "coleccion_handle")
     private List<CriterioEntity> criteriosDePertenencia;
 
     public ColeccionEntity() {

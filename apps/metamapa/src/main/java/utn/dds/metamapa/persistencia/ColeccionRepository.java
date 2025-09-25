@@ -8,6 +8,8 @@ import utn.dds.dominio.Hecho;
 import utn.dds.dominio.criterios.HechoStrategy;
 import utn.dds.jpa.entities.ColeccionEntity;
 import utn.dds.mappers.ColeccionMapper;
+import utn.dds.dto.ColeccionDTO;
+import utn.dds.dto.RespuestaPaginadaDTO;
 
 import java.util.List;
 import java.util.Map;
@@ -38,16 +40,163 @@ public class ColeccionRepository {
     }
 
     public List<Coleccion> obtenerTodas() {
+        if (dao instanceof Hibernate) {
+            Hibernate<ColeccionEntity> hibernateDAO = (Hibernate<ColeccionEntity>) dao;
+
+            return hibernateDAO.executeQuery(em -> {
+                // Primera consulta: obtener colecciones básicas con fuentes
+                List<ColeccionEntity> entities = em.createQuery(
+                    "SELECT DISTINCT c FROM ColeccionEntity c " +
+                    "LEFT JOIN FETCH c.fuentes " +
+                    "ORDER BY c.titulo",
+                    ColeccionEntity.class)
+                    .getResultList();
+
+                // Segunda consulta: cargar criterios para las colecciones obtenidas (misma sesión)
+                if (!entities.isEmpty()) {
+                    List<String> handles = entities.stream()
+                            .map(ColeccionEntity::getHandle)
+                            .collect(Collectors.toList());
+
+                    em.createQuery(
+                        "SELECT DISTINCT c FROM ColeccionEntity c " +
+                        "LEFT JOIN FETCH c.criteriosDePertenencia " +
+                        "WHERE c.handle IN :handles",
+                        ColeccionEntity.class)
+                        .setParameter("handles", handles)
+                        .getResultList();
+                }
+
+                // Convertir a domain dentro de la misma sesión
+                return entities.stream()
+                        .map(ColeccionMapper::toDomain)
+                        .collect(Collectors.toList());
+            });
+        }
+
         List<ColeccionEntity> entities = dao.find();
         return entities.stream()
                 .map(ColeccionMapper::toDomain)
                 .collect(Collectors.toList());
     }
 
+    public List<ColeccionDTO> obtenerTodasDTO() {
+        if (dao instanceof Hibernate) {
+            Hibernate<ColeccionEntity> hibernateDAO = (Hibernate<ColeccionEntity>) dao;
+
+            return hibernateDAO.executeQuery(em -> {
+                // Primera consulta: obtener colecciones básicas con fuentes
+                List<ColeccionEntity> entities = em.createQuery(
+                    "SELECT DISTINCT c FROM ColeccionEntity c " +
+                    "LEFT JOIN FETCH c.fuentes " +
+                    "ORDER BY c.titulo",
+                    ColeccionEntity.class)
+                    .getResultList();
+
+                // Segunda consulta: cargar criterios para las colecciones obtenidas (misma sesión)
+                if (!entities.isEmpty()) {
+                    List<String> handles = entities.stream()
+                            .map(ColeccionEntity::getHandle)
+                            .collect(Collectors.toList());
+
+                    em.createQuery(
+                        "SELECT DISTINCT c FROM ColeccionEntity c " +
+                        "LEFT JOIN FETCH c.criteriosDePertenencia " +
+                        "WHERE c.handle IN :handles",
+                        ColeccionEntity.class)
+                        .setParameter("handles", handles)
+                        .getResultList();
+                }
+
+                // Convertir a DTO dentro de la misma sesión
+                return entities.stream()
+                        .map(ColeccionMapper::toDTO)
+                        .collect(Collectors.toList());
+            });
+        }
+
+        List<ColeccionEntity> entities = dao.find();
+        return entities.stream()
+                .map(ColeccionMapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    public RespuestaPaginadaDTO<ColeccionDTO> obtenerTodasDTOPaginado(int page, int size) {
+        if (dao instanceof Hibernate) {
+            Hibernate<ColeccionEntity> hibernateDAO = (Hibernate<ColeccionEntity>) dao;
+
+            return hibernateDAO.executeQuery(em -> {
+                // Consulta para contar total de elementos
+                Long totalElements = em.createQuery(
+                    "SELECT COUNT(c) FROM ColeccionEntity c",
+                    Long.class)
+                    .getSingleResult();
+
+                // Primera consulta: obtener colecciones básicas con fuentes (paginado)
+                List<ColeccionEntity> entities = em.createQuery(
+                    "SELECT DISTINCT c FROM ColeccionEntity c " +
+                    "LEFT JOIN FETCH c.fuentes " +
+                    "ORDER BY c.titulo",
+                    ColeccionEntity.class)
+                    .setFirstResult(page * size)
+                    .setMaxResults(size)
+                    .getResultList();
+
+                // Segunda consulta: cargar criterios para las colecciones obtenidas (misma sesión)
+                if (!entities.isEmpty()) {
+                    List<String> handles = entities.stream()
+                            .map(ColeccionEntity::getHandle)
+                            .collect(Collectors.toList());
+
+                    em.createQuery(
+                        "SELECT DISTINCT c FROM ColeccionEntity c " +
+                        "LEFT JOIN FETCH c.criteriosDePertenencia " +
+                        "WHERE c.handle IN :handles",
+                        ColeccionEntity.class)
+                        .setParameter("handles", handles)
+                        .getResultList();
+                }
+
+                // Convertir a DTO dentro de la misma sesión
+                List<ColeccionDTO> dtos = entities.stream()
+                        .map(ColeccionMapper::toDTO)
+                        .collect(Collectors.toList());
+
+                return new RespuestaPaginadaDTO<>(dtos, page, size, totalElements);
+            });
+        }
+
+        // Fallback sin paginación para otros tipos de DAO
+        List<ColeccionEntity> entities = dao.find();
+        List<ColeccionDTO> dtos = entities.stream()
+                .map(ColeccionMapper::toDTO)
+                .collect(Collectors.toList());
+
+        // Simular paginación manualmente
+        int fromIndex = page * size;
+        int toIndex = Math.min(fromIndex + size, dtos.size());
+        List<ColeccionDTO> paginatedData = fromIndex < dtos.size() ?
+            dtos.subList(fromIndex, toIndex) : new ArrayList<>();
+
+        return new RespuestaPaginadaDTO<>(paginatedData, page, size, dtos.size());
+    }
+
     public Coleccion obtenerPorId(String id) {
         if (dao instanceof Hibernate) {
             Hibernate<ColeccionEntity> hibernateDAO = (Hibernate<ColeccionEntity>) dao;
-            ColeccionEntity entity = hibernateDAO.findById(id);
+            ColeccionEntity entity = hibernateDAO.executeQuery(em -> {
+                return em.createQuery(
+                    "SELECT c FROM ColeccionEntity c " +
+                    "LEFT JOIN FETCH c.hechos " +
+                    "LEFT JOIN FETCH c.fuentes " +
+                    "LEFT JOIN FETCH c.criteriosDePertenencia " +
+                    "WHERE c.handle = :id",
+                    ColeccionEntity.class)
+                    .setParameter("id", id)
+                    .getResultStream()
+                    .findFirst()
+                    .orElse(null);
+            });
             return entity != null ? ColeccionMapper.toDomain(entity) : null;
         }
         return null;
