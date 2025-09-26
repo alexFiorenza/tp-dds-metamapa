@@ -1,4 +1,4 @@
-package utn.dds.metamapa.controller;
+package utn.dds.metamapa.controller.routers;
 
 import io.javalin.Javalin;
 import io.javalin.openapi.*;

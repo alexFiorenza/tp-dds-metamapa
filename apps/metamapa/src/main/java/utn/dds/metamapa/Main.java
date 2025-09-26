@@ -8,8 +8,8 @@ import io.javalin.openapi.plugin.OpenApiPlugin;
 import io.javalin.openapi.plugin.redoc.ReDocPlugin;
 import io.javalin.openapi.plugin.swagger.SwaggerPlugin;
 import utn.dds.metamapa.config.AppConfig;
-import utn.dds.metamapa.controller.ApiRoutes;
-import utn.dds.metamapa.controller.AdministradorRoutes;
+import utn.dds.metamapa.controller.routers.ApiRoutes;
+import utn.dds.metamapa.controller.routers.AdministradorRoutes;
 
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);

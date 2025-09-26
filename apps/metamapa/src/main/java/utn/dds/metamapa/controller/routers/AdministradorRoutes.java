@@ -1,4 +1,4 @@
-package utn.dds.metamapa.controller;
+package utn.dds.metamapa.controller.routers;
 
 import io.javalin.Javalin;
 import io.javalin.openapi.*;
@@ -61,7 +61,9 @@ public class AdministradorRoutes {
         app.post("/administrador/coleccion", controllerColeccion::crearColeccion);
         app.put("/administrador/coleccion/{id}", controllerColeccion::actualizarColeccion);
         app.delete("/administrador/coleccion/{id}", controllerColeccion::eliminarColeccion);
-        app.get("/administrador/coleccion/{id}/hechos", controllerColeccion::buscarHechosEnColeccion);
+
+        // Rutas para hechos de colecciones
+        app.get("/administrador/coleccion/{id}/hechos", controllerColeccion::obtenerHechosDeColeccion);
 
         // Rutas administrativas para solicitudes de eliminación
         app.put("/administrador/solicitud/{uuid}/aceptar", controllerSolicitud::aceptarSolicitud);

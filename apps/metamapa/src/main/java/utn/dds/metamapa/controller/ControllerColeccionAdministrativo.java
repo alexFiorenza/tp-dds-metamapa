@@ -57,9 +57,9 @@ public class ControllerColeccionAdministrativo {
     )
     public void obtenerColeccionPorId(Context ctx) {
         String id = ctx.pathParam("id");
-        Coleccion coleccion = this.serviceColeccion.obtenerColeccionPorId(id);
-        if (coleccion != null) {
-            ctx.json(coleccion); // Por ahora usar la entidad de dominio directamente
+        ColeccionDTO coleccionDTO = this.serviceColeccion.obtenerColeccionDTOPorId(id);
+        if (coleccionDTO != null) {
+            ctx.json(coleccionDTO);
         } else {
             ctx.status(404).result("Colección no encontrada");
         }
@@ -157,28 +157,48 @@ public class ControllerColeccionAdministrativo {
     }
 
     @OpenApi(
-        summary = "Buscar hechos en colección",
-        operationId = "buscarHechosEnColeccion",
+        summary = "Obtener hechos de una colección con filtros opcionales",
+        operationId = "obtenerHechosDeColeccion",
         path = "/administrador/coleccion/{id}/hechos",
         methods = HttpMethod.GET,
         tags = {"Administrador - Colecciones"},
-        pathParams = @OpenApiParam(name = "id", description = "ID de la colección"),
+        pathParams = @OpenApiParam(name = "id", description = "Handle de la colección"),
+        queryParams = {
+            @OpenApiParam(name = "page", description = "Número de página (default: 0)"),
+            @OpenApiParam(name = "size", description = "Tamaño de página (default: 10, max: 100)"),
+            @OpenApiParam(name = "categoria", description = "Filtrar por categoría específica", required = false),
+            @OpenApiParam(name = "estado", description = "Filtrar por estado (CONFIRMADO, RECHAZADO, etc.)", required = false),
+            @OpenApiParam(name = "etiquetas", description = "Filtrar por etiquetas (separadas por comas)", required = false)
+        },
         responses = {
-            @OpenApiResponse(status = "200", description = "Lista de hechos encontrados", content = @OpenApiContent(from = HechoDTO[].class)),
-            @OpenApiResponse(status = "400", description = "Error al buscar hechos")
+            @OpenApiResponse(status = "200", description = "Lista paginada de hechos de la colección", content = @OpenApiContent(from = RespuestaPaginadaDTO.class)),
+            @OpenApiResponse(status = "404", description = "Colección no encontrada"),
+            @OpenApiResponse(status = "400", description = "Error al obtener hechos")
         }
     )
-    public void buscarHechosEnColeccion(Context ctx) {
+    public void obtenerHechosDeColeccion(Context ctx) {
         try {
             String id = ctx.pathParam("id");
-            List<HechoStrategy> filtros = ctx.bodyAsClass(List.class);
-            List<Hecho> hechos = this.serviceColeccion.buscarHechosEnColeccion(id, filtros);
-            List<HechoDTO> hechosDTO = hechos.stream()
-                .map(HechoDTO::fromHecho)
-                .collect(Collectors.toList());
-            ctx.json(hechosDTO);
+            int page = ctx.queryParamAsClass("page", Integer.class).getOrDefault(0);
+            int size = ctx.queryParamAsClass("size", Integer.class).getOrDefault(10);
+
+            // Obtener filtros opcionales de query params
+            String categoria = ctx.queryParam("categoria");
+            String estado = ctx.queryParam("estado");
+            String etiquetas = ctx.queryParam("etiquetas");
+
+            RespuestaPaginadaDTO<HechoDTO> respuesta = this.serviceColeccion.obtenerHechosDeColeccionPaginado(
+                id, page, size, categoria, estado, etiquetas);
+            ctx.json(respuesta);
+        } catch (RuntimeException e) {
+            if (e.getMessage().equals("Colección no encontrada")) {
+                ctx.status(404).result(e.getMessage());
+            } else {
+                ctx.status(400).result("Error al obtener hechos: " + e.getMessage());
+            }
         } catch (Exception e) {
-            ctx.status(400).result("Error al buscar hechos: " + e.getMessage());
+            ctx.status(400).result("Error al obtener hechos: " + e.getMessage());
         }
     }
+
 }

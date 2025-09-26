@@ -185,19 +185,80 @@ public class ColeccionRepository {
         if (dao instanceof Hibernate) {
             Hibernate<ColeccionEntity> hibernateDAO = (Hibernate<ColeccionEntity>) dao;
             ColeccionEntity entity = hibernateDAO.executeQuery(em -> {
-                return em.createQuery(
+                // Primera consulta: obtener colección básica con hechos
+                ColeccionEntity coleccion = em.createQuery(
                     "SELECT c FROM ColeccionEntity c " +
                     "LEFT JOIN FETCH c.hechos " +
-                    "LEFT JOIN FETCH c.fuentes " +
-                    "LEFT JOIN FETCH c.criteriosDePertenencia " +
                     "WHERE c.handle = :id",
                     ColeccionEntity.class)
                     .setParameter("id", id)
                     .getResultStream()
                     .findFirst()
                     .orElse(null);
+
+                if (coleccion != null) {
+                    // Segunda consulta: cargar fuentes
+                    em.createQuery(
+                        "SELECT c FROM ColeccionEntity c " +
+                        "LEFT JOIN FETCH c.fuentes " +
+                        "WHERE c.handle = :id",
+                        ColeccionEntity.class)
+                        .setParameter("id", id)
+                        .getResultList();
+
+                    // Tercera consulta: cargar criterios de pertenencia
+                    em.createQuery(
+                        "SELECT c FROM ColeccionEntity c " +
+                        "LEFT JOIN FETCH c.criteriosDePertenencia " +
+                        "WHERE c.handle = :id",
+                        ColeccionEntity.class)
+                        .setParameter("id", id)
+                        .getResultList();
+                }
+
+                return coleccion;
             });
             return entity != null ? ColeccionMapper.toDomain(entity) : null;
+        }
+        return null;
+    }
+
+    public ColeccionDTO obtenerDTOPorId(String id) {
+        if (dao instanceof Hibernate) {
+            Hibernate<ColeccionEntity> hibernateDAO = (Hibernate<ColeccionEntity>) dao;
+            ColeccionEntity entity = hibernateDAO.executeQuery(em -> {
+                // Primera consulta: obtener colección básica
+                ColeccionEntity coleccion = em.createQuery(
+                    "SELECT c FROM ColeccionEntity c WHERE c.handle = :id",
+                    ColeccionEntity.class)
+                    .setParameter("id", id)
+                    .getResultStream()
+                    .findFirst()
+                    .orElse(null);
+
+                if (coleccion != null) {
+                    // Segunda consulta: cargar fuentes
+                    em.createQuery(
+                        "SELECT c FROM ColeccionEntity c " +
+                        "LEFT JOIN FETCH c.fuentes " +
+                        "WHERE c.handle = :id",
+                        ColeccionEntity.class)
+                        .setParameter("id", id)
+                        .getResultList();
+
+                    // Tercera consulta: cargar criterios de pertenencia
+                    em.createQuery(
+                        "SELECT c FROM ColeccionEntity c " +
+                        "LEFT JOIN FETCH c.criteriosDePertenencia " +
+                        "WHERE c.handle = :id",
+                        ColeccionEntity.class)
+                        .setParameter("id", id)
+                        .getResultList();
+                }
+
+                return coleccion;
+            });
+            return entity != null ? ColeccionMapper.toDTO(entity) : null;
         }
         return null;
     }

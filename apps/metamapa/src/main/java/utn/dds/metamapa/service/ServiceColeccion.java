@@ -7,8 +7,11 @@ import utn.dds.dominio.Hecho;
 import utn.dds.dominio.criterios.HechoStrategy;
 import utn.dds.dto.ColeccionCreateDTO;
 import utn.dds.dto.ColeccionDTO;
+import utn.dds.dto.HechoDTO;
 import utn.dds.dto.RespuestaPaginadaDTO;
 import utn.dds.mappers.ColeccionMapper;
+import utn.dds.dominio.criterios.*;
+import utn.dds.dominio.EstadoHecho;
 import utn.dds.jpa.entities.FuenteEntity;
 import utn.dds.jpa.entities.HechoEntity;
 import utn.dds.daos.Hibernate;
@@ -20,6 +23,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
+import java.util.Arrays;
 
 public class ServiceColeccion {
     private final ColeccionRepository coleccionRepository;
@@ -63,6 +67,10 @@ public class ServiceColeccion {
 
     public Coleccion obtenerColeccionPorId(String id) {
         return this.coleccionRepository.obtenerPorId(id);
+    }
+
+    public ColeccionDTO obtenerColeccionDTOPorId(String id) {
+        return this.coleccionRepository.obtenerDTOPorId(id);
     }
 
     public void crearColeccion(ColeccionCreateDTO coleccionCreateDTO) {
@@ -203,5 +211,88 @@ public class ServiceColeccion {
             throw new RuntimeException("Colección no encontrada");
         }
         return coleccion.buscarHechos(filtros);
+    }
+
+    public RespuestaPaginadaDTO<HechoDTO> obtenerHechosDeColeccionPaginado(String handle, int page, int size) {
+        // Validar parámetros
+        if (page < 0) page = 0;
+        if (size <= 0 || size > 100) size = 10;
+
+        // Verificar que la colección existe
+        Coleccion coleccion = this.coleccionRepository.obtenerPorId(handle);
+        if (coleccion == null) {
+            throw new RuntimeException("Colección no encontrada");
+        }
+
+        // Usar HechoRepository para consulta directa optimizada
+        return this.hechoRepository.obtenerHechosDeColeccionPaginado(handle, page, size);
+    }
+
+    public RespuestaPaginadaDTO<HechoDTO> obtenerHechosDeColeccionPaginado(String handle, int page, int size,
+                                                                         String categoria, String estado, String etiquetas) {
+        // Validar parámetros
+        if (page < 0) page = 0;
+        if (size <= 0 || size > 100) size = 10;
+
+        // Verificar que la colección existe
+        Coleccion coleccion = this.coleccionRepository.obtenerPorId(handle);
+        if (coleccion == null) {
+            throw new RuntimeException("Colección no encontrada");
+        }
+
+        // Crear filtros a partir de query params
+        List<HechoStrategy> filtros = crearFiltrosDesdeQueryParams(categoria, estado, etiquetas);
+
+        if (filtros.isEmpty()) {
+            // Sin filtros, usar método optimizado
+            return this.hechoRepository.obtenerHechosDeColeccionPaginado(handle, page, size);
+        } else {
+            // Con filtros, usar método que aplica filtros
+            return this.hechoRepository.buscarHechosEnColeccionPaginado(handle, filtros, page, size);
+        }
+    }
+
+    private List<HechoStrategy> crearFiltrosDesdeQueryParams(String categoria, String estado, String etiquetas) {
+        List<HechoStrategy> filtros = new ArrayList<>();
+
+        if (categoria != null && !categoria.trim().isEmpty()) {
+            filtros.add(new CategoriaStrategy(categoria.trim()));
+        }
+
+        if (estado != null && !estado.trim().isEmpty()) {
+            try {
+                EstadoHecho estadoHecho = EstadoHecho.valueOf(estado.trim().toUpperCase());
+                filtros.add(new EstadoStrategy(estadoHecho));
+            } catch (IllegalArgumentException e) {
+                // Ignorar estados inválidos
+            }
+        }
+
+        if (etiquetas != null && !etiquetas.trim().isEmpty()) {
+            List<String> listaEtiquetas = Arrays.stream(etiquetas.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toList());
+            if (!listaEtiquetas.isEmpty()) {
+                filtros.add(new EtiquetasStrategy(listaEtiquetas));
+            }
+        }
+
+        return filtros;
+    }
+
+    public RespuestaPaginadaDTO<HechoDTO> buscarHechosEnColeccionPaginado(String handle, List<HechoStrategy> filtros, int page, int size) {
+        // Validar parámetros
+        if (page < 0) page = 0;
+        if (size <= 0 || size > 100) size = 10;
+
+        // Verificar que la colección existe
+        Coleccion coleccion = this.coleccionRepository.obtenerPorId(handle);
+        if (coleccion == null) {
+            throw new RuntimeException("Colección no encontrada");
+        }
+
+        // Usar HechoRepository para consulta directa optimizada
+        return this.hechoRepository.buscarHechosEnColeccionPaginado(handle, filtros, page, size);
     }
 }
