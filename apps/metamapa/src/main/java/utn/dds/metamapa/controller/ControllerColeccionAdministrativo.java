@@ -166,9 +166,16 @@ public class ControllerColeccionAdministrativo {
         queryParams = {
             @OpenApiParam(name = "page", description = "Número de página (default: 0)"),
             @OpenApiParam(name = "size", description = "Tamaño de página (default: 10, max: 100)"),
-            @OpenApiParam(name = "categoria", description = "Filtrar por categoría específica", required = false),
-            @OpenApiParam(name = "estado", description = "Filtrar por estado (CONFIRMADO, RECHAZADO, etc.)", required = false),
-            @OpenApiParam(name = "etiquetas", description = "Filtrar por etiquetas (separadas por comas)", required = false)
+            @OpenApiParam(name = "categoria", description = "Filtrar por categoría"),
+            @OpenApiParam(name = "titulo", description = "Filtrar por título"),
+            @OpenApiParam(name = "descripcion", description = "Filtrar por descripción"),
+            @OpenApiParam(name = "origen", description = "Filtrar por origen"),
+            @OpenApiParam(name = "fechaAcontecimiento", description = "Filtrar por fecha de acontecimiento (formato: YYYY-MM-DD)"),
+            @OpenApiParam(name = "longitud", description = "Filtrar por longitud exacta", type = Double.class),
+            @OpenApiParam(name = "latitud", description = "Filtrar por latitud exacta", type = Double.class),
+            @OpenApiParam(name = "estado", description = "Filtrar por estado (ACTIVO, OCULTO)"),
+            @OpenApiParam(name = "fechaCarga", description = "Filtrar por fecha de carga (formato: YYYY-MM-DDTHH:mm:ss)"),
+            @OpenApiParam(name = "etiquetas", description = "Filtrar por etiquetas (separadas por comas)")
         },
         responses = {
             @OpenApiResponse(status = "200", description = "Lista paginada de hechos de la colección", content = @OpenApiContent(from = RespuestaPaginadaDTO.class)),
@@ -182,14 +189,20 @@ public class ControllerColeccionAdministrativo {
             int page = ctx.queryParamAsClass("page", Integer.class).getOrDefault(0);
             int size = ctx.queryParamAsClass("size", Integer.class).getOrDefault(10);
 
-            // Obtener filtros opcionales de query params
-            String categoria = ctx.queryParam("categoria");
-            String estado = ctx.queryParam("estado");
-            String etiquetas = ctx.queryParam("etiquetas");
+            // Validar tamaño de página
+            if (size > 100) {
+                size = 100;
+            }
 
-            RespuestaPaginadaDTO<HechoDTO> respuesta = this.serviceColeccion.obtenerHechosDeColeccionPaginado(
-                id, page, size, categoria, estado, etiquetas);
+            // Crear filtros usando el Factory
+            List<HechoStrategy> filtros = FiltroFactory.crearFiltros(ctx);
+
+            RespuestaPaginadaDTO<HechoDTO> respuesta = this.serviceColeccion.buscarHechosEnColeccionPaginado(
+                id, filtros, page, size);
             ctx.json(respuesta);
+
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).result("Error en parámetros: " + e.getMessage());
         } catch (RuntimeException e) {
             if (e.getMessage().equals("Colección no encontrada")) {
                 ctx.status(404).result(e.getMessage());
@@ -197,7 +210,7 @@ public class ControllerColeccionAdministrativo {
                 ctx.status(400).result("Error al obtener hechos: " + e.getMessage());
             }
         } catch (Exception e) {
-            ctx.status(400).result("Error al obtener hechos: " + e.getMessage());
+            ctx.status(500).result("Error interno: " + e.getMessage());
         }
     }
 
