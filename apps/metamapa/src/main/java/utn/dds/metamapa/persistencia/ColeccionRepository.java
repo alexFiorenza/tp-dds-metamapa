@@ -303,10 +303,59 @@ public class ColeccionRepository {
     public void eliminar(String id) {
         if (dao instanceof Hibernate) {
             Hibernate<ColeccionEntity> hibernateDAO = (Hibernate<ColeccionEntity>) dao;
-            ColeccionEntity entity = hibernateDAO.findById(id);
-            if (entity != null) {
-                hibernateDAO.delete(entity);
-            }
+
+            // Usar executeQuery para operaciones complejas con manejo manual de transacciones
+            hibernateDAO.executeQuery(em -> {
+                em.getTransaction().begin();
+                try {
+                    // Buscar la colección con sus relaciones, pero hacerlo por separado para evitar MultipleBagFetchException
+                    ColeccionEntity entity = em.createQuery(
+                        "SELECT c FROM ColeccionEntity c WHERE c.handle = :id",
+                        ColeccionEntity.class)
+                        .setParameter("id", id)
+                        .getResultStream()
+                        .findFirst()
+                        .orElse(null);
+
+                    if (entity != null) {
+                        // Cargar las relaciones de forma separada para poder limpiarlas
+
+                        // Cargar y limpiar hechos
+                        entity = em.createQuery(
+                            "SELECT c FROM ColeccionEntity c LEFT JOIN FETCH c.hechos WHERE c.handle = :id",
+                            ColeccionEntity.class)
+                            .setParameter("id", id)
+                            .getSingleResult();
+                        entity.getHechos().clear();
+
+                        // Cargar y limpiar fuentes
+                        entity = em.createQuery(
+                            "SELECT c FROM ColeccionEntity c LEFT JOIN FETCH c.fuentes WHERE c.handle = :id",
+                            ColeccionEntity.class)
+                            .setParameter("id", id)
+                            .getSingleResult();
+                        entity.getFuentes().clear();
+
+                        // Eliminar criterios explícitamente
+                        em.createQuery("DELETE FROM CriterioEntity c WHERE c.idColeccion = :handle")
+                            .setParameter("handle", id)
+                            .executeUpdate();
+
+                        em.flush(); // Sincronizar cambios de las relaciones
+
+                        // Ahora eliminar la entidad principal
+                        em.remove(entity);
+                    }
+
+                    em.getTransaction().commit();
+                    return null;
+                } catch (Exception e) {
+                    if (em.getTransaction().isActive()) {
+                        em.getTransaction().rollback();
+                    }
+                    throw new RuntimeException("Error al eliminar colección", e);
+                }
+            });
         }
     }
 
