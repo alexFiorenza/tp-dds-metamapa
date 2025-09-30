@@ -197,6 +197,146 @@ public class ServiceColeccion {
         this.coleccionRepository.actualizar(id, coleccionActualizada);
     }
 
+    public void actualizarColeccionCompleta(String id, utn.dds.dto.ColeccionUpdateDTO updateDTO) {
+        // Verificar que la colección existe
+        Coleccion coleccionExistente = this.coleccionRepository.obtenerPorId(id);
+        if (coleccionExistente == null) {
+            throw new RuntimeException("Colección no encontrada");
+        }
+
+        boolean actualizarCriterios = updateDTO.getCriteriosDePertenencia() != null;
+        boolean actualizarFuentes = updateDTO.getFuentesIds() != null;
+        boolean actualizarCamposBasicos = updateDTO.getTitulo() != null || updateDTO.getDescripcion() != null;
+
+        // Convertir criterios de DTO a domain
+        List<HechoStrategy> nuevosCriterios = null;
+        if (actualizarCriterios) {
+            nuevosCriterios = convertirCriteriosDTO(updateDTO.getCriteriosDePertenencia());
+        }
+
+        if (actualizarCriterios && actualizarFuentes) {
+            // Caso 1: Actualizar criterios Y fuentes
+            actualizarCriteriosYFuentes(id, nuevosCriterios, updateDTO.getFuentesIds(), coleccionExistente);
+        } else if (actualizarCriterios) {
+            // Caso 2: Solo actualizar criterios
+            actualizarSoloCriterios(id, nuevosCriterios, coleccionExistente);
+        } else if (actualizarFuentes) {
+            // Caso 3: Solo actualizar fuentes
+            actualizarSoloFuentes(id, updateDTO.getFuentesIds(), coleccionExistente);
+        }
+
+        // Caso 4: Actualizar campos básicos (siempre al final)
+        if (actualizarCamposBasicos) {
+            this.coleccionRepository.actualizarCamposBasicos(id, updateDTO.getTitulo(), updateDTO.getDescripcion());
+        }
+    }
+
+    private void actualizarCriteriosYFuentes(String id, List<HechoStrategy> nuevosCriterios,
+                                           List<String> nuevasFuentesIds, Coleccion coleccionExistente) {
+        // 1. Actualizar criterios primero en la BD
+        this.coleccionRepository.actualizarCriterios(id, nuevosCriterios);
+
+        // 2. Buscar las nuevas fuentes por sus IDs
+        List<FuenteEntity> nuevasFuentes = buscarFuentesPorIds(nuevasFuentesIds);
+
+        // 3. Buscar hechos de las nuevas fuentes
+        List<Hecho> hechosNuevasFuentes = buscarHechosPorOrigenFuentes(nuevasFuentes);
+
+        // 4. Obtener hechos existentes de la colección actual
+        List<Hecho> hechosExistentes = coleccionExistente.getHechos();
+
+        // 5. Combinar hechos existentes + nuevos
+        List<Hecho> todosLosHechos = new ArrayList<>(hechosExistentes);
+        todosLosHechos.addAll(hechosNuevasFuentes);
+
+        // 6. Aplicar criterios a todos los hechos
+        List<Hecho> hechosFiltrados = aplicarCriterios(todosLosHechos, nuevosCriterios);
+
+        // 7. Actualizar fuentes y hechos en la BD
+        this.coleccionRepository.actualizarFuentes(id, nuevasFuentes);
+
+        List<HechoEntity> hechoEntities = hechosFiltrados.stream()
+            .map(hecho -> buscarHechoEntityPorId(hecho.getUuid()))
+            .filter(entity -> entity != null)
+            .collect(Collectors.toList());
+
+        this.coleccionRepository.actualizarHechos(id, hechoEntities);
+    }
+
+    private void actualizarSoloCriterios(String id, List<HechoStrategy> nuevosCriterios, Coleccion coleccionExistente) {
+        // 1. Actualizar criterios en la BD
+        this.coleccionRepository.actualizarCriterios(id, nuevosCriterios);
+
+        // 2. Obtener hechos existentes
+        List<Hecho> hechosExistentes = coleccionExistente.getHechos();
+
+        // 3. Aplicar nuevos criterios a hechos existentes
+        List<Hecho> hechosFiltrados = aplicarCriterios(hechosExistentes, nuevosCriterios);
+
+        // 4. Actualizar hechos filtrados
+        List<HechoEntity> hechoEntities = hechosFiltrados.stream()
+            .map(hecho -> buscarHechoEntityPorId(hecho.getUuid()))
+            .filter(entity -> entity != null)
+            .collect(Collectors.toList());
+
+        this.coleccionRepository.actualizarHechos(id, hechoEntities);
+    }
+
+    private void actualizarSoloFuentes(String id, List<String> nuevasFuentesIds, Coleccion coleccionExistente) {
+        // 1. Buscar las nuevas fuentes por sus IDs
+        List<FuenteEntity> nuevasFuentes = buscarFuentesPorIds(nuevasFuentesIds);
+
+        // 2. Buscar hechos de las nuevas fuentes
+        List<Hecho> hechosNuevasFuentes = buscarHechosPorOrigenFuentes(nuevasFuentes);
+
+        // 3. Obtener hechos existentes de la colección actual
+        List<Hecho> hechosExistentes = coleccionExistente.getHechos();
+
+        // 4. Combinar hechos existentes + nuevos
+        List<Hecho> todosLosHechos = new ArrayList<>(hechosExistentes);
+        todosLosHechos.addAll(hechosNuevasFuentes);
+
+        // 5. Aplicar criterios existentes si los hay
+        List<HechoStrategy> criteriosExistentes = coleccionExistente.getCriteriosDePertenencia();
+        List<Hecho> hechosFiltrados = aplicarCriterios(todosLosHechos, criteriosExistentes);
+
+        // 6. Actualizar fuentes y hechos en la BD
+        this.coleccionRepository.actualizarFuentes(id, nuevasFuentes);
+
+        List<HechoEntity> hechoEntities = hechosFiltrados.stream()
+            .map(hecho -> buscarHechoEntityPorId(hecho.getUuid()))
+            .filter(entity -> entity != null)
+            .collect(Collectors.toList());
+
+        this.coleccionRepository.actualizarHechos(id, hechoEntities);
+    }
+
+    private List<HechoStrategy> convertirCriteriosDTO(List<utn.dds.dto.CriterioCreateDTO> criteriosDTO) {
+        if (criteriosDTO == null || criteriosDTO.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        return criteriosDTO.stream()
+            .map(criterio -> {
+                try {
+                    return criterio.toHechoStrategy();
+                } catch (Exception e) {
+                    // Si hay error al convertir, ignorar este criterio
+                    return null;
+                }
+            })
+            .filter(criterio -> criterio != null)
+            .collect(Collectors.toList());
+    }
+
+    private HechoEntity buscarHechoEntityPorId(String uuid) {
+        if (hechoDAO instanceof Hibernate) {
+            Hibernate<HechoEntity> hibernateDAO = (Hibernate<HechoEntity>) hechoDAO;
+            return hibernateDAO.findById(uuid);
+        }
+        return null;
+    }
+
     public void eliminarColeccion(String id) {
         Coleccion coleccionExistente = this.coleccionRepository.obtenerPorId(id);
         if (coleccionExistente == null) {

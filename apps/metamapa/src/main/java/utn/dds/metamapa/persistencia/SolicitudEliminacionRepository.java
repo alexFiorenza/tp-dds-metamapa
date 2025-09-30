@@ -7,10 +7,13 @@ import utn.dds.dominio.SolicitudEliminacion;
 import utn.dds.dominio.EstadoSolicitud;
 import utn.dds.jpa.entities.SolicitudEliminacionEntity;
 import utn.dds.mappers.SolicitudEliminacionMapper;
+import utn.dds.dto.SolicitudEliminacionDTO;
+import utn.dds.dto.RespuestaPaginadaDTO;
 
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 public class SolicitudEliminacionRepository {
@@ -83,6 +86,55 @@ public class SolicitudEliminacionRepository {
                 hibernateDAO.delete(entity);
             }
         }
+    }
+
+    public RespuestaPaginadaDTO<SolicitudEliminacionDTO> obtenerTodos(int page, int size) {
+        if (dao instanceof Hibernate) {
+            Hibernate<SolicitudEliminacionEntity> hibernateDAO = (Hibernate<SolicitudEliminacionEntity>) dao;
+
+            return hibernateDAO.executeQuery(em -> {
+                // Consulta para contar total de elementos
+                Long totalElements = em.createQuery(
+                    "SELECT COUNT(s) FROM SolicitudEliminacionEntity s",
+                    Long.class)
+                    .getSingleResult();
+
+                // Consulta paginada ordenada por fecha (más recientes primero)
+                List<SolicitudEliminacionEntity> entities = em.createQuery(
+                    "SELECT s FROM SolicitudEliminacionEntity s ORDER BY s.fechaSolicitud DESC",
+                    SolicitudEliminacionEntity.class)
+                    .setFirstResult(page * size)
+                    .setMaxResults(size)
+                    .getResultList();
+
+                // Convertir a DTO
+                List<SolicitudEliminacionDTO> dtos = entities.stream()
+                        .map(entity -> {
+                            SolicitudEliminacion solicitud = SolicitudEliminacionMapper.toDomain(entity);
+                            return SolicitudEliminacionDTO.fromSolicitudEliminacion(solicitud);
+                        })
+                        .collect(Collectors.toList());
+
+                return new RespuestaPaginadaDTO<>(dtos, page, size, totalElements);
+            });
+        }
+
+        // Fallback sin paginación para otros tipos de DAO
+        List<SolicitudEliminacionEntity> entities = dao.find();
+        List<SolicitudEliminacionDTO> dtos = entities.stream()
+                .map(entity -> {
+                    SolicitudEliminacion solicitud = SolicitudEliminacionMapper.toDomain(entity);
+                    return SolicitudEliminacionDTO.fromSolicitudEliminacion(solicitud);
+                })
+                .collect(Collectors.toList());
+
+        // Simular paginación manualmente
+        int fromIndex = page * size;
+        int toIndex = Math.min(fromIndex + size, dtos.size());
+        List<SolicitudEliminacionDTO> paginatedData = fromIndex < dtos.size() ?
+            dtos.subList(fromIndex, toIndex) : new ArrayList<>();
+
+        return new RespuestaPaginadaDTO<>(paginatedData, page, size, dtos.size());
     }
 
     public void close() {

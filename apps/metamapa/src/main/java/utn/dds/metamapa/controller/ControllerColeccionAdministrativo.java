@@ -8,6 +8,7 @@ import utn.dds.dominio.Hecho;
 import utn.dds.dominio.criterios.HechoStrategy;
 import utn.dds.dto.ColeccionDTO;
 import utn.dds.dto.ColeccionCreateDTO;
+import utn.dds.dto.ColeccionUpdateDTO;
 import utn.dds.dto.HechoDTO;
 import utn.dds.dto.RespuestaPaginadaDTO;
 
@@ -117,7 +118,26 @@ public class ControllerColeccionAdministrativo {
         methods = HttpMethod.PUT,
         tags = {"Administrador - Colecciones"},
         pathParams = @OpenApiParam(name = "id", description = "ID de la colección"),
-        requestBody = @OpenApiRequestBody(content = @OpenApiContent(from = Coleccion.class)),
+        requestBody = @OpenApiRequestBody(
+            content = @OpenApiContent(
+                from = ColeccionUpdateDTO.class,
+                example = "{\n" +
+                    "  \"titulo\": \"Eventos Deportivos Buenos Aires 2024\",\n" +
+                    "  \"descripcion\": \"Colección actualizada de eventos deportivos en Buenos Aires\",\n" +
+                    "  \"fuentesIds\": [\"fuente-gov-ar-123\", \"fuente-deportes-456\"],\n" +
+                    "  \"criteriosDePertenencia\": [\n" +
+                    "    {\n" +
+                    "      \"tipo\": \"categoria\",\n" +
+                    "      \"categoria\": \"DEPORTES\"\n" +
+                    "    },\n" +
+                    "    {\n" +
+                    "      \"tipo\": \"estado\",\n" +
+                    "      \"estado\": \"CONFIRMADO\"\n" +
+                    "    }\n" +
+                    "  ]\n" +
+                    "}"
+            )
+        ),
         responses = {
             @OpenApiResponse(status = "200", description = "Colección actualizada exitosamente"),
             @OpenApiResponse(status = "400", description = "Error al actualizar colección")
@@ -126,8 +146,8 @@ public class ControllerColeccionAdministrativo {
     public void actualizarColeccion(Context ctx) {
         try {
             String id = ctx.pathParam("id");
-            Coleccion coleccionActualizada = ctx.bodyAsClass(Coleccion.class);
-            this.serviceColeccion.actualizarColeccion(id, coleccionActualizada);
+            ColeccionUpdateDTO updateDTO = ctx.bodyAsClass(ColeccionUpdateDTO.class);
+            this.serviceColeccion.actualizarColeccionCompleta(id, updateDTO);
             ctx.status(200).result("Colección actualizada exitosamente");
         } catch (Exception e) {
             ctx.status(400).result("Error al actualizar colección: " + e.getMessage());

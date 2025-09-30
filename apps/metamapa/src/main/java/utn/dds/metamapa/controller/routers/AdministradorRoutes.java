@@ -66,6 +66,7 @@ public class AdministradorRoutes {
         app.get("/administrador/coleccion/{id}/hechos", controllerColeccion::obtenerHechosDeColeccion);
 
         // Rutas administrativas para solicitudes de eliminación
+        app.get("/administrador/solicitudes", controllerSolicitud::obtenerSolicitudes);
         app.put("/administrador/solicitud/{uuid}/aceptar", controllerSolicitud::aceptarSolicitud);
         app.put("/administrador/solicitud/{uuid}/rechazar", controllerSolicitud::rechazarSolicitud);
 

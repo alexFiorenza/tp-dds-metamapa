@@ -300,6 +300,109 @@ public class ColeccionRepository {
         }
     }
 
+    public void actualizarCamposBasicos(String id, String titulo, String descripcion) {
+        if (dao instanceof Hibernate) {
+            Hibernate<ColeccionEntity> hibernateDAO = (Hibernate<ColeccionEntity>) dao;
+            ColeccionEntity entity = hibernateDAO.findById(id);
+            if (entity != null) {
+                if (titulo != null) entity.setTitulo(titulo);
+                if (descripcion != null) entity.setDescripcion(descripcion);
+                dao.save(entity);
+            }
+        }
+    }
+
+    public void actualizarCriterios(String id, List<utn.dds.dominio.criterios.HechoStrategy> nuevosCriterios) {
+        if (dao instanceof Hibernate) {
+            Hibernate<ColeccionEntity> hibernateDAO = (Hibernate<ColeccionEntity>) dao;
+            hibernateDAO.executeQuery(em -> {
+                em.getTransaction().begin();
+                try {
+                    // Eliminar criterios antiguos
+                    em.createQuery("DELETE FROM CriterioEntity c WHERE c.idColeccion = :handle")
+                        .setParameter("handle", id)
+                        .executeUpdate();
+
+                    // Crear nuevos criterios si existen
+                    if (nuevosCriterios != null && !nuevosCriterios.isEmpty()) {
+                        List<utn.dds.jpa.entities.CriterioEntity> criteriosEntities =
+                            utn.dds.mappers.CriterioMapper.toEntityList(nuevosCriterios, id);
+
+                        for (utn.dds.jpa.entities.CriterioEntity criterio : criteriosEntities) {
+                            em.persist(criterio);
+                        }
+                    }
+
+                    em.getTransaction().commit();
+                    return null;
+                } catch (Exception e) {
+                    if (em.getTransaction().isActive()) {
+                        em.getTransaction().rollback();
+                    }
+                    throw new RuntimeException("Error al actualizar criterios", e);
+                }
+            });
+        }
+    }
+
+    public void actualizarFuentes(String id, List<utn.dds.jpa.entities.FuenteEntity> nuevasFuentes) {
+        if (dao instanceof Hibernate) {
+            Hibernate<ColeccionEntity> hibernateDAO = (Hibernate<ColeccionEntity>) dao;
+            hibernateDAO.executeQuery(em -> {
+                em.getTransaction().begin();
+                try {
+                    // Cargar la colección con fuentes
+                    ColeccionEntity entity = em.createQuery(
+                        "SELECT c FROM ColeccionEntity c LEFT JOIN FETCH c.fuentes WHERE c.handle = :id",
+                        ColeccionEntity.class)
+                        .setParameter("id", id)
+                        .getSingleResult();
+
+                    // Actualizar fuentes
+                    entity.setFuentes(nuevasFuentes);
+                    em.merge(entity);
+
+                    em.getTransaction().commit();
+                    return null;
+                } catch (Exception e) {
+                    if (em.getTransaction().isActive()) {
+                        em.getTransaction().rollback();
+                    }
+                    throw new RuntimeException("Error al actualizar fuentes", e);
+                }
+            });
+        }
+    }
+
+    public void actualizarHechos(String id, List<utn.dds.jpa.entities.HechoEntity> nuevosHechos) {
+        if (dao instanceof Hibernate) {
+            Hibernate<ColeccionEntity> hibernateDAO = (Hibernate<ColeccionEntity>) dao;
+            hibernateDAO.executeQuery(em -> {
+                em.getTransaction().begin();
+                try {
+                    // Cargar la colección con hechos
+                    ColeccionEntity entity = em.createQuery(
+                        "SELECT c FROM ColeccionEntity c LEFT JOIN FETCH c.hechos WHERE c.handle = :id",
+                        ColeccionEntity.class)
+                        .setParameter("id", id)
+                        .getSingleResult();
+
+                    // Reemplazar hechos
+                    entity.setHechos(nuevosHechos);
+                    em.merge(entity);
+
+                    em.getTransaction().commit();
+                    return null;
+                } catch (Exception e) {
+                    if (em.getTransaction().isActive()) {
+                        em.getTransaction().rollback();
+                    }
+                    throw new RuntimeException("Error al actualizar hechos", e);
+                }
+            });
+        }
+    }
+
     public void eliminar(String id) {
         if (dao instanceof Hibernate) {
             Hibernate<ColeccionEntity> hibernateDAO = (Hibernate<ColeccionEntity>) dao;
