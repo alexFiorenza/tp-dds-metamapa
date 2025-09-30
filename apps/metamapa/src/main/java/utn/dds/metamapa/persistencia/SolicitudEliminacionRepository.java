@@ -2,56 +2,145 @@ package utn.dds.metamapa.persistencia;
 
 import utn.dds.daos.IDAO;
 import utn.dds.daos.DAOFactory;
+import utn.dds.daos.Hibernate;
 import utn.dds.dominio.SolicitudEliminacion;
 import utn.dds.dominio.EstadoSolicitud;
+import utn.dds.jpa.entities.SolicitudEliminacionEntity;
+import utn.dds.mappers.SolicitudEliminacionMapper;
+import utn.dds.dto.SolicitudEliminacionDTO;
+import utn.dds.dto.RespuestaPaginadaDTO;
 
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 public class SolicitudEliminacionRepository {
-    private final IDAO<SolicitudEliminacion> dao;
+    private IDAO<SolicitudEliminacionEntity> dao;
 
-    public SolicitudEliminacionRepository(String daoType, Map<String, Object> daoConfig) {
-        this.dao = DAOFactory.createDAO(SolicitudEliminacion.class, daoType, daoConfig);
+    public SolicitudEliminacionRepository() {
+        this(new HashMap<>());
+    }
+
+    public SolicitudEliminacionRepository(Map<String, Object> daoConfig) {
+        Map<String, Object> hibernateConfig = new HashMap<>(daoConfig);
+
+        // Configurar valores por defecto desde variables de entorno
+        hibernateConfig.putIfAbsent("jakarta.persistence.jdbc.url",
+            System.getenv().getOrDefault("DB_URL", "jdbc:postgresql://localhost:5432/metamapa_db"));
+        hibernateConfig.putIfAbsent("jakarta.persistence.jdbc.user",
+            System.getenv().getOrDefault("DB_USER", "metamapa"));
+        hibernateConfig.putIfAbsent("jakarta.persistence.jdbc.password",
+            System.getenv().getOrDefault("DB_PASSWORD", "metamapa123"));
+        hibernateConfig.putIfAbsent("persistenceUnit", "metamapa-db");
+
+        this.dao = DAOFactory.createDAO(SolicitudEliminacionEntity.class, "hibernate", hibernateConfig);
     }
 
     public List<SolicitudEliminacion> obtenerTodas() {
-        return this.dao.find();
+        List<SolicitudEliminacionEntity> entities = dao.find();
+        return entities.stream()
+                .map(SolicitudEliminacionMapper::toDomain)
+                .collect(Collectors.toList());
     }
 
     public List<SolicitudEliminacion> obtenerPorEstado(EstadoSolicitud estado) {
-        return this.dao.find().stream()
-            .filter(s -> s.getEstado() == estado)
-            .collect(Collectors.toList());
+        List<SolicitudEliminacionEntity> entities = dao.find();
+        return entities.stream()
+                .map(SolicitudEliminacionMapper::toDomain)
+                .filter(s -> s.getEstado() == estado)
+                .collect(Collectors.toList());
     }
 
     public SolicitudEliminacion obtenerPorId(String id) {
-        List<SolicitudEliminacion> solicitudes = this.dao.find();
-        return solicitudes.stream()
-            .filter(s -> s.getUuid().equals(id))
-            .findFirst()
-            .orElse(null);
+        if (dao instanceof Hibernate) {
+            Hibernate<SolicitudEliminacionEntity> hibernateDAO = (Hibernate<SolicitudEliminacionEntity>) dao;
+            SolicitudEliminacionEntity entity = hibernateDAO.findById(id);
+            return entity != null ? SolicitudEliminacionMapper.toDomain(entity) : null;
+        }
+        return null;
     }
 
     public void crear(SolicitudEliminacion solicitud) {
-        this.dao.save(solicitud);
+        SolicitudEliminacionEntity entity = SolicitudEliminacionMapper.toEntity(solicitud);
+        dao.save(entity);
     }
 
     public void actualizar(String id, SolicitudEliminacion solicitudActualizada) {
-        List<SolicitudEliminacion> solicitudes = this.dao.find();
-        for (int i = 0; i < solicitudes.size(); i++) {
-            if (solicitudes.get(i).getUuid().equals(id)) {
-                solicitudes.set(i, solicitudActualizada);
-                break;
+        if (dao instanceof Hibernate) {
+            Hibernate<SolicitudEliminacionEntity> hibernateDAO = (Hibernate<SolicitudEliminacionEntity>) dao;
+            SolicitudEliminacionEntity entity = hibernateDAO.findById(id);
+            if (entity != null) {
+                entity.setEstado(solicitudActualizada.getEstado());
+                dao.save(entity);
             }
         }
-        this.dao.saveAll(solicitudes);
     }
 
     public void eliminar(String id) {
-        List<SolicitudEliminacion> solicitudes = this.dao.find();
-        solicitudes.removeIf(s -> s.getUuid().equals(id));
-        this.dao.saveAll(solicitudes);
+        if (dao instanceof Hibernate) {
+            Hibernate<SolicitudEliminacionEntity> hibernateDAO = (Hibernate<SolicitudEliminacionEntity>) dao;
+            SolicitudEliminacionEntity entity = hibernateDAO.findById(id);
+            if (entity != null) {
+                hibernateDAO.delete(entity);
+            }
+        }
+    }
+
+    public RespuestaPaginadaDTO<SolicitudEliminacionDTO> obtenerTodos(int page, int size) {
+        if (dao instanceof Hibernate) {
+            Hibernate<SolicitudEliminacionEntity> hibernateDAO = (Hibernate<SolicitudEliminacionEntity>) dao;
+
+            return hibernateDAO.executeQuery(em -> {
+                // Consulta para contar total de elementos
+                Long totalElements = em.createQuery(
+                    "SELECT COUNT(s) FROM SolicitudEliminacionEntity s",
+                    Long.class)
+                    .getSingleResult();
+
+                // Consulta paginada ordenada por fecha (más recientes primero)
+                List<SolicitudEliminacionEntity> entities = em.createQuery(
+                    "SELECT s FROM SolicitudEliminacionEntity s ORDER BY s.fechaSolicitud DESC",
+                    SolicitudEliminacionEntity.class)
+                    .setFirstResult(page * size)
+                    .setMaxResults(size)
+                    .getResultList();
+
+                // Convertir a DTO
+                List<SolicitudEliminacionDTO> dtos = entities.stream()
+                        .map(entity -> {
+                            SolicitudEliminacion solicitud = SolicitudEliminacionMapper.toDomain(entity);
+                            return SolicitudEliminacionDTO.fromSolicitudEliminacion(solicitud);
+                        })
+                        .collect(Collectors.toList());
+
+                return new RespuestaPaginadaDTO<>(dtos, page, size, totalElements);
+            });
+        }
+
+        // Fallback sin paginación para otros tipos de DAO
+        List<SolicitudEliminacionEntity> entities = dao.find();
+        List<SolicitudEliminacionDTO> dtos = entities.stream()
+                .map(entity -> {
+                    SolicitudEliminacion solicitud = SolicitudEliminacionMapper.toDomain(entity);
+                    return SolicitudEliminacionDTO.fromSolicitudEliminacion(solicitud);
+                })
+                .collect(Collectors.toList());
+
+        // Simular paginación manualmente
+        int fromIndex = page * size;
+        int toIndex = Math.min(fromIndex + size, dtos.size());
+        List<SolicitudEliminacionDTO> paginatedData = fromIndex < dtos.size() ?
+            dtos.subList(fromIndex, toIndex) : new ArrayList<>();
+
+        return new RespuestaPaginadaDTO<>(paginatedData, page, size, dtos.size());
+    }
+
+    public void close() {
+        if (dao instanceof Hibernate) {
+            Hibernate<SolicitudEliminacionEntity> hibernateDAO = (Hibernate<SolicitudEliminacionEntity>) dao;
+            hibernateDAO.close();
+        }
     }
 }

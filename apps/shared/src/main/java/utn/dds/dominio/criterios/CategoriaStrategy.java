@@ -13,4 +13,8 @@ public class CategoriaStrategy implements HechoStrategy{
     public boolean cumple(Hecho hecho) {
         return hecho.getCategoria().toLowerCase().contains(categoria);
     }
+
+    public String getCategoria() {
+        return categoria;
+    }
 } 

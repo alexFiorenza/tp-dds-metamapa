@@ -32,6 +32,22 @@ services:
     networks:
       - metamapa-network
 
+  # CouchDB Database
+  couchdb:
+    image: couchdb:3.3
+    container_name: metamapa-couchdb
+    ports:
+      - "5984:5984"
+    volumes:
+      - couchdb_data:/opt/couchdb/data
+      - couchdb_config:/opt/couchdb/etc/local.d
+    environment:
+      - COUCHDB_USER=${COUCHDB_USER:-admin}
+      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-admin123}
+    restart: unless-stopped
+    networks:
+      - metamapa-network
+
   # pgAdmin
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -81,6 +97,8 @@ services:
     restart: unless-stopped
     environment:
       - DAO_TYPE=${FUENTE_DINAMICA_DAO_TYPE:-filesystem}
+    depends_on:
+      - couchdb
     networks:
       - metamapa-network
 
@@ -109,6 +127,8 @@ services:
     restart: unless-stopped
     environment:
       - DAO_TYPE=${FUENTE_PROXY_DEMO_DAO_TYPE:-filesystem}
+    depends_on:
+      - couchdb
     networks:
       - metamapa-network
 
@@ -152,6 +172,13 @@ services:
       - "7006:7006"
     container_name: metamapa-administrativo
     restart: unless-stopped
+    environment:
+      - DAO_TYPE=${METAMAPA_DAO_TYPE:-hibernate}
+      - DB_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-metamapa_db}
+      - DB_USER=${POSTGRES_USER:-metamapa}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-metamapa123}
+    depends_on:
+      - postgres
     networks:
       - metamapa-network
 
@@ -221,6 +248,8 @@ volumes:
   minio_data:
   postgres_data:
   pgadmin_data:
+  couchdb_data:
+  couchdb_config:
 
 networks:
   metamapa-network:

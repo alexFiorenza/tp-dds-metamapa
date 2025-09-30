@@ -2,6 +2,8 @@ package utn.dds.metamapa.service;
 
 import utn.dds.metamapa.persistencia.SolicitudEliminacionRepository;
 import utn.dds.dominio.SolicitudEliminacion;
+import utn.dds.dto.SolicitudEliminacionDTO;
+import utn.dds.dto.RespuestaPaginadaDTO;
 
 import java.util.Map;
 
@@ -9,7 +11,7 @@ public class ServiceSolicitudEliminacion {
     private final SolicitudEliminacionRepository solicitudEliminacionRepository;
 
     public ServiceSolicitudEliminacion(String daoType, Map<String, Object> daoConfig) {
-        this.solicitudEliminacionRepository = new SolicitudEliminacionRepository(daoType, daoConfig);
+        this.solicitudEliminacionRepository = new SolicitudEliminacionRepository(daoConfig);
     }
 
     public void crearSolicitud(SolicitudEliminacion solicitud) {
@@ -32,5 +34,13 @@ public class ServiceSolicitudEliminacion {
         }
         solicitud.ocultar();
         this.solicitudEliminacionRepository.actualizar(uuid, solicitud);
+    }
+
+    public RespuestaPaginadaDTO<SolicitudEliminacionDTO> obtenerSolicitudes(int page, int size) {
+        // Validar parámetros
+        if (page < 0) page = 0;
+        if (size <= 0 || size > 100) size = 10; // Máximo 100 elementos por página
+
+        return this.solicitudEliminacionRepository.obtenerTodos(page, size);
     }
 }

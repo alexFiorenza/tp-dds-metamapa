@@ -1,95 +1,65 @@
 package utn.dds.dto;
 
-import utn.dds.dominio.Coleccion;
-import utn.dds.dominio.Hecho;
-import utn.dds.dominio.criterios.HechoStrategy;
-
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ColeccionDTO {
+    private String handle;
     private String titulo;
     private String descripcion;
-    private List<HechoDTO> hechos;
-    private String handle;
-    private int cantidadHechos;
+    private List<FuenteDTO> fuentes;
+    private List<CriterioCreateDTO> criteriosDePertenencia;
 
-    // Constructor vacío para deserialización
     public ColeccionDTO() {}
 
-    // Constructor completo
-    public ColeccionDTO(String titulo, String descripcion, List<HechoDTO> hechos, String handle, int cantidadHechos) {
+    public ColeccionDTO(String handle, String titulo, String descripcion,
+                       List<FuenteDTO> fuentes,
+                       List<CriterioCreateDTO> criteriosDePertenencia) {
+        this.handle = handle;
         this.titulo = titulo;
         this.descripcion = descripcion;
-        this.hechos = hechos;
-        this.handle = handle;
-        this.cantidadHechos = cantidadHechos;
+        this.fuentes = fuentes;
+        this.criteriosDePertenencia = criteriosDePertenencia;
     }
 
-    // Método estático para crear DTO desde entidad de dominio
-    public static ColeccionDTO fromColeccion(Coleccion coleccion) {
-        List<HechoDTO> hechosDTO = coleccion.getHechos().stream()
-            .map(HechoDTO::fromHecho)
-            .collect(Collectors.toList());
-        
-        return new ColeccionDTO(
-            coleccion.getTitulo(),
-            coleccion.getHechos().isEmpty() ? "" : "Colección de " + coleccion.getHechos().size() + " hechos",
-            hechosDTO,
-            coleccion.getTitulo(), // Usando título como handle por simplicidad
-            coleccion.getHechos().size()
-        );
+    // Getters
+    public String getHandle() {
+        return handle;
     }
 
-    // Método para crear DTO básico sin hechos (para listados)
-    public static ColeccionDTO fromColeccionBasic(Coleccion coleccion) {
-        return new ColeccionDTO(
-            coleccion.getTitulo(),
-            coleccion.getHechos().isEmpty() ? "" : "Colección de " + coleccion.getHechos().size() + " hechos",
-            null, // No incluir hechos en listados
-            coleccion.getTitulo(),
-            coleccion.getHechos().size()
-        );
-    }
-
-    // Getters y Setters
     public String getTitulo() {
         return titulo;
-    }
-
-    public void setTitulo(String titulo) {
-        this.titulo = titulo;
     }
 
     public String getDescripcion() {
         return descripcion;
     }
 
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
+    public List<FuenteDTO> getFuentes() {
+        return fuentes;
     }
 
-    public List<HechoDTO> getHechos() {
-        return hechos;
+    public List<CriterioCreateDTO> getCriteriosDePertenencia() {
+        return criteriosDePertenencia;
     }
 
-    public void setHechos(List<HechoDTO> hechos) {
-        this.hechos = hechos;
-    }
-
-    public String getHandle() {
-        return handle;
-    }
-
+    // Setters
     public void setHandle(String handle) {
         this.handle = handle;
     }
 
-    public int getCantidadHechos() {
-        return cantidadHechos;
+    public void setTitulo(String titulo) {
+        this.titulo = titulo;
     }
 
-    public void setCantidadHechos(int cantidadHechos) {
-        this.cantidadHechos = cantidadHechos;
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
+    public void setFuentes(List<FuenteDTO> fuentes) {
+        this.fuentes = fuentes;
+    }
+
+    public void setCriteriosDePertenencia(List<CriterioCreateDTO> criteriosDePertenencia) {
+        this.criteriosDePertenencia = criteriosDePertenencia;
     }
 }
