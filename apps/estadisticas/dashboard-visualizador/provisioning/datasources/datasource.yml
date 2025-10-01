@@ -1,8 +1,17 @@
 apiVersion: 1
 
 datasources:
-  - name: Prometheus
-    type: prometheus
+  - name: MetaMapa PostgreSQL
+    type: postgres
     access: proxy
-    url: http://prometheus:9090
-    isDefault: true 
+    url: postgres:5432
+    database: metamapa_db
+    user: metamapa
+    secureJsonData:
+      password: metamapa123
+    jsonData:
+      sslmode: disable
+      postgresVersion: 1500
+      timescaledb: false
+    isDefault: true
+    editable: true
