@@ -1,4 +1,46 @@
 {
+  "__inputs": [
+    {
+      "name": "DS_POSTGRES",
+      "label": "PostgreSQL",
+      "description": "Selecciona tu datasource PostgreSQL",
+      "type": "datasource",
+      "pluginId": "postgres",
+      "pluginName": "PostgreSQL"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "10.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "postgres",
+      "name": "PostgreSQL",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "barchart",
+      "name": "Bar chart",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    }
+  ],
   "annotations": {
     "list": [
       {
@@ -25,7 +67,7 @@
     {
       "datasource": {
         "type": "postgres",
-        "uid": "${DS_METAMAPA_POSTGRESQL}"
+        "uid": "${DS_POSTGRES}"
       },
       "fieldConfig": {
         "defaults": {
@@ -93,7 +135,7 @@
         {
           "datasource": {
             "type": "postgres",
-            "uid": "${DS_METAMAPA_POSTGRESQL}"
+            "uid": "${DS_POSTGRES}"
           },
           "editorMode": "code",
           "format": "table",
@@ -125,7 +167,7 @@
     {
       "datasource": {
         "type": "postgres",
-        "uid": "${DS_METAMAPA_POSTGRESQL}"
+        "uid": "${DS_POSTGRES}"
       },
       "fieldConfig": {
         "defaults": {
@@ -166,7 +208,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 16,
         "w": 12,
         "x": 12,
         "y": 0
@@ -198,12 +240,12 @@
         {
           "datasource": {
             "type": "postgres",
-            "uid": "${DS_METAMAPA_POSTGRESQL}"
+            "uid": "${DS_POSTGRES}"
           },
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT categoria, total\nFROM analiticas.agg_hechos_por_categoria\nORDER BY total DESC;",
+          "rawSql": "SELECT categoria, total\nFROM analiticas.agg_hechos_por_categoria\nORDER BY total DESC\nLIMIT 10;",
           "refId": "A",
           "sql": {
             "columns": [
@@ -230,7 +272,7 @@
     {
       "datasource": {
         "type": "postgres",
-        "uid": "${DS_METAMAPA_POSTGRESQL}"
+        "uid": "${DS_POSTGRES}"
       },
       "fieldConfig": {
         "defaults": {
@@ -261,7 +303,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 8
+        "y": 16
       },
       "id": 3,
       "options": {
@@ -285,7 +327,7 @@
         {
           "datasource": {
             "type": "postgres",
-            "uid": "${DS_METAMAPA_POSTGRESQL}"
+            "uid": "${DS_POSTGRES}"
           },
           "editorMode": "code",
           "format": "table",
@@ -317,7 +359,7 @@
     {
       "datasource": {
         "type": "postgres",
-        "uid": "${DS_METAMAPA_POSTGRESQL}"
+        "uid": "${DS_POSTGRES}"
       },
       "fieldConfig": {
         "defaults": {
@@ -361,7 +403,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 8
+        "y": 16
       },
       "id": 4,
       "options": {
@@ -390,7 +432,7 @@
         {
           "datasource": {
             "type": "postgres",
-            "uid": "${DS_METAMAPA_POSTGRESQL}"
+            "uid": "${DS_POSTGRES}"
           },
           "editorMode": "code",
           "format": "table",
@@ -422,7 +464,7 @@
     {
       "datasource": {
         "type": "postgres",
-        "uid": "${DS_METAMAPA_POSTGRESQL}"
+        "uid": "${DS_POSTGRES}"
       },
       "fieldConfig": {
         "defaults": {
@@ -450,7 +492,7 @@
         "h": 6,
         "w": 6,
         "x": 0,
-        "y": 16
+        "y": 24
       },
       "id": 5,
       "options": {
@@ -470,7 +512,7 @@
         {
           "datasource": {
             "type": "postgres",
-            "uid": "${DS_METAMAPA_POSTGRESQL}"
+            "uid": "${DS_POSTGRES}"
           },
           "editorMode": "code",
           "format": "table",
@@ -502,7 +544,7 @@
     {
       "datasource": {
         "type": "postgres",
-        "uid": "${DS_METAMAPA_POSTGRESQL}"
+        "uid": "${DS_POSTGRES}"
       },
       "fieldConfig": {
         "defaults": {
@@ -526,7 +568,7 @@
         "h": 6,
         "w": 6,
         "x": 6,
-        "y": 16
+        "y": 24
       },
       "id": 6,
       "options": {
@@ -546,7 +588,7 @@
         {
           "datasource": {
             "type": "postgres",
-            "uid": "${DS_METAMAPA_POSTGRESQL}"
+            "uid": "${DS_POSTGRES}"
           },
           "editorMode": "code",
           "format": "table",
@@ -590,7 +632,7 @@
         },
         "datasource": {
           "type": "postgres",
-          "uid": "${DS_METAMAPA_POSTGRESQL}"
+          "uid": "${DS_POSTGRES}"
         },
         "definition": "SELECT DISTINCT coleccion_handle FROM analiticas.agg_hechos_por_provincia ORDER BY coleccion_handle;",
         "hide": 0,
@@ -614,7 +656,7 @@
         },
         "datasource": {
           "type": "postgres",
-          "uid": "${DS_METAMAPA_POSTGRESQL}"
+          "uid": "${DS_POSTGRES}"
         },
         "definition": "SELECT DISTINCT categoria FROM analiticas.agg_hechos_por_categoria ORDER BY categoria;",
         "hide": 0,
