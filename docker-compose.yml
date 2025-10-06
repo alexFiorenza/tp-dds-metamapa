@@ -213,6 +213,24 @@ services:
     networks:
       - metamapa-network
 
+  # Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: metamapa-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    depends_on:
+      - postgres
+      - metric-collector
+    restart: unless-stopped
+    networks:
+      - metamapa-network
+
   # Scheduler para Proxy Demo
   scheduler-proxy-demo:
     build:
@@ -250,6 +268,7 @@ volumes:
   pgadmin_data:
   couchdb_data:
   couchdb_config:
+  grafana_data:
 
 networks:
   metamapa-network:

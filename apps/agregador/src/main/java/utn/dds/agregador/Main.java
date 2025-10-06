@@ -8,6 +8,7 @@ import io.javalin.openapi.plugin.OpenApiPlugin;
 import io.javalin.openapi.plugin.redoc.ReDocPlugin;
 import io.javalin.openapi.plugin.swagger.SwaggerPlugin;
 import utn.dds.agregador.config.AppConfig;
+import utn.dds.agregador.config.MetricsConfig;
 import utn.dds.agregador.controller.RegistryController;
 import utn.dds.agregador.controller.ControllerAgregador;
 import utn.dds.agregador.service.ServiceRegistry;
@@ -49,6 +50,7 @@ public class Main {
 
     public static void main(String[] args) {
         AppConfig appConfig = AppConfig.fromEnvironment();
+        MetricsConfig metricsConfig = new MetricsConfig();
 
         FuentesRepository fuentesRepository = new FuentesRepository(appConfig.getDaoConfig());
         HechoRepository hechoRepository = new HechoRepository(appConfig.getDaoConfig());
@@ -91,12 +93,13 @@ public class Main {
 
         app.get("/health", Main::healthCheck);
         app.get("/", Main::infoServicio);
-        
+        app.get("/metrics", ctx -> ctx.contentType("text/plain; version=0.0.4").result(metricsConfig.scrape()));
+
         app.post("/fuentes", registryController::registrar);
         app.get("/fuentes", registryController::obtenerFuentes);
         app.get("/fuentes/{host}", registryController::obtenerFuentePorHost);
         app.delete("/fuentes/{uuid}", registryController::eliminarFuente);
-        
+
         app.post("/agregacion", controllerAgregador::agregacion);
         app.get("/hechos", controllerAgregador::obtenerHechos);
 

@@ -8,6 +8,7 @@ import io.javalin.openapi.plugin.OpenApiPlugin;
 import io.javalin.openapi.plugin.redoc.ReDocPlugin;
 import io.javalin.openapi.plugin.swagger.SwaggerPlugin;
 import utn.dds.metamapa.config.AppConfig;
+import utn.dds.metamapa.config.MetricsConfig;
 import utn.dds.metamapa.controller.routers.ApiRoutes;
 import utn.dds.metamapa.controller.routers.AdministradorRoutes;
 
@@ -45,7 +46,8 @@ public class Main {
     public static void main(String[] args) {
         try {
             AppConfig appConfig = AppConfig.fromEnvironment();
-            
+            MetricsConfig metricsConfig = new MetricsConfig();
+
             logger.info("Iniciando servicio MetaMapa con configuración:");
             logger.info("  - DAO Type: {}", appConfig.getDaoType());
 
@@ -91,6 +93,7 @@ public class Main {
             // Rutas base del servicio
             app.get("/health", Main::healthCheck);
             app.get("/", Main::infoServicio);
+            app.get("/metrics", ctx -> ctx.contentType("text/plain; version=0.0.4").result(metricsConfig.scrape()));
 
             // Configurar rutas de API y Administrador
             apiRoutes.configure(app);
