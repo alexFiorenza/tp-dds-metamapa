@@ -193,46 +193,7 @@ public class HechoRepository {
         return new RespuestaPaginadaDTO<>(hechosPaginados, pagina, tamanioPagina, totalElementos);
     }
 
-    public RespuestaPaginadaDTO<HechoDTO> obtenerHechosDeColeccionPaginado(String coleccionHandle, int pagina, int tamanioPagina) {
-        if (dao instanceof Hibernate) {
-            Hibernate<HechoEntity> hibernateDAO = (Hibernate<HechoEntity>) dao;
-
-            return hibernateDAO.executeQuery(em -> {
-                // Contar total de hechos de la colección
-                Long totalElementos = em.createQuery(
-                    "SELECT COUNT(h) FROM HechoEntity h " +
-                    "JOIN ColeccionEntity c ON h MEMBER OF c.hechos " +
-                    "WHERE c.handle = :handle",
-                    Long.class)
-                    .setParameter("handle", coleccionHandle)
-                    .getSingleResult();
-
-                // Obtener hechos paginados de la colección
-                List<HechoEntity> entities = em.createQuery(
-                    "SELECT h FROM HechoEntity h " +
-                    "JOIN ColeccionEntity c ON h MEMBER OF c.hechos " +
-                    "WHERE c.handle = :handle " +
-                    "ORDER BY h.fechaCarga DESC",
-                    HechoEntity.class)
-                    .setParameter("handle", coleccionHandle)
-                    .setFirstResult(pagina * tamanioPagina)
-                    .setMaxResults(tamanioPagina)
-                    .getResultList();
-
-                // Convertir a DTO directamente
-                List<HechoDTO> hechosDTO = entities.stream()
-                        .map(entity -> HechoDTO.fromHecho(HechoMapper.toDomain(entity)))
-                        .collect(Collectors.toList());
-
-                return new RespuestaPaginadaDTO<>(hechosDTO, pagina, tamanioPagina, totalElementos);
-            });
-        }
-
-        // Fallback (no debería llegar aquí en condiciones normales)
-        return new RespuestaPaginadaDTO<>(List.of(), pagina, tamanioPagina, 0L);
-    }
-
-    public RespuestaPaginadaDTO<HechoDTO> buscarHechosEnColeccionPaginado(String coleccionHandle, List<HechoStrategy> filtros, int pagina, int tamanioPagina) {
+    public RespuestaPaginadaDTO<HechoDTO> buscarHechosEnColeccion(String coleccionHandle, List<HechoStrategy> filtros, int pagina, int tamanioPagina) {
         if (dao instanceof Hibernate) {
             Hibernate<HechoEntity> hibernateDAO = (Hibernate<HechoEntity>) dao;
 

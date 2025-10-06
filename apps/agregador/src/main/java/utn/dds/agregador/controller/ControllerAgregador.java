@@ -74,8 +74,8 @@ public class ControllerAgregador {
         try {
             int pagina = ctx.queryParamAsClass("pagina", Integer.class).getOrDefault(0);
             int tamanioPagina = ctx.queryParamAsClass("tamanioPagina", Integer.class).getOrDefault(10);
-            
-            RespuestaPaginadaDTO<Hecho> respuesta = serviceAgregador.obtenerHechosPaginados(pagina, tamanioPagina);
+
+            RespuestaPaginadaDTO<Hecho> respuesta = serviceAgregador.obtenerHechos(pagina, tamanioPagina);
             ctx.json(respuesta);
         } catch (Exception e) {
             ctx.status(500).result("Error al obtener los hechos: " + e.getMessage());

@@ -33,7 +33,7 @@ public class ControllerColeccionPublica {
     public void obtenerColeccion(Context ctx) {
         try {
             String identificador = ctx.pathParam("identificador");
-            ColeccionDTO coleccionDTO = this.serviceColeccion.obtenerColeccionDTOPorId(identificador);
+            ColeccionDTO coleccionDTO = this.serviceColeccion.obtenerColeccionPorId(identificador);
 
             if (coleccionDTO != null) {
                 ctx.json(coleccionDTO);
@@ -86,7 +86,7 @@ public class ControllerColeccionPublica {
             // Crear filtros usando el Factory
             List<HechoStrategy> filtros = FiltroFactory.crearFiltros(ctx);
 
-            RespuestaPaginadaDTO<HechoDTO> respuesta = this.serviceColeccion.buscarHechosEnColeccionPaginado(
+            RespuestaPaginadaDTO<HechoDTO> respuesta = this.serviceColeccion.obtenerHechosDeColeccion(
                 identificador, filtros, page, size);
             ctx.json(respuesta);
 
