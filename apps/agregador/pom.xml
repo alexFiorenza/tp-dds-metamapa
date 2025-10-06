@@ -64,6 +64,18 @@
             <artifactId>shared</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- Micrometer Core -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-core</artifactId>
+            <version>1.13.0</version>
+        </dependency>
+        <!-- Micrometer Prometheus Registry -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+            <version>1.13.0</version>
+        </dependency>
         <!-- Testing -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
