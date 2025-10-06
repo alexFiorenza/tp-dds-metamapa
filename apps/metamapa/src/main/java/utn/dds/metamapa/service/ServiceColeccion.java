@@ -12,6 +12,7 @@ import utn.dds.dto.RespuestaPaginadaDTO;
 import utn.dds.mappers.ColeccionMapper;
 import utn.dds.dominio.criterios.*;
 import utn.dds.dominio.EstadoHecho;
+import utn.dds.jpa.entities.ColeccionEntity;
 import utn.dds.jpa.entities.FuenteEntity;
 import utn.dds.jpa.entities.HechoEntity;
 import utn.dds.daos.Hibernate;
@@ -49,28 +50,24 @@ public class ServiceColeccion {
         this.hechoDAO = DAOFactory.createDAO(HechoEntity.class, "hibernate", hibernateConfig);
     }
 
-    public List<Coleccion> obtenerColecciones() {
-        return this.coleccionRepository.obtenerTodas();
-    }
-
-    public List<ColeccionDTO> obtenerColeccionesDTO() {
-        return this.coleccionRepository.obtenerTodasDTO();
-    }
-
-    public RespuestaPaginadaDTO<ColeccionDTO> obtenerColeccionesPaginado(int page, int size) {
+    public RespuestaPaginadaDTO<ColeccionDTO> obtenerColecciones(int page, int size) {
         // Valores por defecto si los parámetros no son válidos
         if (page < 0) page = 0;
         if (size <= 0 || size > 100) size = 10; // Máximo 100 elementos por página
 
-        return this.coleccionRepository.obtenerTodasDTOPaginado(page, size);
+        RespuestaPaginadaDTO<ColeccionEntity> respuesta = this.coleccionRepository.obtenerTodas(page, size);
+
+        // Mapear de entity a DTO
+        List<ColeccionDTO> coleccionesDTO = respuesta.getDatos().stream()
+                .map(ColeccionMapper::toDTO)
+                .collect(Collectors.toList());
+
+        return new RespuestaPaginadaDTO<>(coleccionesDTO, page, size, respuesta.getTotalElementos());
     }
 
-    public Coleccion obtenerColeccionPorId(String id) {
-        return this.coleccionRepository.obtenerPorId(id);
-    }
-
-    public ColeccionDTO obtenerColeccionDTOPorId(String id) {
-        return this.coleccionRepository.obtenerDTOPorId(id);
+    public ColeccionDTO obtenerColeccionPorId(String id) {
+        ColeccionEntity entity = this.coleccionRepository.obtenerPorId(id);
+        return entity != null ? ColeccionMapper.toDTO(entity) : null;
     }
 
     public void crearColeccion(ColeccionCreateDTO coleccionCreateDTO) {
@@ -189,20 +186,13 @@ public class ServiceColeccion {
         coleccionDAO.save(coleccionEntity);
     }
 
-    public void actualizarColeccion(String id, Coleccion coleccionActualizada) {
-        Coleccion coleccionExistente = this.coleccionRepository.obtenerPorId(id);
-        if (coleccionExistente == null) {
+    public void actualizarColeccion(String id, utn.dds.dto.ColeccionUpdateDTO updateDTO) {
+        // Verificar que la colección existe y convertir a dominio
+        ColeccionEntity entity = this.coleccionRepository.obtenerPorId(id);
+        if (entity == null) {
             throw new RuntimeException("Colección no encontrada");
         }
-        this.coleccionRepository.actualizar(id, coleccionActualizada);
-    }
-
-    public void actualizarColeccionCompleta(String id, utn.dds.dto.ColeccionUpdateDTO updateDTO) {
-        // Verificar que la colección existe
-        Coleccion coleccionExistente = this.coleccionRepository.obtenerPorId(id);
-        if (coleccionExistente == null) {
-            throw new RuntimeException("Colección no encontrada");
-        }
+        Coleccion coleccionExistente = ColeccionMapper.toDomain(entity);
 
         boolean actualizarCriterios = updateDTO.getCriteriosDePertenencia() != null;
         boolean actualizarFuentes = updateDTO.getFuentesIds() != null;
@@ -338,101 +328,25 @@ public class ServiceColeccion {
     }
 
     public void eliminarColeccion(String id) {
-        Coleccion coleccionExistente = this.coleccionRepository.obtenerPorId(id);
-        if (coleccionExistente == null) {
+        ColeccionEntity entity = this.coleccionRepository.obtenerPorId(id);
+        if (entity == null) {
             throw new RuntimeException("Colección no encontrada");
         }
         this.coleccionRepository.eliminar(id);
     }
 
-    public List<Hecho> buscarHechosEnColeccion(String id, List<HechoStrategy> filtros) {
-        Coleccion coleccion = this.coleccionRepository.obtenerPorId(id);
-        if (coleccion == null) {
-            throw new RuntimeException("Colección no encontrada");
-        }
-        return coleccion.buscarHechos(filtros);
-    }
-
-    public RespuestaPaginadaDTO<HechoDTO> obtenerHechosDeColeccionPaginado(String handle, int page, int size) {
+    public RespuestaPaginadaDTO<HechoDTO> obtenerHechosDeColeccion(String handle, List<HechoStrategy> filtros, int page, int size) {
         // Validar parámetros
         if (page < 0) page = 0;
         if (size <= 0 || size > 100) size = 10;
 
         // Verificar que la colección existe
-        Coleccion coleccion = this.coleccionRepository.obtenerPorId(handle);
-        if (coleccion == null) {
+        ColeccionEntity entity = this.coleccionRepository.obtenerPorId(handle);
+        if (entity == null) {
             throw new RuntimeException("Colección no encontrada");
         }
 
         // Usar HechoRepository para consulta directa optimizada
-        return this.hechoRepository.obtenerHechosDeColeccionPaginado(handle, page, size);
-    }
-
-    public RespuestaPaginadaDTO<HechoDTO> obtenerHechosDeColeccionPaginado(String handle, int page, int size,
-                                                                         String categoria, String estado, String etiquetas) {
-        // Validar parámetros
-        if (page < 0) page = 0;
-        if (size <= 0 || size > 100) size = 10;
-
-        // Verificar que la colección existe
-        Coleccion coleccion = this.coleccionRepository.obtenerPorId(handle);
-        if (coleccion == null) {
-            throw new RuntimeException("Colección no encontrada");
-        }
-
-        // Crear filtros a partir de query params
-        List<HechoStrategy> filtros = crearFiltrosDesdeQueryParams(categoria, estado, etiquetas);
-
-        if (filtros.isEmpty()) {
-            // Sin filtros, usar método optimizado
-            return this.hechoRepository.obtenerHechosDeColeccionPaginado(handle, page, size);
-        } else {
-            // Con filtros, usar método que aplica filtros
-            return this.hechoRepository.buscarHechosEnColeccionPaginado(handle, filtros, page, size);
-        }
-    }
-
-    private List<HechoStrategy> crearFiltrosDesdeQueryParams(String categoria, String estado, String etiquetas) {
-        List<HechoStrategy> filtros = new ArrayList<>();
-
-        if (categoria != null && !categoria.trim().isEmpty()) {
-            filtros.add(new CategoriaStrategy(categoria.trim()));
-        }
-
-        if (estado != null && !estado.trim().isEmpty()) {
-            try {
-                EstadoHecho estadoHecho = EstadoHecho.valueOf(estado.trim().toUpperCase());
-                filtros.add(new EstadoStrategy(estadoHecho));
-            } catch (IllegalArgumentException e) {
-                // Ignorar estados inválidos
-            }
-        }
-
-        if (etiquetas != null && !etiquetas.trim().isEmpty()) {
-            List<String> listaEtiquetas = Arrays.stream(etiquetas.split(","))
-                    .map(String::trim)
-                    .filter(s -> !s.isEmpty())
-                    .collect(Collectors.toList());
-            if (!listaEtiquetas.isEmpty()) {
-                filtros.add(new EtiquetasStrategy(listaEtiquetas));
-            }
-        }
-
-        return filtros;
-    }
-
-    public RespuestaPaginadaDTO<HechoDTO> buscarHechosEnColeccionPaginado(String handle, List<HechoStrategy> filtros, int page, int size) {
-        // Validar parámetros
-        if (page < 0) page = 0;
-        if (size <= 0 || size > 100) size = 10;
-
-        // Verificar que la colección existe
-        Coleccion coleccion = this.coleccionRepository.obtenerPorId(handle);
-        if (coleccion == null) {
-            throw new RuntimeException("Colección no encontrada");
-        }
-
-        // Usar HechoRepository para consulta directa optimizada
-        return this.hechoRepository.buscarHechosEnColeccionPaginado(handle, filtros, page, size);
+        return this.hechoRepository.buscarHechosEnColeccion(handle, filtros, page, size);
     }
 }

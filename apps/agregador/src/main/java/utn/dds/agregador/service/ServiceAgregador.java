@@ -290,7 +290,7 @@ public class ServiceAgregador {
         return urlBuilder.toString();
     }
     
-    public RespuestaPaginadaDTO<Hecho> obtenerHechosPaginados(int pagina, int tamanioPagina) {
+    public RespuestaPaginadaDTO<Hecho> obtenerHechos(int pagina, int tamanioPagina) {
         // Validaciones
         if (pagina < 0) {
             pagina = 0;
@@ -301,14 +301,14 @@ public class ServiceAgregador {
         if (tamanioPagina > 100) {
             tamanioPagina = 100; // Máximo 100 elementos por página
         }
-        
+
         List<Hecho> todosLosHechos = hechoRepository.find();
         long totalElementos = todosLosHechos.size();
-        
+
         // Calcular índices para la paginación
         int indiceInicio = pagina * tamanioPagina;
         int indiceFin = Math.min(indiceInicio + tamanioPagina, (int) totalElementos);
-        
+
         // Obtener datos de la página actual
         List<Hecho> datosPagina;
         if (indiceInicio >= totalElementos) {
@@ -316,7 +316,7 @@ public class ServiceAgregador {
         } else {
             datosPagina = todosLosHechos.subList(indiceInicio, indiceFin);
         }
-        
+
         return new RespuestaPaginadaDTO<>(datosPagina, pagina, tamanioPagina, totalElementos);
     }
 }

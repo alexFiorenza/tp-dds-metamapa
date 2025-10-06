@@ -40,7 +40,7 @@ public class ControllerColeccionAdministrativo {
     public void obtenerColecciones(Context ctx) {
         int page = ctx.queryParamAsClass("page", Integer.class).getOrDefault(0);
         int size = ctx.queryParamAsClass("size", Integer.class).getOrDefault(10);
-        RespuestaPaginadaDTO<ColeccionDTO> respuesta = this.serviceColeccion.obtenerColeccionesPaginado(page, size);
+        RespuestaPaginadaDTO<ColeccionDTO> respuesta = this.serviceColeccion.obtenerColecciones(page, size);
         ctx.json(respuesta);
     }
 
@@ -58,7 +58,7 @@ public class ControllerColeccionAdministrativo {
     )
     public void obtenerColeccionPorId(Context ctx) {
         String id = ctx.pathParam("id");
-        ColeccionDTO coleccionDTO = this.serviceColeccion.obtenerColeccionDTOPorId(id);
+        ColeccionDTO coleccionDTO = this.serviceColeccion.obtenerColeccionPorId(id);
         if (coleccionDTO != null) {
             ctx.json(coleccionDTO);
         } else {
@@ -147,7 +147,7 @@ public class ControllerColeccionAdministrativo {
         try {
             String id = ctx.pathParam("id");
             ColeccionUpdateDTO updateDTO = ctx.bodyAsClass(ColeccionUpdateDTO.class);
-            this.serviceColeccion.actualizarColeccionCompleta(id, updateDTO);
+            this.serviceColeccion.actualizarColeccion(id, updateDTO);
             ctx.status(200).result("Colección actualizada exitosamente");
         } catch (Exception e) {
             ctx.status(400).result("Error al actualizar colección: " + e.getMessage());
@@ -217,7 +217,7 @@ public class ControllerColeccionAdministrativo {
             // Crear filtros usando el Factory
             List<HechoStrategy> filtros = FiltroFactory.crearFiltros(ctx);
 
-            RespuestaPaginadaDTO<HechoDTO> respuesta = this.serviceColeccion.buscarHechosEnColeccionPaginado(
+            RespuestaPaginadaDTO<HechoDTO> respuesta = this.serviceColeccion.obtenerHechosDeColeccion(
                 id, filtros, page, size);
             ctx.json(respuesta);
 
