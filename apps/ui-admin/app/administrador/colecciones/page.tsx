@@ -1,6 +1,6 @@
 import { ApiClient } from "@/lib/api-client"
 import { SidebarLayout } from "@/components/sidebar-layout"
-import { MapPlaceholder } from "@/components/map-placeholder"
+import { MapWrapper } from "@/components/map-wrapper"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -68,7 +68,7 @@ export default async function AdminColeccionesPage() {
         </div>
       }
     >
-      <MapPlaceholder />
+      <MapWrapper />
     </SidebarLayout>
   )
 }

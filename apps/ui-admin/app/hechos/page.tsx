@@ -1,31 +1,31 @@
 import { ApiClient } from "@/lib/api-client"
 import { SidebarLayout } from "@/components/sidebar-layout"
 import { InfiniteScrollHechos } from "@/components/infinite-scroll-hechos"
-import { MapPlaceholder } from "@/components/map-placeholder"
+import { MapWrapper } from "@/components/map-wrapper"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
 interface HechosPageProps {
-  searchParams: {
+  searchParams: Promise<{
     categoria?: string
     titulo?: string
-  }
+  }>
 }
 
 export default async function HechosPage({ searchParams }: HechosPageProps) {
+  const params = await searchParams
   const respuesta = await ApiClient.obtenerHechos({
     pagina: 0,
     tamanioPagina: 10,
-    categoria: searchParams.categoria,
-    titulo: searchParams.titulo,
+    categoria: params.categoria,
+    titulo: params.titulo,
   })
 
   return (
     <SidebarLayout
       sidebar={
         <div className="flex flex-col h-full">
-          {/* Header */}
           <div className="p-4 border-b border-border">
             <Link href="/">
               <Button variant="ghost" size="sm" className="mb-3">
@@ -37,7 +37,6 @@ export default async function HechosPage({ searchParams }: HechosPageProps) {
             <p className="text-sm text-muted-foreground mt-1">{respuesta.totalElementos} hechos encontrados</p>
           </div>
 
-          {/* Filters would go here */}
           <div className="p-4 border-b border-border">
             <p className="text-xs text-muted-foreground">Filtros disponibles próximamente</p>
           </div>
@@ -50,8 +49,8 @@ export default async function HechosPage({ searchParams }: HechosPageProps) {
                 return ApiClient.obtenerHechos({
                   pagina,
                   tamanioPagina: 10,
-                  categoria: searchParams.categoria,
-                  titulo: searchParams.titulo,
+                  categoria: params.categoria,
+                  titulo: params.titulo,
                 })
               }}
             />
@@ -59,7 +58,7 @@ export default async function HechosPage({ searchParams }: HechosPageProps) {
         </div>
       }
     >
-      <MapPlaceholder />
+      <MapWrapper hechos={respuesta.datos} />
     </SidebarLayout>
   )
 }

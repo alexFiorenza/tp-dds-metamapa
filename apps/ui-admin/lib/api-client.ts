@@ -2,7 +2,7 @@ import type { HechoDTO, ColeccionDTO, SolicitudEliminacionDTO, RespuestaPaginada
 import { mockHechos, mockColecciones, mockSolicitudes, crearRespuestaPaginada } from "./mock-data"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7006"
-const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true" || true // Por defecto usar mock
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true"
 
 // Cliente API para consumir el backend
 export class ApiClient {
@@ -26,7 +26,7 @@ export class ApiClient {
       return crearRespuestaPaginada(hechosFiltrados, filtros.pagina || 0, filtros.tamanioPagina || 10)
     }
 
-    // Implementación real cuando el backend esté disponible
+    // Implementación real con la API
     const params = new URLSearchParams()
     Object.entries(filtros).forEach(([key, value]) => {
       if (value !== undefined) {
@@ -34,7 +34,14 @@ export class ApiClient {
       }
     })
 
-    const response = await fetch(`${API_BASE_URL}/api/hechos?${params}`)
+    const response = await fetch(`${API_BASE_URL}/api/hechos?${params}`, {
+      cache: 'no-store' // Asegurar datos frescos en cada request
+    })
+
+    if (!response.ok) {
+      throw new Error(`Error al obtener hechos: ${response.statusText}`)
+    }
+
     return response.json()
   }
 
@@ -44,7 +51,15 @@ export class ApiClient {
       return crearRespuestaPaginada(mockColecciones, pagina, tamanioPagina)
     }
 
-    const response = await fetch(`${API_BASE_URL}/administrador/coleccion?page=${pagina}&size=${tamanioPagina}`)
+    const response = await fetch(
+      `${API_BASE_URL}/administrador/coleccion?page=${pagina}&size=${tamanioPagina}`,
+      { cache: 'no-store' }
+    )
+
+    if (!response.ok) {
+      throw new Error(`Error al obtener colecciones: ${response.statusText}`)
+    }
+
     return response.json()
   }
 
@@ -56,7 +71,15 @@ export class ApiClient {
       return coleccion
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/colecciones/${identificador}`)
+    const response = await fetch(
+      `${API_BASE_URL}/api/colecciones/${identificador}`,
+      { cache: 'no-store' }
+    )
+
+    if (!response.ok) {
+      throw new Error(`Error al obtener colección: ${response.statusText}`)
+    }
+
     return response.json()
   }
 
@@ -81,13 +104,31 @@ export class ApiClient {
     }
 
     const params = new URLSearchParams()
+
+    // Mapear los parámetros de paginación al formato esperado por la API
+    if (filtros.pagina !== undefined) {
+      params.append('page', String(filtros.pagina))
+    }
+    if (filtros.tamanioPagina !== undefined) {
+      params.append('size', String(filtros.tamanioPagina))
+    }
+
+    // Agregar el resto de filtros
     Object.entries(filtros).forEach(([key, value]) => {
-      if (value !== undefined) {
+      if (value !== undefined && key !== 'pagina' && key !== 'tamanioPagina') {
         params.append(key, String(value))
       }
     })
 
-    const response = await fetch(`${API_BASE_URL}/api/colecciones/${identificador}/hechos?${params}`)
+    const response = await fetch(
+      `${API_BASE_URL}/api/colecciones/${identificador}/hechos?${params}`,
+      { cache: 'no-store' }
+    )
+
+    if (!response.ok) {
+      throw new Error(`Error al obtener hechos de colección: ${response.statusText}`)
+    }
+
     return response.json()
   }
 
@@ -100,7 +141,15 @@ export class ApiClient {
       return crearRespuestaPaginada(mockSolicitudes, pagina, tamanioPagina)
     }
 
-    const response = await fetch(`${API_BASE_URL}/administrador/solicitudes?page=${pagina}&size=${tamanioPagina}`)
+    const response = await fetch(
+      `${API_BASE_URL}/administrador/solicitudes?page=${pagina}&size=${tamanioPagina}`,
+      { cache: 'no-store' }
+    )
+
+    if (!response.ok) {
+      throw new Error(`Error al obtener solicitudes: ${response.statusText}`)
+    }
+
     return response.json()
   }
 
@@ -111,9 +160,13 @@ export class ApiClient {
       return
     }
 
-    await fetch(`${API_BASE_URL}/api/hechos/${uuid}/reportar`, {
+    const response = await fetch(`${API_BASE_URL}/api/hechos/${uuid}/reportar`, {
       method: "POST",
     })
+
+    if (!response.ok) {
+      throw new Error(`Error al reportar hecho: ${response.statusText}`)
+    }
   }
 
   // Aceptar solicitud de eliminación
@@ -125,9 +178,13 @@ export class ApiClient {
       return
     }
 
-    await fetch(`${API_BASE_URL}/administrador/solicitud/${uuid}/aceptar`, {
+    const response = await fetch(`${API_BASE_URL}/administrador/solicitud/${uuid}/aceptar`, {
       method: "PUT",
     })
+
+    if (!response.ok) {
+      throw new Error(`Error al aceptar solicitud: ${response.statusText}`)
+    }
   }
 
   // Rechazar solicitud de eliminación
@@ -139,8 +196,12 @@ export class ApiClient {
       return
     }
 
-    await fetch(`${API_BASE_URL}/administrador/solicitud/${uuid}/rechazar`, {
+    const response = await fetch(`${API_BASE_URL}/administrador/solicitud/${uuid}/rechazar`, {
       method: "PUT",
     })
+
+    if (!response.ok) {
+      throw new Error(`Error al rechazar solicitud: ${response.statusText}`)
+    }
   }
 }

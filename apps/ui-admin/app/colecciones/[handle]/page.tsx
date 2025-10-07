@@ -1,21 +1,22 @@
 import { ApiClient } from "@/lib/api-client"
 import { SidebarLayout } from "@/components/sidebar-layout"
 import { InfiniteScrollHechos } from "@/components/infinite-scroll-hechos"
-import { MapPlaceholder } from "@/components/map-placeholder"
+import { MapWrapper } from "@/components/map-wrapper"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
 interface ColeccionPageProps {
-  params: {
+  params: Promise<{
     handle: string
-  }
+  }>
 }
 
 export default async function ColeccionPage({ params }: ColeccionPageProps) {
-  const coleccion = await ApiClient.obtenerColeccion(params.handle)
-  const hechos = await ApiClient.obtenerHechosDeColeccion(params.handle, {
+  const { handle } = await params
+  const coleccion = await ApiClient.obtenerColeccion(handle)
+  const hechos = await ApiClient.obtenerHechosDeColeccion(handle, {
     pagina: 0,
     tamanioPagina: 10,
   })
@@ -24,7 +25,6 @@ export default async function ColeccionPage({ params }: ColeccionPageProps) {
     <SidebarLayout
       sidebar={
         <div className="flex flex-col h-full">
-          {/* Header */}
           <div className="p-4 border-b border-border">
             <Link href="/colecciones">
               <Button variant="ghost" size="sm" className="mb-3">
@@ -56,7 +56,7 @@ export default async function ColeccionPage({ params }: ColeccionPageProps) {
               datosIniciales={hechos}
               fetchMas={async (pagina) => {
                 "use server"
-                return ApiClient.obtenerHechosDeColeccion(params.handle, {
+                return ApiClient.obtenerHechosDeColeccion(handle, {
                   pagina,
                   tamanioPagina: 10,
                 })
@@ -66,7 +66,7 @@ export default async function ColeccionPage({ params }: ColeccionPageProps) {
         </div>
       }
     >
-      <MapPlaceholder />
+      <MapWrapper hechos={hechos.datos} />
     </SidebarLayout>
   )
 }

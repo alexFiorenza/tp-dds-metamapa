@@ -1,7 +1,7 @@
 import { ApiClient } from "@/lib/api-client"
 import { SidebarLayout } from "@/components/sidebar-layout"
 import { HechoCard } from "@/components/hecho-card"
-import { MapPlaceholder } from "@/components/map-placeholder"
+import { MapWrapper } from "@/components/map-wrapper"
 import { Button } from "@/components/ui/button"
 import { Map, List } from "lucide-react"
 import Link from "next/link"
@@ -56,7 +56,7 @@ export default async function HomePage() {
         </div>
       }
     >
-      <MapPlaceholder />
+      <MapWrapper hechos={respuesta.datos} />
     </SidebarLayout>
   )
 }

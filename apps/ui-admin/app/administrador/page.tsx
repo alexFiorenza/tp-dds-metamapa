@@ -1,5 +1,5 @@
 import { SidebarLayout } from "@/components/sidebar-layout"
-import { MapPlaceholder } from "@/components/map-placeholder"
+import { MapWrapper } from "@/components/map-wrapper"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ArrowLeft, FolderOpen, AlertCircle, BarChart } from "lucide-react"
@@ -69,7 +69,7 @@ export default function AdminPage() {
         </div>
       }
     >
-      <MapPlaceholder />
+      <MapWrapper />
     </SidebarLayout>
   )
 }

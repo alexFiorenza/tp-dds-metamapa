@@ -1,7 +1,7 @@
 import { ApiClient } from "@/lib/api-client"
 import { SidebarLayout } from "@/components/sidebar-layout"
 import { InfiniteScrollColecciones } from "@/components/infinite-scroll-colecciones"
-import { MapPlaceholder } from "@/components/map-placeholder"
+import { MapWrapper } from "@/components/map-wrapper"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
@@ -37,7 +37,7 @@ export default async function ColeccionesPage() {
         </div>
       }
     >
-      <MapPlaceholder />
+      <MapWrapper />
     </SidebarLayout>
   )
 }
