@@ -4,16 +4,13 @@ import utn.dds.daos.IDAO;
 import utn.dds.daos.DAOFactory;
 import utn.dds.daos.Hibernate;
 import utn.dds.dominio.Hecho;
-import utn.dds.jpa.entities.HechoEntity;
-import utn.dds.mappers.HechoMapper;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.stream.Collectors;
 
 public class HechoRepository {
 
-    private IDAO<HechoEntity> dao;
+    private IDAO<Hecho> dao;
 
     public HechoRepository() {
         this(new HashMap<>());
@@ -31,40 +28,32 @@ public class HechoRepository {
             System.getenv().getOrDefault("DB_PASSWORD", "metamapa123"));
         hibernateConfig.putIfAbsent("persistenceUnit", "metamapa-db");
 
-        this.dao = DAOFactory.createDAO(HechoEntity.class, "hibernate", hibernateConfig);
+        this.dao = DAOFactory.createDAO(Hecho.class, "hibernate", hibernateConfig);
     }
-    
+
     public List<Hecho> find() {
-        List<HechoEntity> entities = dao.find();
-        return entities.stream()
-                .map(HechoMapper::toDomain)
-                .collect(Collectors.toList());
+        return dao.find();
     }
-    
+
     public void save(Hecho hecho) {
-        HechoEntity entity = HechoMapper.toEntity(hecho);
-        dao.save(entity);
+        dao.save(hecho);
     }
-    
+
     public void saveAll(List<Hecho> hechos) {
-        List<HechoEntity> entities = hechos.stream()
-                .map(HechoMapper::toEntity)
-                .collect(Collectors.toList());
-        dao.saveAll(entities);
+        dao.saveAll(hechos);
     }
 
     public Hecho findById(String uuid) {
         if (dao instanceof Hibernate) {
-            Hibernate<HechoEntity> hibernateDAO = (Hibernate<HechoEntity>) dao;
-            HechoEntity entity = hibernateDAO.findById(uuid);
-            return entity != null ? HechoMapper.toDomain(entity) : null;
+            Hibernate<Hecho> hibernateDAO = (Hibernate<Hecho>) dao;
+            return hibernateDAO.findById(uuid);
         }
         return null;
     }
 
     public void close() {
         if (dao instanceof Hibernate) {
-            Hibernate<HechoEntity> hibernateDAO = (Hibernate<HechoEntity>) dao;
+            Hibernate<Hecho> hibernateDAO = (Hibernate<Hecho>) dao;
             hibernateDAO.close();
         }
     }

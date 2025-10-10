@@ -1,24 +1,58 @@
 package utn.dds.dominio;
 
+import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@Entity
+@Table(name = "hechos")
 public class Hecho {
+    @Id
+    @Column(name = "uuid")
     private String uuid;
+
+    @Column(name = "titulo", nullable = false, length = 500)
     private String titulo;
+
+    @Column(name = "descripcion", length = 2000)
     private String descripcion;
+
+    @Column(name = "categoria", length = 500)
     private String categoria;
+
+    @Column(name = "fecha_acontecimiento")
     private LocalDate fechaAcontecimiento;
+
+    @Column(name = "origen", length = 500)
     private String origen;
+
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "contribuyente_id")
     private Contribuyente contribuyente;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo")
     private TipoHecho tipo;
+
+    @Column(name = "longitud")
     private double longitud;
+
+    @Column(name = "latitud")
     private double latitud;
+
+    @Column(name = "fecha_carga")
     private LocalDateTime fechaCarga;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado")
     private EstadoHecho estado;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "hecho_etiquetas", joinColumns = @JoinColumn(name = "hecho_uuid"))
+    @Column(name = "etiqueta")
     private List<String> etiquetas;
 
     public Hecho() {

@@ -1,5 +1,6 @@
 package utn.dds.dto;
 
+import utn.dds.dominio.Fuente;
 import java.util.Map;
 import java.util.UUID;
 
@@ -14,6 +15,29 @@ public class FuenteDTO {
         this.host = host;
         this.params = params;
         this.uuid = uuid;
+    }
+
+    // Factory method para convertir desde dominio
+    public static FuenteDTO from(Fuente fuente) {
+        if (fuente == null) {
+            return null;
+        }
+        return new FuenteDTO(
+            fuente.getHost(),
+            fuente.getParams(),
+            UUID.fromString(fuente.getUuid())
+        );
+    }
+
+    // Método para convertir a dominio
+    public Fuente toFuente() {
+        Fuente fuente = new Fuente();
+        if (this.uuid != null) {
+            fuente.setUuid(this.uuid.toString());
+        }
+        fuente.setHost(this.host);
+        fuente.setParams(this.params);
+        return fuente;
     }
 
     public String getHost() {

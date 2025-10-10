@@ -1,7 +1,7 @@
 package utn.dds.metamapa.persistencia;
 
 import utn.dds.dominio.criterios.*;
-import utn.dds.jpa.entities.HechoEntity;
+import utn.dds.dominio.Hecho;
 
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Root;
@@ -16,7 +16,7 @@ public class StrategyToSQLAdapter {
 
     public static List<Predicate> convertirStrategiasASQL(List<HechoStrategy> strategies,
                                                           CriteriaBuilder cb,
-                                                          Root<HechoEntity> root) {
+                                                          Root<Hecho> root) {
         List<Predicate> predicates = new ArrayList<>();
 
         for (HechoStrategy strategy : strategies) {
@@ -31,7 +31,7 @@ public class StrategyToSQLAdapter {
 
     private static Predicate convertirEstrategiaASQL(HechoStrategy strategy,
                                                     CriteriaBuilder cb,
-                                                    Root<HechoEntity> root) {
+                                                    Root<Hecho> root) {
 
         if (strategy instanceof TituloStrategy) {
             TituloStrategy ts = (TituloStrategy) strategy;
@@ -85,7 +85,7 @@ public class StrategyToSQLAdapter {
             EtiquetasStrategy es = (EtiquetasStrategy) strategy;
 
             // Hacemos JOIN con la tabla hecho_etiquetas
-            Join<HechoEntity, String> etiquetasJoin = root.join("etiquetas", JoinType.INNER);
+            Join<Hecho, String> etiquetasJoin = root.join("etiquetas", JoinType.INNER);
 
             // Creamos condición OR para que coincida con cualquiera de las etiquetas buscadas
             List<Predicate> etiquetaPredicates = new ArrayList<>();

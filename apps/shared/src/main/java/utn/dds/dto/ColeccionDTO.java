@@ -1,6 +1,9 @@
 package utn.dds.dto;
 
+import utn.dds.dominio.Coleccion;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 public class ColeccionDTO {
     private String handle;
@@ -19,6 +22,47 @@ public class ColeccionDTO {
         this.descripcion = descripcion;
         this.fuentes = fuentes;
         this.criteriosDePertenencia = criteriosDePertenencia;
+    }
+
+    // Factory method para convertir desde dominio
+    public static ColeccionDTO from(Coleccion coleccion) {
+        if (coleccion == null) {
+            return null;
+        }
+
+        ColeccionDTO dto = new ColeccionDTO();
+        dto.setHandle(coleccion.getHandle());
+        dto.setTitulo(coleccion.getTitulo());
+        dto.setDescripcion(coleccion.getDescripcion());
+
+        // Mapear fuentes
+        if (coleccion.getFuentes() != null) {
+            dto.setFuentes(
+                coleccion.getFuentes().stream()
+                    .map(FuenteDTO::from)
+                    .collect(Collectors.toList())
+            );
+        } else {
+            dto.setFuentes(new ArrayList<>());
+        }
+
+        // Mapear criterios
+        if (coleccion.getCriteriosDePertenencia() != null) {
+            dto.setCriteriosDePertenencia(
+                coleccion.getCriteriosDePertenencia().stream()
+                    .map(criterio -> {
+                        CriterioCreateDTO criterioDTO = new CriterioCreateDTO();
+                        criterioDTO.setTipo(criterio.getTipo());
+                        criterioDTO.setEstado(criterio.getEstado());
+                        return criterioDTO;
+                    })
+                    .collect(Collectors.toList())
+            );
+        } else {
+            dto.setCriteriosDePertenencia(new ArrayList<>());
+        }
+
+        return dto;
     }
 
     // Getters
