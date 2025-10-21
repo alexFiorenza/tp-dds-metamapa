@@ -1,10 +1,7 @@
 import { ApiClient } from "@/lib/api-client"
 import { getAuthToken } from "@/lib/auth-helpers"
-import { SidebarLayout } from "@/components/sidebar-layout"
 import { MapWrapper } from "@/components/map-wrapper"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Button, Card, CardBody, Chip, ButtonGroup } from "@heroui/react"
 import { ArrowLeft, Check, X, Clock } from "lucide-react"
 import Link from "next/link"
 
@@ -13,87 +10,98 @@ export default async function AdminSolicitudesPage() {
   const respuesta = await ApiClient.obtenerSolicitudes(0, 10, token)
 
   return (
-    <SidebarLayout
-      sidebar={
-        <div className="flex flex-col h-full">
-          {/* Header */}
-          <div className="p-4 border-b border-border">
-            <Link href="/administrador">
-              <Button variant="ghost" size="sm" className="mb-3">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Volver
-              </Button>
-            </Link>
-            <h1 className="text-2xl font-bold">Solicitudes de Eliminación</h1>
-            <p className="text-sm text-muted-foreground mt-1">{respuesta.totalElementos} solicitudes</p>
-          </div>
+    <div className="flex h-[calc(100vh-4rem)]">
+      {/* Sidebar */}
+      <div className="w-[420px] flex flex-col bg-content1 border-r border-divider">
+        {/* Header */}
+        <div className="p-6 border-b border-divider">
+          <Link href="/administrador">
+            <Button variant="light" size="sm" startContent={<ArrowLeft className="w-4 h-4" />} className="mb-4">
+              Volver
+            </Button>
+          </Link>
+          <h1 className="text-2xl font-bold text-foreground">Solicitudes de Eliminación</h1>
+          <p className="text-sm text-default-500 mt-2">{respuesta.totalElementos} solicitudes</p>
+        </div>
 
-          {/* Filters */}
-          <div className="p-4 border-b border-border">
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="flex-1 bg-transparent">
-                Todas
-              </Button>
-              <Button variant="outline" size="sm" className="flex-1 bg-transparent">
-                Pendientes
-              </Button>
-              <Button variant="outline" size="sm" className="flex-1 bg-transparent">
-                Resueltas
-              </Button>
-            </div>
-          </div>
+        {/* Filters */}
+        <div className="p-4 border-b border-divider">
+          <ButtonGroup className="w-full" size="sm" variant="bordered">
+            <Button className="flex-1">Todas</Button>
+            <Button className="flex-1">Pendientes</Button>
+            <Button className="flex-1">Resueltas</Button>
+          </ButtonGroup>
+        </div>
 
-          {/* List */}
-          <div className="flex-1 overflow-y-auto p-4">
-            <div className="space-y-3">
-              {respuesta.datos.map((solicitud) => (
-                <Card key={solicitud.uuid} className="p-4">
+        {/* List */}
+        <div className="flex-1 overflow-y-auto p-4">
+          <div className="space-y-3">
+            {respuesta.datos.map((solicitud) => (
+              <Card key={solicitud.uuid}>
+                <CardBody className="p-4">
                   <div className="space-y-3">
                     <div className="flex items-start justify-between gap-2">
-                      <Badge
-                        variant={
+                      <Chip
+                        size="sm"
+                        variant="flat"
+                        color={
                           solicitud.estado === "PENDIENTE"
-                            ? "default"
+                            ? "warning"
                             : solicitud.estado === "ACEPTADA"
-                              ? "secondary"
-                              : "outline"
+                              ? "success"
+                              : "default"
                         }
-                        className="shrink-0"
+                        startContent={solicitud.estado === "PENDIENTE" ? <Clock className="w-3 h-3" /> : null}
                       >
-                        {solicitud.estado === "PENDIENTE" && <Clock className="h-3 w-3 mr-1" />}
                         {solicitud.estado}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(solicitud.fechaSolicitud).toLocaleDateString("es-AR")}
+                      </Chip>
+                      <span className="text-xs text-default-500">
+                        {new Date(solicitud.fechaSolicitud).toLocaleDateString("es-AR", {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric'
+                        })}
                       </span>
                     </div>
 
                     <div>
-                      <p className="text-sm font-medium mb-1">Hecho: {solicitud.hecho}</p>
-                      <p className="text-sm text-muted-foreground">{solicitud.texto}</p>
+                      <p className="text-sm font-semibold mb-1 text-foreground">Hecho: {solicitud.hecho}</p>
+                      <p className="text-sm text-default-600">{solicitud.texto}</p>
                     </div>
 
                     {solicitud.estado === "PENDIENTE" && (
                       <div className="flex gap-2">
-                        <Button variant="default" size="sm" className="flex-1">
-                          <Check className="h-4 w-4 mr-1" />
+                        <Button
+                          color="success"
+                          size="sm"
+                          className="flex-1"
+                          startContent={<Check className="w-4 h-4" />}
+                        >
                           Aceptar
                         </Button>
-                        <Button variant="outline" size="sm" className="flex-1 bg-transparent">
-                          <X className="h-4 w-4 mr-1" />
+                        <Button
+                          color="danger"
+                          variant="flat"
+                          size="sm"
+                          className="flex-1"
+                          startContent={<X className="w-4 h-4" />}
+                        >
                           Rechazar
                         </Button>
                       </div>
                     )}
                   </div>
-                </Card>
-              ))}
-            </div>
+                </CardBody>
+              </Card>
+            ))}
           </div>
         </div>
-      }
-    >
-      <MapWrapper />
-    </SidebarLayout>
+      </div>
+
+      {/* Map */}
+      <div className="flex-1">
+        <MapWrapper />
+      </div>
+    </div>
   )
 }
