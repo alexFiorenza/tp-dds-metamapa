@@ -21,6 +21,7 @@ public class ControllerSolicitudEliminacionAdministrativo {
         path = "/administrador/solicitudes",
         methods = HttpMethod.GET,
         tags = {"Administrador - Solicitudes"},
+        security = {@OpenApiSecurity(name = "BearerAuth")},
         queryParams = {
             @OpenApiParam(name = "page", description = "Número de página (default: 0)"),
             @OpenApiParam(name = "size", description = "Tamaño de página (default: 10, max: 100)")
@@ -42,6 +43,7 @@ public class ControllerSolicitudEliminacionAdministrativo {
         path = "/administrador/solicitud/{uuid}/aceptar",
         methods = HttpMethod.PUT,
         tags = {"Administrador - Solicitudes"},
+        security = {@OpenApiSecurity(name = "BearerAuth")},
         pathParams = @OpenApiParam(name = "uuid", description = "UUID de la solicitud"),
         responses = {
             @OpenApiResponse(status = "200", description = "Solicitud aceptada exitosamente"),
@@ -64,6 +66,7 @@ public class ControllerSolicitudEliminacionAdministrativo {
         path = "/administrador/solicitud/{uuid}/rechazar",
         methods = HttpMethod.PUT,
         tags = {"Administrador - Solicitudes"},
+        security = {@OpenApiSecurity(name = "BearerAuth")},
         pathParams = @OpenApiParam(name = "uuid", description = "UUID de la solicitud"),
         responses = {
             @OpenApiResponse(status = "200", description = "Solicitud rechazada exitosamente"),

@@ -2,6 +2,7 @@ package utn.dds.metamapa.controller.routers;
 
 import io.javalin.Javalin;
 import io.javalin.openapi.*;
+import utn.dds.metamapa.auth.ClerkAuthHandler;
 import utn.dds.metamapa.config.AppConfig;
 import utn.dds.metamapa.controller.ControllerColeccionAdministrativo;
 import utn.dds.metamapa.controller.ControllerSolicitudEliminacionAdministrativo;
@@ -12,12 +13,17 @@ public class AdministradorRoutes {
     private static final Logger logger = LoggerFactory.getLogger(AdministradorRoutes.class);
     private final ControllerColeccionAdministrativo controllerColeccion;
     private final ControllerSolicitudEliminacionAdministrativo controllerSolicitud;
+    private final ClerkAuthHandler authHandler;
 
     public AdministradorRoutes(AppConfig appConfig) {
         this.controllerColeccion = new ControllerColeccionAdministrativo(
             appConfig.getDaoType(), appConfig.getDaoConfig());
         this.controllerSolicitud = new ControllerSolicitudEliminacionAdministrativo(
             appConfig.getDaoType(), appConfig.getDaoConfig());
+
+        // Inicializar autenticación con Clerk (la secret key es obligatoria en AppConfig)
+        logger.info("Configurando autenticación Clerk con SDK oficial");
+        this.authHandler = new ClerkAuthHandler(appConfig.getClerkSecretKey(), true); // Requiere rol de admin
     }
 
     @OpenApi(
@@ -26,8 +32,11 @@ public class AdministradorRoutes {
         path = "/administrador/",
         methods = HttpMethod.GET,
         tags = {"Administrador"},
+        security = {@OpenApiSecurity(name = "BearerAuth")},
         responses = {
-            @OpenApiResponse(status = "200", description = "Información del panel de administrador")
+            @OpenApiResponse(status = "200", description = "Información del panel de administrador"),
+            @OpenApiResponse(status = "401", description = "No autenticado"),
+            @OpenApiResponse(status = "403", description = "No tiene permisos de administrador")
         }
     )
     private static void administradorInfo(io.javalin.http.Context ctx) {
@@ -40,8 +49,11 @@ public class AdministradorRoutes {
         path = "/administrador/health",
         methods = HttpMethod.GET,
         tags = {"Administrador"},
+        security = {@OpenApiSecurity(name = "BearerAuth")},
         responses = {
-            @OpenApiResponse(status = "200", description = "Administrador funcionando correctamente")
+            @OpenApiResponse(status = "200", description = "Administrador funcionando correctamente"),
+            @OpenApiResponse(status = "401", description = "No autenticado"),
+            @OpenApiResponse(status = "403", description = "No tiene permisos de administrador")
         }
     )
     private static void administradorHealthCheck(io.javalin.http.Context ctx) {
@@ -50,6 +62,10 @@ public class AdministradorRoutes {
 
     public void configure(Javalin app) {
         logger.info("Configurando rutas de administrador...");
+
+        // Aplicar autenticación a todas las rutas de administrador
+        app.before("/administrador/*", authHandler);
+        logger.info("Filtro de autenticación Clerk aplicado a rutas de administrador");
 
         // Rutas base del administrador
         app.get("/administrador/", AdministradorRoutes::administradorInfo);

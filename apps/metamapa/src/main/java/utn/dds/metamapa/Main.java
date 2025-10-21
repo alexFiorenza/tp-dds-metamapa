@@ -79,6 +79,9 @@ public class Main {
                                     openApiServer
                                         .url("http://localhost:7006")
                                         .description("Servidor de desarrollo");
+                                })
+                                .withSecurity(security -> {
+                                    security.withBearerAuth();
                                 });
                         });
                 }));

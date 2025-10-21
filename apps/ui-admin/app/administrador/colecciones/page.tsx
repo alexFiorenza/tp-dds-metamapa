@@ -1,14 +1,16 @@
 import { ApiClient } from "@/lib/api-client"
+import { getAuthToken } from "@/lib/auth-helpers"
 import { SidebarLayout } from "@/components/sidebar-layout"
 import { MapWrapper } from "@/components/map-wrapper"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Folder, Plus } from "lucide-react"
+import { ArrowLeft, Folder, Plus, Eye, Edit, Trash2 } from "lucide-react"
 import Link from "next/link"
 
 export default async function AdminColeccionesPage() {
-  const respuesta = await ApiClient.obtenerColecciones()
+  const token = await getAuthToken()
+  const respuesta = await ApiClient.obtenerColecciones(0, 10, token)
 
   return (
     <SidebarLayout
@@ -52,10 +54,18 @@ export default async function AdminColeccionesPage() {
                         ))}
                       </div>
                       <div className="flex gap-2">
+                        <Link href={`/administrador/colecciones/${coleccion.handle}`}>
+                          <Button variant="default" size="sm">
+                            <Eye className="h-4 w-4 mr-2" />
+                            Ver
+                          </Button>
+                        </Link>
                         <Button variant="outline" size="sm">
+                          <Edit className="h-4 w-4 mr-2" />
                           Editar
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                          <Trash2 className="h-4 w-4 mr-2" />
                           Eliminar
                         </Button>
                       </div>

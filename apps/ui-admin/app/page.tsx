@@ -3,7 +3,7 @@ import { SidebarLayout } from "@/components/sidebar-layout"
 import { HechoCard } from "@/components/hecho-card"
 import { MapWrapper } from "@/components/map-wrapper"
 import { Button } from "@/components/ui/button"
-import { Map, List } from "lucide-react"
+import { List } from "lucide-react"
 import Link from "next/link"
 
 export default async function HomePage() {
@@ -34,15 +34,8 @@ export default async function HomePage() {
                 Ver todos los hechos
               </Button>
             </Link>
-            <Link href="/colecciones" className="flex-1">
-              <Button variant="outline" className="w-full bg-transparent" size="sm">
-                <Map className="h-4 w-4 mr-2" />
-                Colecciones
-              </Button>
-            </Link>
           </div>
 
-          {/* Recent facts */}
           <div className="flex-1 overflow-y-auto p-4">
             <h2 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">
               Hechos recientes
