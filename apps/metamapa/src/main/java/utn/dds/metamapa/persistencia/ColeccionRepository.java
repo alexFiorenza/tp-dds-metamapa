@@ -6,8 +6,6 @@ import utn.dds.daos.Hibernate;
 import utn.dds.dominio.Coleccion;
 import utn.dds.dominio.Hecho;
 import utn.dds.dominio.criterios.HechoStrategy;
-import utn.dds.jpa.entities.ColeccionEntity;
-import utn.dds.mappers.ColeccionMapper;
 import utn.dds.dto.ColeccionDTO;
 import utn.dds.dto.RespuestaPaginadaDTO;
 
@@ -18,7 +16,7 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 public class ColeccionRepository {
-    private IDAO<ColeccionEntity> dao;
+    private IDAO<Coleccion> dao;
 
     public ColeccionRepository() {
         this(new HashMap<>());
@@ -36,26 +34,26 @@ public class ColeccionRepository {
             System.getenv().getOrDefault("DB_PASSWORD", "metamapa123"));
         hibernateConfig.putIfAbsent("persistenceUnit", "metamapa-db");
 
-        this.dao = DAOFactory.createDAO(ColeccionEntity.class, "hibernate", hibernateConfig);
+        this.dao = DAOFactory.createDAO(Coleccion.class, "hibernate", hibernateConfig);
     }
 
-    public RespuestaPaginadaDTO<ColeccionEntity> obtenerTodas(int page, int size) {
+    public RespuestaPaginadaDTO<Coleccion> obtenerTodas(int page, int size) {
         if (dao instanceof Hibernate) {
-            Hibernate<ColeccionEntity> hibernateDAO = (Hibernate<ColeccionEntity>) dao;
+            Hibernate<Coleccion> hibernateDAO = (Hibernate<Coleccion>) dao;
 
             return hibernateDAO.executeQuery(em -> {
                 // Consulta para contar total de elementos
                 Long totalElements = em.createQuery(
-                    "SELECT COUNT(c) FROM ColeccionEntity c",
+                    "SELECT COUNT(c) FROM Coleccion c",
                     Long.class)
                     .getSingleResult();
 
                 // Primera consulta: obtener colecciones básicas con fuentes (paginado)
-                List<ColeccionEntity> entities = em.createQuery(
-                    "SELECT DISTINCT c FROM ColeccionEntity c " +
+                List<Coleccion> entities = em.createQuery(
+                    "SELECT DISTINCT c FROM Coleccion c " +
                     "LEFT JOIN FETCH c.fuentes " +
                     "ORDER BY c.titulo",
-                    ColeccionEntity.class)
+                    Coleccion.class)
                     .setFirstResult(page * size)
                     .setMaxResults(size)
                     .getResultList();
@@ -63,14 +61,14 @@ public class ColeccionRepository {
                 // Segunda consulta: cargar criterios para las colecciones obtenidas (misma sesión)
                 if (!entities.isEmpty()) {
                     List<String> handles = entities.stream()
-                            .map(ColeccionEntity::getHandle)
+                            .map(Coleccion::getHandle)
                             .collect(Collectors.toList());
 
                     em.createQuery(
-                        "SELECT DISTINCT c FROM ColeccionEntity c " +
+                        "SELECT DISTINCT c FROM Coleccion c " +
                         "LEFT JOIN FETCH c.criteriosDePertenencia " +
                         "WHERE c.handle IN :handles",
-                        ColeccionEntity.class)
+                        Coleccion.class)
                         .setParameter("handles", handles)
                         .getResultList();
                 }
@@ -80,27 +78,27 @@ public class ColeccionRepository {
         }
 
         // Fallback sin paginación para otros tipos de DAO
-        List<ColeccionEntity> entities = dao.find();
+        List<Coleccion> entities = dao.find();
 
         // Simular paginación manualmente
         int fromIndex = page * size;
         int toIndex = Math.min(fromIndex + size, entities.size());
-        List<ColeccionEntity> paginatedData = fromIndex < entities.size() ?
+        List<Coleccion> paginatedData = fromIndex < entities.size() ?
             entities.subList(fromIndex, toIndex) : new ArrayList<>();
 
         return new RespuestaPaginadaDTO<>(paginatedData, page, size, entities.size());
     }
 
-    public ColeccionEntity obtenerPorId(String id) {
+    public Coleccion obtenerPorId(String id) {
         if (dao instanceof Hibernate) {
-            Hibernate<ColeccionEntity> hibernateDAO = (Hibernate<ColeccionEntity>) dao;
+            Hibernate<Coleccion> hibernateDAO = (Hibernate<Coleccion>) dao;
             return hibernateDAO.executeQuery(em -> {
                 // Primera consulta: obtener colección básica con hechos
-                ColeccionEntity coleccion = em.createQuery(
-                    "SELECT c FROM ColeccionEntity c " +
+                Coleccion coleccion = em.createQuery(
+                    "SELECT c FROM Coleccion c " +
                     "LEFT JOIN FETCH c.hechos " +
                     "WHERE c.handle = :id",
-                    ColeccionEntity.class)
+                    Coleccion.class)
                     .setParameter("id", id)
                     .getResultStream()
                     .findFirst()
@@ -109,19 +107,19 @@ public class ColeccionRepository {
                 if (coleccion != null) {
                     // Segunda consulta: cargar fuentes
                     em.createQuery(
-                        "SELECT c FROM ColeccionEntity c " +
+                        "SELECT c FROM Coleccion c " +
                         "LEFT JOIN FETCH c.fuentes " +
                         "WHERE c.handle = :id",
-                        ColeccionEntity.class)
+                        Coleccion.class)
                         .setParameter("id", id)
                         .getResultList();
 
                     // Tercera consulta: cargar criterios de pertenencia
                     em.createQuery(
-                        "SELECT c FROM ColeccionEntity c " +
+                        "SELECT c FROM Coleccion c " +
                         "LEFT JOIN FETCH c.criteriosDePertenencia " +
                         "WHERE c.handle = :id",
-                        ColeccionEntity.class)
+                        Coleccion.class)
                         .setParameter("id", id)
                         .getResultList();
                 }
@@ -133,14 +131,13 @@ public class ColeccionRepository {
     }
 
     public List<Hecho> obtenerHechos(String handle) {
-        ColeccionEntity entity = obtenerPorId(handle);
+        Coleccion entity = obtenerPorId(handle);
         if (entity == null) {
             return new ArrayList<>();
         }
 
-        Coleccion coleccion = ColeccionMapper.toDomain(entity);
-        List<Hecho> todosLosHechos = coleccion.getHechos();
-        List<HechoStrategy> criterios = coleccion.getCriteriosDePertenencia();
+        List<Hecho> todosLosHechos = entity.getHechos();
+        List<HechoStrategy> criterios = entity.getCriteriosDePertenenciaAsStrategies();
 
         // Si no hay criterios, devolver todos los hechos
         if (criterios == null || criterios.isEmpty()) {
@@ -154,14 +151,13 @@ public class ColeccionRepository {
     }
 
     public void crear(Coleccion coleccion) {
-        ColeccionEntity entity = ColeccionMapper.toEntity(coleccion);
-        dao.save(entity);
+        dao.save(coleccion);
     }
 
     public void actualizar(String id, Coleccion coleccionActualizada) {
         if (dao instanceof Hibernate) {
-            Hibernate<ColeccionEntity> hibernateDAO = (Hibernate<ColeccionEntity>) dao;
-            ColeccionEntity entity = hibernateDAO.findById(id);
+            Hibernate<Coleccion> hibernateDAO = (Hibernate<Coleccion>) dao;
+            Coleccion entity = hibernateDAO.findById(id);
             if (entity != null) {
                 entity.setTitulo(coleccionActualizada.getTitulo());
                 entity.setDescripcion(coleccionActualizada.getDescripcion());
@@ -172,8 +168,8 @@ public class ColeccionRepository {
 
     public void actualizarCamposBasicos(String id, String titulo, String descripcion) {
         if (dao instanceof Hibernate) {
-            Hibernate<ColeccionEntity> hibernateDAO = (Hibernate<ColeccionEntity>) dao;
-            ColeccionEntity entity = hibernateDAO.findById(id);
+            Hibernate<Coleccion> hibernateDAO = (Hibernate<Coleccion>) dao;
+            Coleccion entity = hibernateDAO.findById(id);
             if (entity != null) {
                 if (titulo != null) entity.setTitulo(titulo);
                 if (descripcion != null) entity.setDescripcion(descripcion);
@@ -184,21 +180,19 @@ public class ColeccionRepository {
 
     public void actualizarCriterios(String id, List<utn.dds.dominio.criterios.HechoStrategy> nuevosCriterios) {
         if (dao instanceof Hibernate) {
-            Hibernate<ColeccionEntity> hibernateDAO = (Hibernate<ColeccionEntity>) dao;
+            Hibernate<Coleccion> hibernateDAO = (Hibernate<Coleccion>) dao;
             hibernateDAO.executeQuery(em -> {
                 em.getTransaction().begin();
                 try {
                     // Eliminar criterios antiguos
-                    em.createQuery("DELETE FROM CriterioEntity c WHERE c.idColeccion = :handle")
+                    em.createQuery("DELETE FROM Criterio c WHERE c.idColeccion = :handle")
                         .setParameter("handle", id)
                         .executeUpdate();
 
                     // Crear nuevos criterios si existen
                     if (nuevosCriterios != null && !nuevosCriterios.isEmpty()) {
-                        List<utn.dds.jpa.entities.CriterioEntity> criteriosEntities =
-                            utn.dds.mappers.CriterioMapper.toEntityList(nuevosCriterios, id);
-
-                        for (utn.dds.jpa.entities.CriterioEntity criterio : criteriosEntities) {
+                        for (HechoStrategy strategy : nuevosCriterios) {
+                            utn.dds.dominio.Criterio criterio = utn.dds.dominio.Criterio.fromHechoStrategy(strategy, id);
                             em.persist(criterio);
                         }
                     }
@@ -215,16 +209,16 @@ public class ColeccionRepository {
         }
     }
 
-    public void actualizarFuentes(String id, List<utn.dds.jpa.entities.FuenteEntity> nuevasFuentes) {
+    public void actualizarFuentes(String id, List<utn.dds.dominio.Fuente> nuevasFuentes) {
         if (dao instanceof Hibernate) {
-            Hibernate<ColeccionEntity> hibernateDAO = (Hibernate<ColeccionEntity>) dao;
+            Hibernate<Coleccion> hibernateDAO = (Hibernate<Coleccion>) dao;
             hibernateDAO.executeQuery(em -> {
                 em.getTransaction().begin();
                 try {
                     // Cargar la colección con fuentes
-                    ColeccionEntity entity = em.createQuery(
-                        "SELECT c FROM ColeccionEntity c LEFT JOIN FETCH c.fuentes WHERE c.handle = :id",
-                        ColeccionEntity.class)
+                    Coleccion entity = em.createQuery(
+                        "SELECT c FROM Coleccion c LEFT JOIN FETCH c.fuentes WHERE c.handle = :id",
+                        Coleccion.class)
                         .setParameter("id", id)
                         .getSingleResult();
 
@@ -244,16 +238,16 @@ public class ColeccionRepository {
         }
     }
 
-    public void actualizarHechos(String id, List<utn.dds.jpa.entities.HechoEntity> nuevosHechos) {
+    public void actualizarHechos(String id, List<utn.dds.dominio.Hecho> nuevosHechos) {
         if (dao instanceof Hibernate) {
-            Hibernate<ColeccionEntity> hibernateDAO = (Hibernate<ColeccionEntity>) dao;
+            Hibernate<Coleccion> hibernateDAO = (Hibernate<Coleccion>) dao;
             hibernateDAO.executeQuery(em -> {
                 em.getTransaction().begin();
                 try {
                     // Cargar la colección con hechos
-                    ColeccionEntity entity = em.createQuery(
-                        "SELECT c FROM ColeccionEntity c LEFT JOIN FETCH c.hechos WHERE c.handle = :id",
-                        ColeccionEntity.class)
+                    Coleccion entity = em.createQuery(
+                        "SELECT c FROM Coleccion c LEFT JOIN FETCH c.hechos WHERE c.handle = :id",
+                        Coleccion.class)
                         .setParameter("id", id)
                         .getSingleResult();
 
@@ -275,16 +269,16 @@ public class ColeccionRepository {
 
     public void eliminar(String id) {
         if (dao instanceof Hibernate) {
-            Hibernate<ColeccionEntity> hibernateDAO = (Hibernate<ColeccionEntity>) dao;
+            Hibernate<Coleccion> hibernateDAO = (Hibernate<Coleccion>) dao;
 
             // Usar executeQuery para operaciones complejas con manejo manual de transacciones
             hibernateDAO.executeQuery(em -> {
                 em.getTransaction().begin();
                 try {
                     // Buscar la colección con sus relaciones, pero hacerlo por separado para evitar MultipleBagFetchException
-                    ColeccionEntity entity = em.createQuery(
-                        "SELECT c FROM ColeccionEntity c WHERE c.handle = :id",
-                        ColeccionEntity.class)
+                    Coleccion entity = em.createQuery(
+                        "SELECT c FROM Coleccion c WHERE c.handle = :id",
+                        Coleccion.class)
                         .setParameter("id", id)
                         .getResultStream()
                         .findFirst()
@@ -295,22 +289,22 @@ public class ColeccionRepository {
 
                         // Cargar y limpiar hechos
                         entity = em.createQuery(
-                            "SELECT c FROM ColeccionEntity c LEFT JOIN FETCH c.hechos WHERE c.handle = :id",
-                            ColeccionEntity.class)
+                            "SELECT c FROM Coleccion c LEFT JOIN FETCH c.hechos WHERE c.handle = :id",
+                            Coleccion.class)
                             .setParameter("id", id)
                             .getSingleResult();
                         entity.getHechos().clear();
 
                         // Cargar y limpiar fuentes
                         entity = em.createQuery(
-                            "SELECT c FROM ColeccionEntity c LEFT JOIN FETCH c.fuentes WHERE c.handle = :id",
-                            ColeccionEntity.class)
+                            "SELECT c FROM Coleccion c LEFT JOIN FETCH c.fuentes WHERE c.handle = :id",
+                            Coleccion.class)
                             .setParameter("id", id)
                             .getSingleResult();
                         entity.getFuentes().clear();
 
                         // Eliminar criterios explícitamente
-                        em.createQuery("DELETE FROM CriterioEntity c WHERE c.idColeccion = :handle")
+                        em.createQuery("DELETE FROM Criterio c WHERE c.idColeccion = :handle")
                             .setParameter("handle", id)
                             .executeUpdate();
 
@@ -334,7 +328,7 @@ public class ColeccionRepository {
 
     public void close() {
         if (dao instanceof Hibernate) {
-            Hibernate<ColeccionEntity> hibernateDAO = (Hibernate<ColeccionEntity>) dao;
+            Hibernate<Coleccion> hibernateDAO = (Hibernate<Coleccion>) dao;
             hibernateDAO.close();
         }
     }

@@ -9,11 +9,12 @@
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
         
         <!-- Clases de entidad JPA -->
-        <class>utn.dds.jpa.entities.HechoEntity</class>
-        <class>utn.dds.jpa.entities.ContribuyenteEntity</class>
-        <class>utn.dds.jpa.entities.ColeccionEntity</class>
-        <class>utn.dds.jpa.entities.FuenteEntity</class>
-        <class>utn.dds.jpa.entities.SolicitudEliminacionEntity</class>
+        <class>utn.dds.dominio.Hecho</class>
+        <class>utn.dds.dominio.Contribuyente</class>
+        <class>utn.dds.dominio.Coleccion</class>
+        <class>utn.dds.dominio.Fuente</class>
+        <class>utn.dds.dominio.Criterio</class>
+        <class>utn.dds.dominio.SolicitudEliminacion</class>
         
         <properties>
             <!-- Configuración de la base de datos -->

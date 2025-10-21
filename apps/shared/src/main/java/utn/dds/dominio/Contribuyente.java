@@ -1,13 +1,26 @@
 package utn.dds.dominio;
 
+import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@Entity
+@Table(name = "contribuyentes")
 public class Contribuyente {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @OneToMany(mappedBy = "contribuyente", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Hecho> aportes;
+
+    @Column(name = "nombre", nullable = false)
     private String nombre;
+
+    @Column(name = "apellido", nullable = false)
     private String apellido;
+
+    @Column(name = "edad")
     private int edad;
 
     public Contribuyente() {

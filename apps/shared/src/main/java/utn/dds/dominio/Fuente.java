@@ -1,4 +1,4 @@
-package utn.dds.jpa.entities;
+package utn.dds.dominio;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -8,7 +8,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "fuentes")
-public class FuenteEntity {
+public class Fuente {
     @Id
     @Column(name = "uuid")
     private String uuid;
@@ -20,7 +20,7 @@ public class FuenteEntity {
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Object> params;
 
-    public FuenteEntity() {
+    public Fuente() {
         this.uuid = UUID.randomUUID().toString();
     }
 
