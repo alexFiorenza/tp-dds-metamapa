@@ -29,12 +29,15 @@ public class ControllerColeccionAdministrativo {
         path = "/administrador/coleccion",
         methods = HttpMethod.GET,
         tags = {"Administrador - Colecciones"},
+        security = {@OpenApiSecurity(name = "BearerAuth")},
         queryParams = {
             @OpenApiParam(name = "page", description = "Número de página (default: 0)"),
             @OpenApiParam(name = "size", description = "Tamaño de página (default: 10, max: 100)")
         },
         responses = {
-            @OpenApiResponse(status = "200", description = "Lista paginada de colecciones", content = @OpenApiContent(from = RespuestaPaginadaDTO.class))
+            @OpenApiResponse(status = "200", description = "Lista paginada de colecciones", content = @OpenApiContent(from = RespuestaPaginadaDTO.class)),
+            @OpenApiResponse(status = "401", description = "No autenticado"),
+            @OpenApiResponse(status = "403", description = "No tiene permisos de administrador")
         }
     )
     public void obtenerColecciones(Context ctx) {
@@ -50,6 +53,7 @@ public class ControllerColeccionAdministrativo {
         path = "/administrador/coleccion/{id}",
         methods = HttpMethod.GET,
         tags = {"Administrador - Colecciones"},
+        security = {@OpenApiSecurity(name = "BearerAuth")},
         pathParams = @OpenApiParam(name = "id", description = "ID de la colección"),
         responses = {
             @OpenApiResponse(status = "200", description = "Colección encontrada", content = @OpenApiContent(from = ColeccionDTO.class)),
@@ -72,6 +76,7 @@ public class ControllerColeccionAdministrativo {
         path = "/administrador/coleccion",
         methods = HttpMethod.POST,
         tags = {"Administrador - Colecciones"},
+        security = {@OpenApiSecurity(name = "BearerAuth")},
         requestBody = @OpenApiRequestBody(
             content = @OpenApiContent(
                 from = ColeccionCreateDTO.class,
@@ -117,6 +122,7 @@ public class ControllerColeccionAdministrativo {
         path = "/administrador/coleccion/{id}",
         methods = HttpMethod.PUT,
         tags = {"Administrador - Colecciones"},
+        security = {@OpenApiSecurity(name = "BearerAuth")},
         pathParams = @OpenApiParam(name = "id", description = "ID de la colección"),
         requestBody = @OpenApiRequestBody(
             content = @OpenApiContent(
@@ -160,6 +166,7 @@ public class ControllerColeccionAdministrativo {
         path = "/administrador/coleccion/{id}",
         methods = HttpMethod.DELETE,
         tags = {"Administrador - Colecciones"},
+        security = {@OpenApiSecurity(name = "BearerAuth")},
         pathParams = @OpenApiParam(name = "id", description = "ID de la colección"),
         responses = {
             @OpenApiResponse(status = "200", description = "Colección eliminada exitosamente"),

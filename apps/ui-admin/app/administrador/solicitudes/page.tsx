@@ -1,4 +1,5 @@
 import { ApiClient } from "@/lib/api-client"
+import { getAuthToken } from "@/lib/auth-helpers"
 import { SidebarLayout } from "@/components/sidebar-layout"
 import { MapWrapper } from "@/components/map-wrapper"
 import { Button } from "@/components/ui/button"
@@ -8,7 +9,8 @@ import { ArrowLeft, Check, X, Clock } from "lucide-react"
 import Link from "next/link"
 
 export default async function AdminSolicitudesPage() {
-  const respuesta = await ApiClient.obtenerSolicitudes()
+  const token = await getAuthToken()
+  const respuesta = await ApiClient.obtenerSolicitudes(0, 10, token)
 
   return (
     <SidebarLayout

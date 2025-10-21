@@ -6,6 +6,20 @@ const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true"
 
 // Cliente API para consumir el backend
 export class ApiClient {
+  /**
+   * Crea headers con autenticación si se proporciona un token
+   */
+  private static createHeaders(token?: string | null): HeadersInit {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    }
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+
+    return headers
+  }
   // Obtener hechos con filtros
   static async obtenerHechos(filtros: FiltrosHechos = {}): Promise<RespuestaPaginadaDTO<HechoDTO>> {
     if (USE_MOCK) {
@@ -46,14 +60,17 @@ export class ApiClient {
   }
 
   // Obtener colecciones
-  static async obtenerColecciones(pagina = 0, tamanioPagina = 10): Promise<RespuestaPaginadaDTO<ColeccionDTO>> {
+  static async obtenerColecciones(pagina = 0, tamanioPagina = 10, token?: string | null): Promise<RespuestaPaginadaDTO<ColeccionDTO>> {
     if (USE_MOCK) {
       return crearRespuestaPaginada(mockColecciones, pagina, tamanioPagina)
     }
 
     const response = await fetch(
       `${API_BASE_URL}/administrador/coleccion?page=${pagina}&size=${tamanioPagina}`,
-      { cache: 'no-store' }
+      {
+        cache: 'no-store',
+        headers: this.createHeaders(token)
+      }
     )
 
     if (!response.ok) {
@@ -64,7 +81,7 @@ export class ApiClient {
   }
 
   // Obtener colección por identificador
-  static async obtenerColeccion(identificador: string): Promise<ColeccionDTO> {
+  static async obtenerColeccion(identificador: string, token?: string | null): Promise<ColeccionDTO> {
     if (USE_MOCK) {
       const coleccion = mockColecciones.find((c) => c.handle === identificador)
       if (!coleccion) throw new Error("Colección no encontrada")
@@ -72,12 +89,68 @@ export class ApiClient {
     }
 
     const response = await fetch(
-      `${API_BASE_URL}/api/colecciones/${identificador}`,
-      { cache: 'no-store' }
+      `${API_BASE_URL}/administrador/coleccion/${identificador}`,
+      {
+        cache: 'no-store',
+        headers: this.createHeaders(token)
+      }
     )
 
     if (!response.ok) {
       throw new Error(`Error al obtener colección: ${response.statusText}`)
+    }
+
+    return response.json()
+  }
+
+  // Obtener hechos de una colección (admin)
+  static async obtenerHechosDeColeccionAdmin(
+    id: string,
+    filtros: FiltrosHechos = {},
+    token?: string | null
+  ): Promise<RespuestaPaginadaDTO<HechoDTO>> {
+    if (USE_MOCK) {
+      const coleccion = mockColecciones.find((c) => c.handle === id)
+      if (!coleccion) throw new Error("Colección no encontrada")
+
+      // Filtrar hechos según criterios de la colección
+      const criterioCategoria = coleccion.criteriosDePertenencia.find((c) => c.tipo === "categoria")
+      let hechosFiltrados = mockHechos
+
+      if (criterioCategoria?.categoria) {
+        hechosFiltrados = hechosFiltrados.filter((h) => h.categoria === criterioCategoria.categoria)
+      }
+
+      return crearRespuestaPaginada(hechosFiltrados, filtros.pagina || 0, filtros.tamanioPagina || 10)
+    }
+
+    const params = new URLSearchParams()
+
+    // Mapear los parámetros de paginación al formato esperado por la API
+    if (filtros.pagina !== undefined) {
+      params.append('page', String(filtros.pagina))
+    }
+    if (filtros.tamanioPagina !== undefined) {
+      params.append('size', String(filtros.tamanioPagina))
+    }
+
+    // Agregar el resto de filtros
+    Object.entries(filtros).forEach(([key, value]) => {
+      if (value !== undefined && key !== 'pagina' && key !== 'tamanioPagina') {
+        params.append(key, String(value))
+      }
+    })
+
+    const response = await fetch(
+      `${API_BASE_URL}/administrador/coleccion/${id}/hechos?${params}`,
+      {
+        cache: 'no-store',
+        headers: this.createHeaders(token)
+      }
+    )
+
+    if (!response.ok) {
+      throw new Error(`Error al obtener hechos de colección: ${response.statusText}`)
     }
 
     return response.json()
@@ -136,6 +209,7 @@ export class ApiClient {
   static async obtenerSolicitudes(
     pagina = 0,
     tamanioPagina = 10,
+    token?: string | null
   ): Promise<RespuestaPaginadaDTO<SolicitudEliminacionDTO>> {
     if (USE_MOCK) {
       return crearRespuestaPaginada(mockSolicitudes, pagina, tamanioPagina)
@@ -143,7 +217,10 @@ export class ApiClient {
 
     const response = await fetch(
       `${API_BASE_URL}/administrador/solicitudes?page=${pagina}&size=${tamanioPagina}`,
-      { cache: 'no-store' }
+      {
+        cache: 'no-store',
+        headers: this.createHeaders(token)
+      }
     )
 
     if (!response.ok) {
@@ -170,7 +247,7 @@ export class ApiClient {
   }
 
   // Aceptar solicitud de eliminación
-  static async aceptarSolicitud(uuid: string): Promise<void> {
+  static async aceptarSolicitud(uuid: string, token?: string | null): Promise<void> {
     if (USE_MOCK) {
       console.log(`[MOCK] Solicitud ${uuid} aceptada`)
       const solicitud = mockSolicitudes.find((s) => s.uuid === uuid)
@@ -180,6 +257,7 @@ export class ApiClient {
 
     const response = await fetch(`${API_BASE_URL}/administrador/solicitud/${uuid}/aceptar`, {
       method: "PUT",
+      headers: this.createHeaders(token)
     })
 
     if (!response.ok) {
@@ -188,7 +266,7 @@ export class ApiClient {
   }
 
   // Rechazar solicitud de eliminación
-  static async rechazarSolicitud(uuid: string): Promise<void> {
+  static async rechazarSolicitud(uuid: string, token?: string | null): Promise<void> {
     if (USE_MOCK) {
       console.log(`[MOCK] Solicitud ${uuid} rechazada`)
       const solicitud = mockSolicitudes.find((s) => s.uuid === uuid)
@@ -198,6 +276,7 @@ export class ApiClient {
 
     const response = await fetch(`${API_BASE_URL}/administrador/solicitud/${uuid}/rechazar`, {
       method: "PUT",
+      headers: this.createHeaders(token)
     })
 
     if (!response.ok) {
