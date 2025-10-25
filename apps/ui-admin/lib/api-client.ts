@@ -48,7 +48,7 @@ export class ApiClient {
       }
     })
 
-    const response = await fetch(`${API_BASE_URL}/api/hechos?${params}`, {
+    const response = await fetch(`/api/hechos?${params}`, {
       cache: 'no-store' // Asegurar datos frescos en cada request
     })
 
