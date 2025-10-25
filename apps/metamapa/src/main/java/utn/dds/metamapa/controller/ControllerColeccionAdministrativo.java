@@ -22,54 +22,7 @@ public class ControllerColeccionAdministrativo {
     public ControllerColeccionAdministrativo(String daoType, Map<String, Object> daoConfig) {
         this.serviceColeccion = new ServiceColeccion(daoType, daoConfig);
     }
-
-    @OpenApi(
-        summary = "Obtener todas las colecciones",
-        operationId = "obtenerColecciones",
-        path = "/administrador/coleccion",
-        methods = HttpMethod.GET,
-        tags = {"Administrador - Colecciones"},
-        security = {@OpenApiSecurity(name = "BearerAuth")},
-        queryParams = {
-            @OpenApiParam(name = "page", description = "Número de página (default: 0)"),
-            @OpenApiParam(name = "size", description = "Tamaño de página (default: 10, max: 100)")
-        },
-        responses = {
-            @OpenApiResponse(status = "200", description = "Lista paginada de colecciones", content = @OpenApiContent(from = RespuestaPaginadaDTO.class)),
-            @OpenApiResponse(status = "401", description = "No autenticado"),
-            @OpenApiResponse(status = "403", description = "No tiene permisos de administrador")
-        }
-    )
-    public void obtenerColecciones(Context ctx) {
-        int page = ctx.queryParamAsClass("page", Integer.class).getOrDefault(0);
-        int size = ctx.queryParamAsClass("size", Integer.class).getOrDefault(10);
-        RespuestaPaginadaDTO<ColeccionDTO> respuesta = this.serviceColeccion.obtenerColecciones(page, size);
-        ctx.json(respuesta);
-    }
-
-    @OpenApi(
-        summary = "Obtener colección por ID",
-        operationId = "obtenerColeccionPorId",
-        path = "/administrador/coleccion/{id}",
-        methods = HttpMethod.GET,
-        tags = {"Administrador - Colecciones"},
-        security = {@OpenApiSecurity(name = "BearerAuth")},
-        pathParams = @OpenApiParam(name = "id", description = "ID de la colección"),
-        responses = {
-            @OpenApiResponse(status = "200", description = "Colección encontrada", content = @OpenApiContent(from = ColeccionDTO.class)),
-            @OpenApiResponse(status = "404", description = "Colección no encontrada")
-        }
-    )
-    public void obtenerColeccionPorId(Context ctx) {
-        String id = ctx.pathParam("id");
-        ColeccionDTO coleccionDTO = this.serviceColeccion.obtenerColeccionPorId(id);
-        if (coleccionDTO != null) {
-            ctx.json(coleccionDTO);
-        } else {
-            ctx.status(404).result("Colección no encontrada");
-        }
-    }
-
+    
     @OpenApi(
         summary = "Crear nueva colección",
         operationId = "crearColeccion",

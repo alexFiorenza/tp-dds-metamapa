@@ -76,7 +76,6 @@ public class AdministradorRoutes {
         app.get("/administrador/health", AdministradorRoutes::administradorHealthCheck);
 
         // Rutas CRUD para colecciones (solo operaciones administrativas)
-        app.post("/administrador/coleccion", controllerColeccion::crearColeccion);
         app.put("/administrador/coleccion/{id}", controllerColeccion::actualizarColeccion);
         app.delete("/administrador/coleccion/{id}", controllerColeccion::eliminarColeccion);
 

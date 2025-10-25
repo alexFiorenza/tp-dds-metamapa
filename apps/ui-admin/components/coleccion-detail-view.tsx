@@ -6,6 +6,7 @@ import { HechoListItem } from './hecho-list-item'
 import { Button, Pagination, Card, CardBody, Chip, Spinner } from '@heroui/react'
 import { motion, AnimatePresence } from 'motion/react'
 import Link from 'next/link'
+import { useUserRole } from '@/hooks/use-user-role'
 import type { HechoDTO, RespuestaPaginadaDTO } from '@/types/api'
 import type { ColeccionDTO } from '@/types/api'
 
@@ -18,6 +19,7 @@ interface ColeccionDetailViewProps {
 }
 
 export function ColeccionDetailView({ coleccion, initialData, fetchPage, backUrl = "/colecciones", backLabel = "Volver a Colecciones" }: ColeccionDetailViewProps) {
+  const { isAdmin } = useUserRole()
   const [selectedHechoId, setSelectedHechoId] = useState<string | undefined>()
   const [hoveredHechoId, setHoveredHechoId] = useState<string | undefined>()
   const [currentPage, setCurrentPage] = useState(0) // Backend usa 0-indexed
@@ -99,15 +101,17 @@ export function ColeccionDetailView({ coleccion, initialData, fetchPage, backUrl
             </div>
           )}
 
-          {/* Actions */}
-          <div className="flex gap-2 mt-4">
-            <Button variant="flat" size="sm" className="flex-1" startContent={<i className="ri-edit-line w-4 h-4" />}>
-              Editar
-            </Button>
-            <Button variant="flat" color="danger" size="sm" className="flex-1" startContent={<i className="ri-delete-bin-line w-4 h-4" />}>
-              Eliminar
-            </Button>
-          </div>
+          {/* Actions - Solo para administradores */}
+          {isAdmin && (
+            <div className="flex gap-2 mt-4">
+              <Button variant="flat" size="sm" className="flex-1" startContent={<i className="ri-edit-line w-4 h-4" />}>
+                Editar
+              </Button>
+              <Button variant="flat" color="danger" size="sm" className="flex-1" startContent={<i className="ri-delete-bin-line w-4 h-4" />}>
+                Eliminar
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Lista de hechos */}
