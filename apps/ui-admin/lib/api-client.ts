@@ -59,7 +59,27 @@ export class ApiClient {
     return response.json()
   }
 
-  // Obtener colecciones
+  // Obtener colecciones (API pública - no requiere autenticación)
+  static async obtenerColeccionesPublicas(pagina = 0, tamanioPagina = 10): Promise<RespuestaPaginadaDTO<ColeccionDTO>> {
+    if (USE_MOCK) {
+      return crearRespuestaPaginada(mockColecciones, pagina, tamanioPagina)
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/colecciones?page=${pagina}&size=${tamanioPagina}`,
+      {
+        cache: 'no-store'
+      }
+    )
+
+    if (!response.ok) {
+      throw new Error(`Error al obtener colecciones: ${response.statusText}`)
+    }
+
+    return response.json()
+  }
+
+  // Obtener colecciones (API administrativa - requiere autenticación)
   static async obtenerColecciones(pagina = 0, tamanioPagina = 10, token?: string | null): Promise<RespuestaPaginadaDTO<ColeccionDTO>> {
     if (USE_MOCK) {
       return crearRespuestaPaginada(mockColecciones, pagina, tamanioPagina)
@@ -80,7 +100,29 @@ export class ApiClient {
     return response.json()
   }
 
-  // Obtener colección por identificador
+  // Obtener colección por identificador (API pública - no requiere autenticación)
+  static async obtenerColeccionPublica(identificador: string): Promise<ColeccionDTO> {
+    if (USE_MOCK) {
+      const coleccion = mockColecciones.find((c) => c.handle === identificador)
+      if (!coleccion) throw new Error("Colección no encontrada")
+      return coleccion
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/colecciones/${identificador}`,
+      {
+        cache: 'no-store'
+      }
+    )
+
+    if (!response.ok) {
+      throw new Error(`Error al obtener colección: ${response.statusText}`)
+    }
+
+    return response.json()
+  }
+
+  // Obtener colección por identificador (API administrativa - requiere autenticación)
   static async obtenerColeccion(identificador: string, token?: string | null): Promise<ColeccionDTO> {
     if (USE_MOCK) {
       const coleccion = mockColecciones.find((c) => c.handle === identificador)

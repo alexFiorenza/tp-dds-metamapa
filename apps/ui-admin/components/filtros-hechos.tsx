@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search, Filter } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface FiltrosHechosProps {
@@ -26,7 +25,7 @@ export function FiltrosHechos({ onFiltrar }: FiltrosHechosProps) {
   return (
     <div className="space-y-3 p-4 border-b border-border">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Buscar hechos..."
           value={busqueda}
@@ -52,7 +51,7 @@ export function FiltrosHechos({ onFiltrar }: FiltrosHechosProps) {
         </Select>
 
         <Button onClick={handleBuscar} size="icon" variant="secondary">
-          <Filter className="h-4 w-4" />
+          <i className="ri-filter-line h-4 w-4" />
         </Button>
       </div>
     </div>

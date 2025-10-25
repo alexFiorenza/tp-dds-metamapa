@@ -19,6 +19,38 @@ public class ControllerColeccionPublica {
     }
 
     @OpenApi(
+        summary = "Obtener todas las colecciones públicas",
+        operationId = "obtenerColeccionesPublicas",
+        path = "/api/colecciones",
+        methods = HttpMethod.GET,
+        tags = {"API Pública - Colecciones"},
+        queryParams = {
+            @OpenApiParam(name = "page", description = "Número de página (default: 0)"),
+            @OpenApiParam(name = "size", description = "Tamaño de página (default: 10, max: 100)")
+        },
+        responses = {
+            @OpenApiResponse(status = "200", description = "Lista paginada de colecciones públicas", content = @OpenApiContent(from = RespuestaPaginadaDTO.class)),
+            @OpenApiResponse(status = "400", description = "Error al obtener colecciones")
+        }
+    )
+    public void obtenerColecciones(Context ctx) {
+        try {
+            int page = ctx.queryParamAsClass("page", Integer.class).getOrDefault(0);
+            int size = ctx.queryParamAsClass("size", Integer.class).getOrDefault(10);
+            
+            // Validar tamaño de página
+            if (size > 100) {
+                size = 100;
+            }
+            
+            RespuestaPaginadaDTO<ColeccionDTO> respuesta = this.serviceColeccion.obtenerColecciones(page, size);
+            ctx.json(respuesta);
+        } catch (Exception e) {
+            ctx.status(400).result("Error al obtener colecciones: " + e.getMessage());
+        }
+    }
+
+    @OpenApi(
         summary = "Obtener colección por identificador",
         operationId = "obtenerColeccionPublica",
         path = "/api/colecciones/{identificador}",

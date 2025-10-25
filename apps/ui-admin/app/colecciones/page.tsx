@@ -3,8 +3,8 @@ import { MapWrapper } from "@/components/map-wrapper"
 import { Button, Card, CardBody, Chip } from "@heroui/react"
 import Link from "next/link"
 
-export default async function AdminColeccionesPage() {
-  const respuesta = await ApiClient.obtenerColeccionesPublicas(0, 10)
+export default async function ColeccionesPage() {
+  const respuesta = await ApiClient.obtenerColeccionesPublicas(0, 20)
 
   return (
     <div className="h-full w-full flex">
@@ -12,17 +12,7 @@ export default async function AdminColeccionesPage() {
       <div className="w-[420px] flex flex-col bg-content1 border-r border-divider">
         {/* Header */}
         <div className="p-6 border-b border-divider">
-          <Link href="/administrador">
-            <Button variant="light" size="sm" startContent={<i className="ri-arrow-left-line w-4 h-4" />} className="mb-4">
-              Volver
-            </Button>
-          </Link>
-          <div className="flex items-center justify-between mb-2">
-            <h1 className="text-2xl font-bold text-foreground">Colecciones</h1>
-            <Button color="primary" size="sm" startContent={<i className="ri-add-line w-4 h-4" />}>
-              Nueva
-            </Button>
-          </div>
+          <h1 className="text-2xl font-bold text-foreground mb-2">Colecciones</h1>
           <p className="text-sm text-default-500">{respuesta.totalElementos} colecciones</p>
         </div>
 
@@ -56,12 +46,6 @@ export default async function AdminColeccionesPage() {
                             Ver Hechos
                           </Button>
                         </Link>
-                        <Button variant="flat" size="sm" startContent={<i className="ri-edit-line w-4 h-4" />}>
-                          Editar
-                        </Button>
-                        <Button variant="flat" color="danger" size="sm" startContent={<i className="ri-delete-bin-line w-4 h-4" />}>
-                          Eliminar
-                        </Button>
                       </div>
                     </div>
                   </div>

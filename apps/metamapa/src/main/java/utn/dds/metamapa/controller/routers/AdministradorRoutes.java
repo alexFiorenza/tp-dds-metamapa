@@ -75,15 +75,10 @@ public class AdministradorRoutes {
         app.get("/administrador/", AdministradorRoutes::administradorInfo);
         app.get("/administrador/health", AdministradorRoutes::administradorHealthCheck);
 
-        // Rutas CRUD para colecciones
-        app.get("/administrador/coleccion", controllerColeccion::obtenerColecciones);
-        app.get("/administrador/coleccion/{id}", controllerColeccion::obtenerColeccionPorId);
+        // Rutas CRUD para colecciones (solo operaciones administrativas)
         app.post("/administrador/coleccion", controllerColeccion::crearColeccion);
         app.put("/administrador/coleccion/{id}", controllerColeccion::actualizarColeccion);
         app.delete("/administrador/coleccion/{id}", controllerColeccion::eliminarColeccion);
-
-        // Rutas para hechos de colecciones
-        app.get("/administrador/coleccion/{id}/hechos", controllerColeccion::obtenerHechosDeColeccion);
 
         // Rutas administrativas para solicitudes de eliminación
         app.get("/administrador/solicitudes", controllerSolicitud::obtenerSolicitudes);

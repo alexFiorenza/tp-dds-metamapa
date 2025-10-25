@@ -1,18 +1,18 @@
 import type { Metadata } from 'next'
-import { GeistSans } from 'geist/font/sans'
-import { GeistMono } from 'geist/font/mono'
 import { Analytics } from '@vercel/analytics/next'
 import { ClerkProvider } from '@clerk/nextjs'
 import './globals.css'
+import 'remixicon/fonts/remixicon.css'
 import { Providers } from '@/components/providers'
-import { Header } from '@/components/header'
+import { LayoutWrapper } from '@/components/layout-wrapper'
+import { Lato } from 'next/font/google'
 
-import { Geist as V0_Font_Geist, Geist_Mono as V0_Font_Geist_Mono, Source_Serif_4 as V0_Font_Source_Serif_4 } from 'next/font/google'
-
-// Initialize fonts
-const _geist = V0_Font_Geist({ subsets: ['latin'], weight: ["100","200","300","400","500","600","700","800","900"] })
-const _geistMono = V0_Font_Geist_Mono({ subsets: ['latin'], weight: ["100","200","300","400","500","600","700","800","900"] })
-const _sourceSerif_4 = V0_Font_Source_Serif_4({ subsets: ['latin'], weight: ["200","300","400","500","600","700","800","900"] })
+// Initialize Lato font
+const lato = Lato({
+  subsets: ['latin'],
+  weight: ['100', '300', '400', '700', '900'],
+  variable: '--font-lato'
+})
 
 export const metadata: Metadata = {
   title: 'MetaMapa Admin',
@@ -27,10 +27,11 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="es" suppressHydrationWarning>
-        <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
+        <body className={`${lato.variable} font-sans antialiased h-screen overflow-hidden`}>
           <Providers>
-            <Header />
-            {children}
+            <LayoutWrapper>
+              {children}
+            </LayoutWrapper>
             <Analytics />
           </Providers>
         </body>

@@ -66,6 +66,7 @@ public class ApiRoutes {
         app.post("/api/hechos/{uuid}/reportar", controllerHecho::reportarHecho);
 
         // Endpoints de Colecciones públicas
+        app.get("/api/colecciones", controllerColeccion::obtenerColecciones);
         app.get("/api/colecciones/{identificador}", controllerColeccion::obtenerColeccion);
         app.get("/api/colecciones/{identificador}/hechos", controllerColeccion::obtenerHechosDeColeccion);
 
@@ -76,6 +77,7 @@ public class ApiRoutes {
         logger.info("Endpoints disponibles:");
         logger.info("GET /api/hechos - Obtener hechos con filtros");
         logger.info("POST /api/hechos/{uuid}/reportar - Reportar un hecho");
+        logger.info("GET /api/colecciones - Obtener todas las colecciones");
         logger.info("GET /api/colecciones/{id} - Obtener colección por ID");
         logger.info("GET /api/colecciones/{id}/hechos - Obtener hechos de colección");
         logger.info("POST /api/solicitudes - Crear solicitud de eliminación");

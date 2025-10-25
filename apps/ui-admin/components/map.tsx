@@ -11,8 +11,9 @@ import Map, {
   MapProps as ReactMapGLProps
 } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
+import { motion, AnimatePresence } from 'motion/react'
+import { useMapResize } from '@/hooks/use-map-resize'
 import type { HechoDTO } from '@/types/api'
-import { Maximize2 } from 'lucide-react'
 
 interface MapComponentProps extends Partial<ReactMapGLProps> {
   /**
@@ -119,6 +120,7 @@ export function MapComponent({
   ...mapProps
 }: MapComponentProps) {
   const [selectedHecho, setSelectedHecho] = useState<HechoDTO | null>(null)
+  const mapRef = useMapResize()
 
   // Sincronizar con selección externa
   const handleHechoClick = useCallback((hecho: HechoDTO) => {
@@ -171,6 +173,7 @@ export function MapComponent({
     zoom: zoom
   })
 
+
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
   if (!mapboxToken) {
@@ -191,8 +194,9 @@ export function MapComponent({
   }
 
   return (
-    <div style={{ height, width }}>
+    <div style={{ height, width }} className="w-full h-full">
       <Map
+        ref={mapRef}
         {...viewState}
         {...mapProps}
         onMove={(evt) => setViewState(evt.viewState)}
@@ -273,57 +277,70 @@ export function MapComponent({
         })}
 
         {/* Popup al seleccionar un hecho */}
-        {selectedHecho && (
-          <Popup
-            longitude={selectedHecho.longitud}
-            latitude={selectedHecho.latitud}
-            anchor="bottom"
-            onClose={() => setSelectedHecho(null)}
-            closeButton={true}
-            closeOnClick={false}
-            maxWidth="340px"
-            className="mapbox-popup-custom"
-          >
-            <div className="min-w-[300px] max-w-[340px] p-4">
-              <h3 className="font-bold text-lg mb-2 text-foreground line-clamp-2 pr-6">
-                {selectedHecho.titulo}
-              </h3>
-              <p className="text-sm text-default-600 mb-4 line-clamp-3">
-                {selectedHecho.descripcion}
-              </p>
-              <div className="flex flex-wrap gap-2 mb-4">
-                <span
-                  className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-bold text-white shadow-sm"
-                  style={{ backgroundColor: getCategoriaColor(selectedHecho.categoria) }}
-                >
-                  {selectedHecho.categoria}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-xs text-default-500">
-                  <span className="text-base">📅</span>
-                  <span>
-                    {new Date(selectedHecho.fechaAcontecimiento).toLocaleDateString('es-AR', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric'
-                    })}
+        <AnimatePresence>
+          {selectedHecho && (
+            <Popup
+              longitude={selectedHecho.longitud}
+              latitude={selectedHecho.latitud}
+              anchor="bottom"
+              onClose={() => setSelectedHecho(null)}
+              closeButton={true}
+              closeOnClick={false}
+              maxWidth="340px"
+              className="mapbox-popup-custom"
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.8, y: 10 }}
+                transition={{
+                  duration: 0.3,
+                  scale: { type: "spring", visualDuration: 0.3, bounce: 0.3 }
+                }}
+                className="min-w-[300px] max-w-[340px] p-4"
+              >
+                <h3 className="font-bold text-lg mb-2 text-foreground line-clamp-2 pr-6">
+                  {selectedHecho.titulo}
+                </h3>
+                <p className="text-sm text-default-600 mb-4 line-clamp-3">
+                  {selectedHecho.descripcion}
+                </p>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <span
+                    className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-bold text-white shadow-sm"
+                    style={{ backgroundColor: getCategoriaColor(selectedHecho.categoria) }}
+                  >
+                    {selectedHecho.categoria}
                   </span>
                 </div>
-                <button
-                  onClick={() => {
-                    // TODO: Implementar modal con detalles completos e imágenes
-                    console.log('Ver detalles de:', selectedHecho.uuid)
-                  }}
-                  className="popup-details-button bg-primary/10 hover:bg-primary/20 text-primary"
-                >
-                  <Maximize2 className="w-3.5 h-3.5" />
-                  <span>Ver detalles</span>
-                </button>
-              </div>
-            </div>
-          </Popup>
-        )}
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 text-xs text-default-500">
+                    <span className="text-base">📅</span>
+                    <span>
+                      {new Date(selectedHecho.fechaAcontecimiento).toLocaleDateString('es-AR', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                      })}
+                    </span>
+                  </div>
+                  <motion.button
+                    onClick={() => {
+                      // TODO: Implementar modal con detalles completos e imágenes
+                      console.log('Ver detalles de:', selectedHecho.uuid)
+                    }}
+                    className="popup-details-button bg-primary/10 hover:bg-primary/20 text-primary"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <i className="ri-fullscreen-line w-3.5 h-3.5" />
+                    <span>Ver detalles</span>
+                  </motion.button>
+                </div>
+              </motion.div>
+            </Popup>
+          )}
+        </AnimatePresence>
 
         {/* Controles */}
         {showControls && (

@@ -2,7 +2,6 @@ import { ApiClient } from "@/lib/api-client"
 import { getAuthToken } from "@/lib/auth-helpers"
 import { MapWrapper } from "@/components/map-wrapper"
 import { Button, Card, CardBody, Chip, ButtonGroup } from "@heroui/react"
-import { ArrowLeft, Check, X, Clock } from "lucide-react"
 import Link from "next/link"
 
 export default async function AdminSolicitudesPage() {
@@ -10,13 +9,13 @@ export default async function AdminSolicitudesPage() {
   const respuesta = await ApiClient.obtenerSolicitudes(0, 10, token)
 
   return (
-    <div className="flex h-[calc(100vh-4rem)]">
+    <div className="flex h-screen">
       {/* Sidebar */}
       <div className="w-[420px] flex flex-col bg-content1 border-r border-divider">
         {/* Header */}
         <div className="p-6 border-b border-divider">
           <Link href="/administrador">
-            <Button variant="light" size="sm" startContent={<ArrowLeft className="w-4 h-4" />} className="mb-4">
+            <Button variant="light" size="sm" startContent={<i className="ri-arrow-left-line w-4 h-4" />} className="mb-4">
               Volver
             </Button>
           </Link>
@@ -51,7 +50,7 @@ export default async function AdminSolicitudesPage() {
                               ? "success"
                               : "default"
                         }
-                        startContent={solicitud.estado === "PENDIENTE" ? <Clock className="w-3 h-3" /> : null}
+                        startContent={solicitud.estado === "PENDIENTE" ? <i className="ri-time-line w-3 h-3" /> : null}
                       >
                         {solicitud.estado}
                       </Chip>
@@ -75,7 +74,7 @@ export default async function AdminSolicitudesPage() {
                           color="success"
                           size="sm"
                           className="flex-1"
-                          startContent={<Check className="w-4 h-4" />}
+                          startContent={<i className="ri-check-line w-4 h-4" />}
                         >
                           Aceptar
                         </Button>
@@ -84,7 +83,7 @@ export default async function AdminSolicitudesPage() {
                           variant="flat"
                           size="sm"
                           className="flex-1"
-                          startContent={<X className="w-4 h-4" />}
+                          startContent={<i className="ri-close-line w-4 h-4" />}
                         >
                           Rechazar
                         </Button>

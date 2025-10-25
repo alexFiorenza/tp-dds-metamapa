@@ -3,7 +3,6 @@
 import type { HechoDTO } from "@/types/api"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, MapPin, Tag, ImageIcon } from "lucide-react"
 import Image from "next/image"
 
 interface HechoCardProps {
@@ -22,7 +21,7 @@ export function HechoCard({ hecho, onClick }: HechoCardProps) {
           <Image src={primeraImagen.url || "/placeholder.svg"} alt={hecho.titulo} fill className="object-cover" />
           {imagenes.length > 1 && (
             <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1">
-              <ImageIcon className="h-3 w-3" />
+              <i className="ri-image-line h-3 w-3" />
               {imagenes.length}
             </div>
           )}
@@ -41,12 +40,12 @@ export function HechoCard({ hecho, onClick }: HechoCardProps) {
 
         <div className="flex flex-col gap-1 text-xs text-default-500">
           <div className="flex items-center gap-1">
-            <Calendar className="h-3 w-3" />
+            <i className="ri-calendar-line h-3 w-3" />
             <span>{new Date(hecho.fechaAcontecimiento).toLocaleDateString("es-AR")}</span>
           </div>
 
           <div className="flex items-center gap-1">
-            <MapPin className="h-3 w-3" />
+            <i className="ri-map-pin-line h-3 w-3" />
             <span>
               {hecho.latitud.toFixed(4)}, {hecho.longitud.toFixed(4)}
             </span>
@@ -55,7 +54,7 @@ export function HechoCard({ hecho, onClick }: HechoCardProps) {
 
         {hecho.etiquetas.length > 0 && (
           <div className="flex items-center gap-1 flex-wrap">
-            <Tag className="h-3 w-3 text-default-500" />
+            <i className="ri-price-tag-3-line h-3 w-3 text-default-500" />
             {hecho.etiquetas.slice(0, 3).map((etiqueta) => (
               <Badge key={etiqueta} variant="outline">
                 {etiqueta}

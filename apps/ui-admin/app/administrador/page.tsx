@@ -1,17 +1,16 @@
 import { MapWrapper } from "@/components/map-wrapper"
 import { Button, Card, CardBody } from "@heroui/react"
-import { FolderOpen, AlertCircle, BarChart, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
 export default function AdminPage() {
   return (
-    <div className="flex h-[calc(100vh-4rem)]">
+    <div className="flex h-screen">
       {/* Sidebar */}
       <div className="w-96 flex flex-col bg-content1 border-r border-divider">
         {/* Header */}
         <div className="p-6 border-b border-divider">
           <Link href="/">
-            <Button variant="light" size="sm" startContent={<ArrowLeft className="w-4 h-4" />} className="mb-4">
+            <Button variant="light" size="sm" startContent={<i className="ri-arrow-left-line w-4 h-4" />} className="mb-4">
               Volver al inicio
             </Button>
           </Link>
@@ -27,7 +26,7 @@ export default function AdminPage() {
                 <CardBody className="p-4">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 flex items-center justify-center bg-primary/10 rounded-xl">
-                      <FolderOpen className="w-6 h-6 text-primary" />
+                      <i className="ri-folder-open-line w-6 h-6 text-primary" />
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-base text-foreground">Gestionar Colecciones</h3>
@@ -43,7 +42,7 @@ export default function AdminPage() {
                 <CardBody className="p-4">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 flex items-center justify-center bg-warning/10 rounded-xl">
-                      <AlertCircle className="w-6 h-6 text-warning" />
+                      <i className="ri-alert-line w-6 h-6 text-warning" />
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-base text-foreground">Solicitudes de Eliminación</h3>

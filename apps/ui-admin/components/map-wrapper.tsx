@@ -53,7 +53,11 @@ export function MapWrapper({ mapStyle, ...props }: MapComponentProps) {
     ? 'mapbox://styles/mapbox/dark-v11'
     : 'mapbox://styles/mapbox/light-v11')
 
-  return <MapComponent {...props} mapStyle={dynamicMapStyle} />
+  return (
+    <div className="w-full h-full">
+      <MapComponent {...props} mapStyle={dynamicMapStyle} />
+    </div>
+  )
 }
 
 export type { MapComponentProps, HechoDTO }

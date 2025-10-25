@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react"
 import type { HechoDTO, RespuestaPaginadaDTO } from "@/types/api"
 import { HechoCard } from "./hecho-card"
 import { HechoCardSkeleton } from "./hecho-card-skeleton"
-import { Loader2 } from "lucide-react"
 
 interface InfiniteScrollHechosProps {
   datosIniciales: RespuestaPaginadaDTO<HechoDTO>
@@ -75,7 +74,7 @@ export function InfiniteScrollHechos({ datosIniciales, fetchMas }: InfiniteScrol
       {/* Loading spinner */}
       {cargando && (
         <div className="flex justify-center py-4">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <i className="ri-loader-4-line h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       )}
     </div>

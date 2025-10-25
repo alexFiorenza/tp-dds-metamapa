@@ -29,7 +29,7 @@ export default async function HechosPage({ searchParams }: HechosPageProps) {
   }
 
   return (
-    <div className="h-[calc(100vh-4rem)]">
+    <div className="h-full w-full">
       <HechosMapView initialData={respuesta} fetchPage={fetchPage} />
     </div>
   )
