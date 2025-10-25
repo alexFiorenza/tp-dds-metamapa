@@ -6,6 +6,7 @@ import utn.dds.metamapa.auth.ClerkAuthHandler;
 import utn.dds.metamapa.config.AppConfig;
 import utn.dds.metamapa.controller.ControllerColeccionAdministrativo;
 import utn.dds.metamapa.controller.ControllerSolicitudEliminacionAdministrativo;
+import utn.dds.metamapa.controller.ControllerFuentesAdministrativo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +14,7 @@ public class AdministradorRoutes {
     private static final Logger logger = LoggerFactory.getLogger(AdministradorRoutes.class);
     private final ControllerColeccionAdministrativo controllerColeccion;
     private final ControllerSolicitudEliminacionAdministrativo controllerSolicitud;
+    private final ControllerFuentesAdministrativo controllerFuentes;
     private final ClerkAuthHandler authHandler;
 
     public AdministradorRoutes(AppConfig appConfig) {
@@ -20,6 +22,8 @@ public class AdministradorRoutes {
             appConfig.getDaoType(), appConfig.getDaoConfig());
         this.controllerSolicitud = new ControllerSolicitudEliminacionAdministrativo(
             appConfig.getDaoType(), appConfig.getDaoConfig());
+        this.controllerFuentes = new ControllerFuentesAdministrativo(
+            appConfig.getDaoConfig());
 
         // Inicializar autenticación con Clerk (la secret key es obligatoria en AppConfig)
         logger.info("Configurando autenticación Clerk con SDK oficial");
@@ -85,6 +89,10 @@ public class AdministradorRoutes {
         app.get("/administrador/solicitudes", controllerSolicitud::obtenerSolicitudes);
         app.put("/administrador/solicitud/{uuid}/aceptar", controllerSolicitud::aceptarSolicitud);
         app.put("/administrador/solicitud/{uuid}/rechazar", controllerSolicitud::rechazarSolicitud);
+
+        // Rutas administrativas para fuentes
+        app.get("/administrador/fuentes", controllerFuentes::obtenerFuentes);
+        app.get("/administrador/fuentes/{uuid}", controllerFuentes::obtenerFuentePorUuid);
 
         logger.info("Rutas de administrador configuradas correctamente");
     }

@@ -1,9 +1,10 @@
-package utn.dds.agregador.persistencia;
+package utn.dds.persistencia;
 
 import utn.dds.daos.IDAO;
 import utn.dds.daos.DAOFactory;
 import utn.dds.daos.Hibernate;
 import utn.dds.dto.FuenteDTO;
+import utn.dds.dto.RespuestaPaginadaDTO;
 import utn.dds.dominio.Fuente;
 import java.util.List;
 import java.util.UUID;
@@ -12,6 +13,10 @@ import java.util.HashMap;
 import java.util.stream.Collectors;
 import jakarta.persistence.EntityGraph;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 
 public class FuentesRepository {
 
@@ -141,6 +146,45 @@ public class FuentesRepository {
             });
         }
         return null;
+    }
+
+    public RespuestaPaginadaDTO<FuenteDTO> findPaginado(int pagina, int tamanioPagina) {
+        if (dao instanceof Hibernate) {
+            Hibernate<Fuente> hibernateDAO = (Hibernate<Fuente>) dao;
+            return hibernateDAO.executeQuery(em -> {
+                CriteriaBuilder cb = em.getCriteriaBuilder();
+
+                // Query para contar total
+                CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
+                Root<Fuente> countRoot = countQuery.from(Fuente.class);
+                countQuery.select(cb.count(countRoot));
+                Long totalElementos = em.createQuery(countQuery).getSingleResult();
+
+                // Query para obtener datos paginados
+                TypedQuery<Fuente> dataQuery = em.createQuery("SELECT DISTINCT f FROM Fuente f", Fuente.class);
+                EntityGraph<Fuente> entityGraph = createEntityGraphWithParams(em);
+                dataQuery.setHint("jakarta.persistence.fetchgraph", entityGraph);
+                dataQuery.setFirstResult(pagina * tamanioPagina);
+                dataQuery.setMaxResults(tamanioPagina);
+
+                List<FuenteDTO> fuentes = dataQuery.getResultList()
+                        .stream()
+                        .map(FuenteDTO::from)
+                        .collect(Collectors.toList());
+
+                return new RespuestaPaginadaDTO<>(fuentes, pagina, tamanioPagina, totalElementos);
+            });
+        }
+
+        // Fallback para otros tipos de DAO
+        List<FuenteDTO> todasLasFuentes = find();
+        long totalElementos = todasLasFuentes != null ? todasLasFuentes.size() : 0;
+        int inicio = pagina * tamanioPagina;
+        int fin = Math.min(inicio + tamanioPagina, (int) totalElementos);
+        List<FuenteDTO> fuentesPaginadas = todasLasFuentes != null ?
+                todasLasFuentes.subList(inicio, fin) : List.of();
+
+        return new RespuestaPaginadaDTO<>(fuentesPaginadas, pagina, tamanioPagina, totalElementos);
     }
 
     private EntityGraph<Fuente> createEntityGraphWithParams(jakarta.persistence.EntityManager em) {
