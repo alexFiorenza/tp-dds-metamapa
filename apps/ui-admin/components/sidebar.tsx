@@ -86,8 +86,8 @@ export function Sidebar({ isCollapsed: externalIsCollapsed, setIsCollapsed: exte
       className="h-screen bg-content1 border-r border-divider flex flex-col fixed left-0 top-0 z-50"
       style={{ minWidth: isCollapsed ? 80 : 256 }}
     >
-      {/* Logo Section with Toggle */}
-      <div className="border-b border-divider">
+      {/* Logo Section */}
+      <div className="border-b border-divider relative">
         <div className="flex items-center justify-between px-4 py-6">
           <Link href="/hechos" className="flex items-center gap-3 overflow-hidden">
             <motion.div
@@ -108,7 +108,6 @@ export function Sidebar({ isCollapsed: externalIsCollapsed, setIsCollapsed: exte
                     className="overflow-hidden"
                   >
                     <h1 className="text-lg font-bold text-foreground whitespace-nowrap">MetaMapa</h1>
-                    <p className="text-xs text-default-500 whitespace-nowrap">Geo Platform</p>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -116,35 +115,29 @@ export function Sidebar({ isCollapsed: externalIsCollapsed, setIsCollapsed: exte
           </Link>
         </div>
 
-        {/* Toggle Button */}
-        <div className={cn("px-3 pb-3", isCollapsed && "flex justify-center")}>
-          <Button
-            isIconOnly={isCollapsed}
-            variant="light"
-            size="sm"
-            onPress={() => setIsCollapsed(!isCollapsed)}
-            className="w-full"
+        {/* Toggle Button - Positioned on the right edge, centered vertically */}
+        <div className="absolute top-1/2 -translate-y-1/2 -right-4 z-10">
+          <motion.div
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            className="bg-content2 rounded-full p-0.5 shadow-lg"
           >
-            <i className={cn("text-lg", isCollapsed ? "ri-menu-unfold-line" : "ri-menu-fold-line")} />
-            <AnimatePresence>
-              {!isCollapsed && (
-                <motion.span
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: "auto" }}
-                  exit={{ opacity: 0, width: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="overflow-hidden whitespace-nowrap"
-                >
-                  Contraer
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </Button>
+            <Button
+              isIconOnly
+              variant="solid"
+              color="primary"
+              size="sm"
+              onPress={() => setIsCollapsed(!isCollapsed)}
+              className="rounded-full w-8 h-8 min-w-8 shadow-md"
+            >
+              <i className={cn("text-base", isCollapsed ? "ri-menu-unfold-2-fill" : "ri-menu-fold-2-fill")} />
+            </Button>
+          </motion.div>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-3 pt-8 pb-6 space-y-1 overflow-y-auto">
         {navItems.map((item) => (
           <NavItem
             key={item.href}

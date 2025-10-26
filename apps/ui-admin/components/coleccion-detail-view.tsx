@@ -7,6 +7,7 @@ import { Button, Pagination, Card, CardBody, Chip, Spinner } from '@heroui/react
 import { motion, AnimatePresence } from 'motion/react'
 import Link from 'next/link'
 import { useUserRole } from '@/hooks/use-user-role'
+import { useSidebarContext } from './layout-wrapper'
 import type { HechoDTO, RespuestaPaginadaDTO } from '@/types/api'
 import type { ColeccionDTO } from '@/types/api'
 
@@ -20,6 +21,7 @@ interface ColeccionDetailViewProps {
 
 export function ColeccionDetailView({ coleccion, initialData, fetchPage, backUrl = "/colecciones", backLabel = "Volver a Colecciones" }: ColeccionDetailViewProps) {
   const { isAdmin } = useUserRole()
+  const { isCollapsed } = useSidebarContext()
   const [selectedHechoId, setSelectedHechoId] = useState<string | undefined>()
   const [hoveredHechoId, setHoveredHechoId] = useState<string | undefined>()
   const [currentPage, setCurrentPage] = useState(0) // Backend usa 0-indexed
@@ -54,10 +56,28 @@ export function ColeccionDetailView({ coleccion, initialData, fetchPage, backUrl
     loadPage()
   }, [currentPage, fetchPage])
 
+  // Efecto para redimensionar el mapa cuando cambie el estado del sidebar
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // Disparar un evento de resize para que el mapa se redimensione
+      window.dispatchEvent(new Event('resize'))
+    }, 300) // Esperar a que termine la animación del sidebar
+
+    return () => clearTimeout(timer)
+  }, [isCollapsed])
+
   return (
-    <div className="flex h-full">
-      {/* Sidebar con detalles de colección */}
-      <div className="w-96 flex flex-col bg-content1 border-r border-divider">
+    <div className="flex h-full w-full">
+      {/* Sidebar con detalles de colección - se oculta completamente cuando el sidebar principal está colapsado */}
+      <AnimatePresence>
+        {!isCollapsed && (
+          <motion.div
+            className="flex flex-col bg-content1 border-r border-divider"
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: 384, opacity: 1 }} // 384px = w-96
+            exit={{ width: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
         {/* Header */}
         <div className="p-6 border-b border-divider">
           <Link href={backUrl}>
@@ -193,15 +213,19 @@ export function ColeccionDetailView({ coleccion, initialData, fetchPage, backUrl
             />
           </div>
         )}
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Mapa */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative min-w-0">
         <MapWrapper
           hechos={data.datos}
           selectedHechoId={selectedHechoId}
           hoveredHechoId={hoveredHechoId}
           onHechoSelect={(hecho) => setSelectedHechoId(hecho?.uuid)}
+          height="100%"
+          width="100%"
         />
       </div>
     </div>
