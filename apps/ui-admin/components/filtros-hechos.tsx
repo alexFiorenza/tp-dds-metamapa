@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -10,14 +10,33 @@ import type { FiltrosHechos, EstadoHecho } from "@/types/api"
 interface FiltrosHechosProps {
   onFiltrar: (filtros: FiltrosHechos) => void
   onLimpiar: () => void
+  filtrosIniciales?: FiltrosHechos
 }
 
 const categorias = ["INCENDIO", "CONTAMINACION", "MANIFESTACION", "INUNDACION", "FAUNA"]
 const estados: EstadoHecho[] = ["ACTIVO", "OCULTO"]
 
-export function FiltrosHechos({ onFiltrar, onLimpiar }: FiltrosHechosProps) {
-  const [filtros, setFiltros] = useState<FiltrosHechos>({})
+export function FiltrosHechos({ onFiltrar, onLimpiar, filtrosIniciales = {} }: FiltrosHechosProps) {
+  const [filtros, setFiltros] = useState<FiltrosHechos>(filtrosIniciales)
   const [mostrarAvanzados, setMostrarAvanzados] = useState(false)
+
+  // Sincronizar filtros con los valores de la URL
+  useEffect(() => {
+    setFiltros(filtrosIniciales)
+
+    // Auto-expandir filtros avanzados si hay filtros avanzados aplicados
+    const tieneAvanzados = filtrosIniciales.descripcion ||
+                          filtrosIniciales.origen ||
+                          filtrosIniciales.estado ||
+                          filtrosIniciales.fechaAcontecimiento ||
+                          filtrosIniciales.etiquetas ||
+                          filtrosIniciales.latitud ||
+                          filtrosIniciales.longitud
+
+    if (tieneAvanzados) {
+      setMostrarAvanzados(true)
+    }
+  }, [filtrosIniciales])
 
   const handleFiltrar = () => {
     // Limpiar valores vacíos

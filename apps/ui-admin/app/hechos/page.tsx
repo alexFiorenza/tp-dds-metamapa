@@ -1,32 +1,58 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { ApiClient } from "@/lib/api-client"
 import { HechosMapView } from "@/components/hechos-map-view"
 import { FiltrosHechos } from "@/components/filtros-hechos"
 import type { RespuestaPaginadaDTO, HechoDTO, FiltrosHechos as FiltrosHechosType } from "@/types/api"
 
-interface HechosPageProps {
-  searchParams: Promise<{
-    categoria?: string
-    titulo?: string
-  }>
-}
-
-export default function HechosPage({ searchParams }: HechosPageProps) {
+export default function HechosPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [initialData, setInitialData] = useState<RespuestaPaginadaDTO<HechoDTO> | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [filtrosAplicados, setFiltrosAplicados] = useState<FiltrosHechosType>({})
 
+  // Cargar filtros iniciales desde la URL
+  useEffect(() => {
+    const filtrosDesdeUrl: FiltrosHechosType = {}
+
+    searchParams.forEach((value, key) => {
+      if (key === 'pagina' || key === 'tamanioPagina') return
+
+      if (key === 'latitud' || key === 'longitud') {
+        const numValue = parseFloat(value)
+        if (!isNaN(numValue)) {
+          filtrosDesdeUrl[key] = numValue
+        }
+      } else {
+        filtrosDesdeUrl[key] = value
+      }
+    })
+
+    setFiltrosAplicados(filtrosDesdeUrl)
+  }, [searchParams])
+
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        const params = await searchParams
+        const filtros: FiltrosHechosType = {}
+        searchParams.forEach((value, key) => {
+          if (key === 'latitud' || key === 'longitud') {
+            const numValue = parseFloat(value)
+            if (!isNaN(numValue)) {
+              filtros[key] = numValue
+            }
+          } else {
+            filtros[key] = value
+          }
+        })
+
         const respuesta = await ApiClient.obtenerHechos({
+          ...filtros,
           pagina: 0,
           tamanioPagina: 10,
-          categoria: params.categoria,
-          titulo: params.titulo,
         })
         setInitialData(respuesta)
       } catch (error) {
@@ -41,36 +67,47 @@ export default function HechosPage({ searchParams }: HechosPageProps) {
 
   // Función para fetch de páginas
   const fetchPage = async (page: number) => {
-    const params = await searchParams
     return await ApiClient.obtenerHechos({
       ...filtrosAplicados,
       pagina: page,
       tamanioPagina: 10,
-      categoria: params.categoria,
-      titulo: params.titulo,
     })
+  }
+
+  // Actualizar la URL con los filtros aplicados
+  const actualizarUrl = (filtros: FiltrosHechosType) => {
+    const params = new URLSearchParams()
+
+    Object.entries(filtros).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        params.set(key, String(value))
+      }
+    })
+
+    const queryString = params.toString()
+    router.push(queryString ? `/hechos?${queryString}` : '/hechos', { scroll: false })
   }
 
   const handleFiltrar = async (filtros: FiltrosHechosType) => {
     setIsLoading(true)
-    
+
     // Limpiar filtros vacíos antes de aplicar
     const filtrosLimpios = Object.fromEntries(
-      Object.entries(filtros).filter(([_, value]) => 
+      Object.entries(filtros).filter(([_, value]) =>
         value !== undefined && value !== null && value !== ""
       )
     ) as FiltrosHechosType
-    
+
     setFiltrosAplicados(filtrosLimpios)
-    
+
+    // Actualizar URL con los filtros
+    actualizarUrl(filtrosLimpios)
+
     try {
-      const params = await searchParams
       const nuevaData = await ApiClient.obtenerHechos({
         ...filtrosLimpios,
         pagina: 0,
         tamanioPagina: 10,
-        categoria: params.categoria,
-        titulo: params.titulo,
       })
       setInitialData(nuevaData)
     } catch (error) {
@@ -83,14 +120,14 @@ export default function HechosPage({ searchParams }: HechosPageProps) {
   const handleLimpiar = async () => {
     setIsLoading(true)
     setFiltrosAplicados({})
-    
+
+    // Limpiar la URL
+    router.push('/hechos', { scroll: false })
+
     try {
-      const params = await searchParams
       const nuevaData = await ApiClient.obtenerHechos({
         pagina: 0,
         tamanioPagina: 10,
-        categoria: params.categoria,
-        titulo: params.titulo,
       })
       setInitialData(nuevaData)
     } catch (error) {
@@ -115,9 +152,10 @@ export default function HechosPage({ searchParams }: HechosPageProps) {
     <div className="h-full w-full flex flex-col">
       {/* Filtros */}
       <div className="flex-shrink-0">
-        <FiltrosHechos 
+        <FiltrosHechos
           onFiltrar={handleFiltrar}
           onLimpiar={handleLimpiar}
+          filtrosIniciales={filtrosAplicados}
         />
       </div>
 
