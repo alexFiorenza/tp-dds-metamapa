@@ -81,3 +81,17 @@ export interface FiltrosHechos {
   pagina?: number
   tamanioPagina?: number
 }
+
+export interface ColeccionCreateDTO {
+  titulo: string
+  descripcion: string
+  fuentesIds: string[]
+  criteriosDePertenencia: CriterioCreateDTO[]
+}
+
+export interface ColeccionUpdateDTO {
+  titulo: string
+  descripcion: string
+  fuentesIds: string[]
+  criteriosDePertenencia: CriterioCreateDTO[]
+}
