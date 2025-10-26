@@ -26,11 +26,16 @@ export function ColeccionDetailView({ coleccion, initialData, fetchPage, backUrl
   const [data, setData] = useState<RespuestaPaginadaDTO<HechoDTO>>(initialData)
   const [isLoading, setIsLoading] = useState(false)
 
+  // Resetear página cuando cambian los datos iniciales (por filtros)
+  useEffect(() => {
+    setCurrentPage(0)
+    setData(initialData)
+  }, [initialData])
+
   // Fetch data cuando cambia la página
   useEffect(() => {
     // Solo fetch si no es la página inicial
     if (currentPage === 0) {
-      setData(initialData)
       return
     }
 
@@ -47,7 +52,7 @@ export function ColeccionDetailView({ coleccion, initialData, fetchPage, backUrl
     }
 
     loadPage()
-  }, [currentPage, fetchPage, initialData])
+  }, [currentPage, fetchPage])
 
   return (
     <div className="flex h-full">
@@ -70,22 +75,6 @@ export function ColeccionDetailView({ coleccion, initialData, fetchPage, backUrl
               <p className="text-sm text-default-500">{coleccion.descripcion}</p>
             </div>
           </div>
-
-          {/* Metadata */}
-          <Card>
-            <CardBody className="p-3">
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="font-semibold text-foreground">Handle:</span>
-                  <span className="text-default-600">{coleccion.handle}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-semibold text-foreground">Hechos:</span>
-                  <span className="text-default-600">{data.totalElementos}</span>
-                </div>
-              </div>
-            </CardBody>
-          </Card>
 
           {/* Criterios de pertenencia */}
           {coleccion.criteriosDePertenencia.length > 0 && (

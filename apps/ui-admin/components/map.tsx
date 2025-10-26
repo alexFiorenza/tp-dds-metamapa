@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import Map, {
   Marker,
   NavigationControl,
@@ -173,6 +173,57 @@ export function MapComponent({
     zoom: zoom
   })
 
+  // Guardar el estado inicial del mapa para volver cuando se deseleccione
+  const [initialViewState, setInitialViewState] = useState({
+    longitude: center.longitude,
+    latitude: center.latitude,
+    zoom: zoom
+  })
+
+  // Usar ref para rastrear si tenemos una selección activa
+  const previousSelectionRef = useRef<string | undefined>(undefined)
+
+  // Actualizar el estado inicial cuando cambian los hechos (sin selección activa)
+  useEffect(() => {
+    if (!selectedHechoId) {
+      setInitialViewState({
+        longitude: center.longitude,
+        latitude: center.latitude,
+        zoom: zoom
+      })
+    }
+  }, [center.longitude, center.latitude, zoom, selectedHechoId])
+
+  // Efecto para hacer zoom cuando se selecciona/deselecciona un hecho desde la lista
+  useEffect(() => {
+    if (!mapRef.current) return
+
+    const previousSelection = previousSelectionRef.current
+
+    if (selectedHechoId) {
+      const hecho = hechos.find(h => h.uuid === selectedHechoId)
+      if (hecho) {
+        // Usar flyTo para una animación suave hacia el hecho seleccionado
+        mapRef.current.flyTo({
+          center: [hecho.longitud, hecho.latitud],
+          zoom: 12, // Zoom más moderado
+          duration: 1200,
+          essential: true
+        })
+      }
+    } else if (previousSelection) {
+      // Solo hacer zoom out si había una selección previa
+      mapRef.current.flyTo({
+        center: [initialViewState.longitude, initialViewState.latitude],
+        zoom: initialViewState.zoom,
+        duration: 1200,
+        essential: true
+      })
+    }
+
+    // Actualizar la referencia
+    previousSelectionRef.current = selectedHechoId
+  }, [selectedHechoId, hechos, initialViewState])
 
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 

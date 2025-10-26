@@ -236,7 +236,7 @@ export class ApiClient {
     })
 
     const response = await fetch(
-      `${API_BASE_URL}/api/colecciones/${identificador}/hechos?${params}`,
+      `/api/colecciones/${identificador}/hechos?${params}`,
       { cache: 'no-store' }
     )
 
