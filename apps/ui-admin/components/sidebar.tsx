@@ -154,10 +154,10 @@ export function Sidebar({ isCollapsed: externalIsCollapsed, setIsCollapsed: exte
           <>
             <div className="h-px bg-divider my-4" />
             <NavItem
-              href="/admin"
+              href="/administrador"
               icon="ri-admin-line"
               label="Admin"
-              isActive={pathname?.startsWith('/admin') || false}
+              isActive={pathname?.startsWith('/administrador') || false}
               isCollapsed={isCollapsed}
             />
           </>

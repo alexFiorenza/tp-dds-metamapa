@@ -25,8 +25,8 @@ export function LayoutWrapper({ children }: { children: ReactNode }) {
   return (
     <SidebarContext.Provider value={{ isCollapsed, setIsCollapsed }}>
       <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main 
-        className="h-screen overflow-hidden transition-[margin] duration-300 ease-in-out" 
+      <main
+        className="h-screen overflow-hidden bg-background transition-[margin] duration-300 ease-in-out"
         style={{ marginLeft: `${marginLeft}px` }}
       >
         {children}

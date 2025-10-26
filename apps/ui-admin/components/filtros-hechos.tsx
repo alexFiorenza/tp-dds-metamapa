@@ -1,9 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input, Button, Select, SelectItem } from "@heroui/react"
 import { motion, AnimatePresence } from "motion/react"
 import type { FiltrosHechos, EstadoHecho } from "@/types/api"
 
@@ -62,7 +60,7 @@ export function FiltrosHechos({ onFiltrar, onLimpiar, filtrosIniciales = {} }: F
   }
 
   return (
-    <div className="mb-3 p-3 bg-content1 rounded-lg border border-divider">
+    <div className="p-4 bg-content1 border-b border-divider">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-foreground">Filtros</h3>
         <Button
@@ -94,21 +92,22 @@ export function FiltrosHechos({ onFiltrar, onLimpiar, filtrosIniciales = {} }: F
 
           {/* Categoría */}
           <div className="w-40">
-            <Select 
-              value={filtros.categoria || "all"} 
-              onValueChange={(value) => actualizarFiltro("categoria", value === "all" ? undefined : value)}
+            <Select
+              placeholder="Categoría"
+              selectedKeys={filtros.categoria ? [filtros.categoria] : ["all"]}
+              onSelectionChange={(keys) => {
+                const value = Array.from(keys)[0] as string
+                actualizarFiltro("categoria", value === "all" ? undefined : value)
+              }}
+              size="sm"
+              className="h-9"
             >
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Categoría" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
-                {categorias.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
+              <SelectItem key="all" value="all">Todas</SelectItem>
+              {categorias.map((cat) => (
+                <SelectItem key={cat} value={cat}>
+                  {cat}
+                </SelectItem>
+              ))}
             </Select>
           </div>
 
@@ -165,21 +164,22 @@ export function FiltrosHechos({ onFiltrar, onLimpiar, filtrosIniciales = {} }: F
                 />
 
                 {/* Estado */}
-                <Select 
-                  value={filtros.estado || "all"} 
-                  onValueChange={(value) => actualizarFiltro("estado", value === "all" ? undefined : value)}
+                <Select
+                  placeholder="Estado"
+                  selectedKeys={filtros.estado ? [filtros.estado] : ["all"]}
+                  onSelectionChange={(keys) => {
+                    const value = Array.from(keys)[0] as string
+                    actualizarFiltro("estado", value === "all" ? undefined : value)
+                  }}
+                  size="sm"
+                  className="h-8"
                 >
-                  <SelectTrigger className="h-8">
-                    <SelectValue placeholder="Estado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    {estados.map((estado) => (
-                      <SelectItem key={estado} value={estado}>
-                        {estado}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
+                  <SelectItem key="all" value="all">Todos</SelectItem>
+                  {estados.map((estado) => (
+                    <SelectItem key={estado} value={estado}>
+                      {estado}
+                    </SelectItem>
+                  ))}
                 </Select>
 
                 {/* Fecha de acontecimiento */}

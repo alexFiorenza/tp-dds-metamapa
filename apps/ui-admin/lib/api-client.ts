@@ -1,4 +1,4 @@
-import type { HechoDTO, ColeccionDTO, SolicitudEliminacionDTO, RespuestaPaginadaDTO, FiltrosHechos } from "@/types/api"
+import type { HechoDTO, ColeccionDTO, SolicitudEliminacionDTO, RespuestaPaginadaDTO, FiltrosHechos, ColeccionCreateDTO, FuenteDTO } from "@/types/api"
 import { mockHechos, mockColecciones, mockSolicitudes, crearRespuestaPaginada } from "./mock-data"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7006"
@@ -66,7 +66,7 @@ export class ApiClient {
     }
 
     const response = await fetch(
-      `${API_BASE_URL}/api/colecciones?page=${pagina}&size=${tamanioPagina}`,
+      `/api/colecciones?page=${pagina}&size=${tamanioPagina}`,
       {
         cache: 'no-store'
       }
@@ -109,7 +109,7 @@ export class ApiClient {
     }
 
     const response = await fetch(
-      `${API_BASE_URL}/api/colecciones/${identificador}`,
+      `/api/colecciones/${identificador}`,
       {
         cache: 'no-store'
       }
@@ -324,5 +324,56 @@ export class ApiClient {
     if (!response.ok) {
       throw new Error(`Error al rechazar solicitud: ${response.statusText}`)
     }
+  }
+
+  // Obtener fuentes disponibles
+  static async obtenerFuentes(token?: string | null): Promise<FuenteDTO[]> {
+    if (USE_MOCK) {
+      return [
+        { uuid: "1", host: "http://fuente-estatica:7001", params: {} },
+        { uuid: "2", host: "http://fuente-dinamica:7002", params: {} },
+      ]
+    }
+
+    const response = await fetch('/api/administrador/fuentes', {
+      cache: 'no-store',
+      headers: this.createHeaders(token)
+    })
+
+    if (!response.ok) {
+      throw new Error(`Error al obtener fuentes: ${response.statusText}`)
+    }
+
+    const data: RespuestaPaginadaDTO<FuenteDTO> = await response.json()
+    return data.datos
+  }
+
+  // Crear colección
+  static async crearColeccion(coleccion: ColeccionCreateDTO, token?: string | null): Promise<ColeccionDTO> {
+    if (USE_MOCK) {
+      const nuevaColeccion: ColeccionDTO = {
+        handle: coleccion.titulo.toLowerCase().replace(/\s+/g, '-'),
+        titulo: coleccion.titulo,
+        descripcion: coleccion.descripcion,
+        fuentes: [],
+        criteriosDePertenencia: coleccion.criteriosDePertenencia,
+      }
+      mockColecciones.push(nuevaColeccion)
+      return nuevaColeccion
+    }
+
+    const response = await fetch('/api/administrador/colecciones', {
+      method: "POST",
+      headers: this.createHeaders(token),
+      body: JSON.stringify(coleccion),
+      cache: 'no-store'
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || `Error al crear colección: ${response.statusText}`)
+    }
+
+    return response.json()
   }
 }

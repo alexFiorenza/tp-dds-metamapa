@@ -2,16 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7006"
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ identificador: string }> }
-) {
+export async function GET(request: NextRequest) {
   try {
-    const { identificador } = await params
     const { searchParams } = new URL(request.url)
 
     // Pasar todos los parámetros de query al backend Java
-    const javaUrl = new URL(`${API_BASE_URL}/api/colecciones/${identificador}/hechos`)
+    const javaUrl = new URL(`${API_BASE_URL}/api/colecciones`)
     searchParams.forEach((value, key) => {
       javaUrl.searchParams.append(key, value)
     })

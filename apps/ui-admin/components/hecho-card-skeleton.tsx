@@ -1,11 +1,10 @@
-import { Card } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
+import { Card, CardBody, Skeleton } from "@heroui/react"
 
 export function HechoCardSkeleton() {
   return (
     <Card className="overflow-hidden">
-      <Skeleton className="w-full h-40" />
-      <div className="p-4 space-y-2">
+      <Skeleton className="w-full h-40 rounded-none" />
+      <CardBody className="p-4 space-y-2">
         <div className="flex items-start justify-between gap-2">
           <Skeleton className="h-5 w-3/4" />
           <Skeleton className="h-5 w-16" />
@@ -20,7 +19,7 @@ export function HechoCardSkeleton() {
           <Skeleton className="h-5 w-16" />
           <Skeleton className="h-5 w-20" />
         </div>
-      </div>
+      </CardBody>
     </Card>
   )
 }

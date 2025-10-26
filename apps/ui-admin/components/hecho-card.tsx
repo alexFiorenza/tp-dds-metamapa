@@ -1,8 +1,7 @@
 "use client"
 
 import type { HechoDTO } from "@/types/api"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardBody, Chip } from "@heroui/react"
 import Image from "next/image"
 
 interface HechoCardProps {
@@ -28,12 +27,12 @@ export function HechoCard({ hecho, onClick }: HechoCardProps) {
         </div>
       )}
 
-      <CardContent className="space-y-2 p-4">
+      <CardBody className="space-y-2 p-4">
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-semibold text-sm leading-tight">{hecho.titulo}</h3>
-          <Badge variant="secondary" className="shrink-0">
+          <Chip size="sm" color="secondary" className="shrink-0">
             {hecho.categoria}
-          </Badge>
+          </Chip>
         </div>
 
         <p className="text-sm text-default-500 line-clamp-2">{hecho.descripcion}</p>
@@ -56,16 +55,16 @@ export function HechoCard({ hecho, onClick }: HechoCardProps) {
           <div className="flex items-center gap-1 flex-wrap">
             <i className="ri-price-tag-3-line h-3 w-3 text-default-500" />
             {hecho.etiquetas.slice(0, 3).map((etiqueta) => (
-              <Badge key={etiqueta} variant="outline">
+              <Chip key={etiqueta} size="sm" variant="bordered">
                 {etiqueta}
-              </Badge>
+              </Chip>
             ))}
             {hecho.etiquetas.length > 3 && (
               <span className="text-xs text-default-500">+{hecho.etiquetas.length - 3}</span>
             )}
           </div>
         )}
-      </CardContent>
+      </CardBody>
     </Card>
   )
 }

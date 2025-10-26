@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { MapWrapper } from "@/components/map-wrapper"
 import { Button, Card, CardBody, Chip } from "@heroui/react"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from 'motion/react'
 import { useSidebarContext } from '@/components/layout-wrapper'
 import type { ColeccionDTO } from "@/types/api"
@@ -15,6 +15,7 @@ interface ColeccionesPageClientProps {
 
 export function ColeccionesPageClient({ colecciones, totalColecciones }: ColeccionesPageClientProps) {
   const { isCollapsed } = useSidebarContext()
+  const router = useRouter()
 
   // Efecto para redimensionar el mapa cuando cambie el estado del sidebar
   useEffect(() => {
@@ -25,6 +26,10 @@ export function ColeccionesPageClient({ colecciones, totalColecciones }: Colecci
 
     return () => clearTimeout(timer)
   }, [isCollapsed])
+
+  const handleVerHechos = (handle: string) => {
+    router.push(`/colecciones/${handle}`)
+  }
 
   return (
     <div className="h-full w-full flex">
@@ -69,11 +74,14 @@ export function ColeccionesPageClient({ colecciones, totalColecciones }: Colecci
                           )}
 
                           <div className="flex gap-2 flex-wrap">
-                            <Link href={`/colecciones/${coleccion.handle}`}>
-                              <Button color="primary" size="sm" startContent={<i className="ri-eye-line w-4 h-4" />}>
-                                Ver Hechos
-                              </Button>
-                            </Link>
+                            <Button 
+                              color="primary" 
+                              size="sm" 
+                              startContent={<i className="ri-eye-line w-4 h-4" />}
+                              onPress={() => handleVerHechos(coleccion.handle)}
+                            >
+                              Ver Hechos
+                            </Button>
                           </div>
                         </div>
                       </div>
