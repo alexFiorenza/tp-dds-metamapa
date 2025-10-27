@@ -79,6 +79,10 @@ interface MapComponentProps extends Partial<ReactMapGLProps> {
    */
   onHechoSelect?: (hecho: HechoDTO | null) => void
   /**
+   * Callback cuando se hace clic en "Ver detalles"
+   */
+  onHechoDetails?: (hecho: HechoDTO) => void
+  /**
    * Hecho con hover desde la lista
    */
   hoveredHechoId?: string
@@ -116,6 +120,7 @@ export function MapComponent({
   mapStyle = 'mapbox://styles/mapbox/light-v11',
   selectedHechoId,
   onHechoSelect,
+  onHechoDetails,
   hoveredHechoId,
   ...mapProps
 }: MapComponentProps) {
@@ -377,8 +382,7 @@ export function MapComponent({
                   </div>
                   <motion.button
                     onClick={() => {
-                      // TODO: Implementar modal con detalles completos e imágenes
-                      console.log('Ver detalles de:', selectedHecho.uuid)
+                      onHechoDetails?.(selectedHecho)
                     }}
                     className="popup-details-button bg-primary/10 hover:bg-primary/20 text-primary"
                     whileHover={{ scale: 1.05 }}

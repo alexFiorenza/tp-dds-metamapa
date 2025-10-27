@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 interface HechoListItemProps {
   hecho: HechoDTO
   onClick?: () => void
+  onDetailsClick?: () => void
   isSelected?: boolean
   onHover?: (hovered: boolean) => void
 }
@@ -30,7 +31,7 @@ const getCategoriaIcon = (categoria: string) => {
   }
 }
 
-export function HechoListItem({ hecho, onClick, isSelected, onHover }: HechoListItemProps) {
+export function HechoListItem({ hecho, onClick, onDetailsClick, isSelected, onHover }: HechoListItemProps) {
   const { iconClass, color, bgColor } = getCategoriaIcon(hecho.categoria)
 
   return (
@@ -80,6 +81,29 @@ export function HechoListItem({ hecho, onClick, isSelected, onHover }: HechoList
                   </span>
                 </div>
               </div>
+
+              {/* Botón Ver detalles */}
+              {isSelected && onDetailsClick && (
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDetailsClick()
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      onDetailsClick()
+                    }
+                  }}
+                  className="mt-2 text-xs text-primary hover:text-primary-600 font-medium flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <i className="ri-fullscreen-line w-3.5 h-3.5" />
+                  <span>Ver detalles</span>
+                </div>
+              )}
             </div>
           </div>
         </CardBody>

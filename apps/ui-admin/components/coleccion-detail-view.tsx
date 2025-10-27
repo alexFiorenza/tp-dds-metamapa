@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { MapWrapper } from './map-wrapper'
 import { HechoListItem } from './hecho-list-item'
+import { HechoDetailModal } from './hecho-detail-modal'
 import { Button, Pagination, Card, CardBody, Chip, Spinner } from '@heroui/react'
 import { motion, AnimatePresence } from 'motion/react'
 import Link from 'next/link'
@@ -24,9 +25,12 @@ export function ColeccionDetailView({ coleccion, initialData, fetchPage, backUrl
   const { isCollapsed } = useSidebarContext()
   const [selectedHechoId, setSelectedHechoId] = useState<string | undefined>()
   const [hoveredHechoId, setHoveredHechoId] = useState<string | undefined>()
+  const [hechoDetailOpen, setHechoDetailOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(0) // Backend usa 0-indexed
   const [data, setData] = useState<RespuestaPaginadaDTO<HechoDTO>>(initialData)
   const [isLoading, setIsLoading] = useState(false)
+
+  const selectedHecho = data.datos.find(h => h.uuid === selectedHechoId)
 
   // Resetear página cuando cambian los datos iniciales (por filtros)
   useEffect(() => {
@@ -162,6 +166,10 @@ export function ColeccionDetailView({ coleccion, initialData, fetchPage, backUrl
                     hecho={hecho}
                     isSelected={selectedHechoId === hecho.uuid}
                     onClick={() => setSelectedHechoId(hecho.uuid === selectedHechoId ? undefined : hecho.uuid)}
+                    onDetailsClick={() => {
+                      setSelectedHechoId(hecho.uuid)
+                      setHechoDetailOpen(true)
+                    }}
                     onHover={(hovered) => setHoveredHechoId(hovered ? hecho.uuid : undefined)}
                   />
                 ))}
@@ -224,10 +232,24 @@ export function ColeccionDetailView({ coleccion, initialData, fetchPage, backUrl
           selectedHechoId={selectedHechoId}
           hoveredHechoId={hoveredHechoId}
           onHechoSelect={(hecho) => setSelectedHechoId(hecho?.uuid)}
+          onHechoDetails={(hecho) => {
+            setSelectedHechoId(hecho.uuid)
+            setHechoDetailOpen(true)
+          }}
           height="100%"
           width="100%"
         />
       </div>
+
+      {/* Modal de detalles del hecho */}
+      <HechoDetailModal
+        hecho={selectedHecho || null}
+        isOpen={hechoDetailOpen}
+        onClose={() => {
+          setHechoDetailOpen(false)
+          setSelectedHechoId(undefined)
+        }}
+      />
     </div>
   )
 }

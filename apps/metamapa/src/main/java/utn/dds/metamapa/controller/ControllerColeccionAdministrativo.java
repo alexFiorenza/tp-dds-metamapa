@@ -55,17 +55,17 @@ public class ControllerColeccionAdministrativo {
             )
         ),
         responses = {
-            @OpenApiResponse(status = "201", description = "Colección creada exitosamente"),
+            @OpenApiResponse(status = "201", description = "Colección creada exitosamente", content = @OpenApiContent(from = ColeccionDTO.class)),
             @OpenApiResponse(status = "400", description = "Error al crear colección")
         }
     )
     public void crearColeccion(Context ctx) {
         try {
             ColeccionCreateDTO coleccionCreateDTO = ctx.bodyAsClass(ColeccionCreateDTO.class);
-            this.serviceColeccion.crearColeccion(coleccionCreateDTO);
-            ctx.status(201).result("Colección creada exitosamente");
+            ColeccionDTO coleccionCreada = this.serviceColeccion.crearColeccion(coleccionCreateDTO);
+            ctx.status(201).json(coleccionCreada);
         } catch (Exception e) {
-            ctx.status(400).result("Error al crear colección: " + e.getMessage());
+            ctx.status(400).json(Map.of("error", "Error al crear colección: " + e.getMessage()));
         }
     }
 
@@ -98,7 +98,7 @@ public class ControllerColeccionAdministrativo {
             )
         ),
         responses = {
-            @OpenApiResponse(status = "200", description = "Colección actualizada exitosamente"),
+            @OpenApiResponse(status = "200", description = "Colección actualizada exitosamente", content = @OpenApiContent(from = ColeccionDTO.class)),
             @OpenApiResponse(status = "400", description = "Error al actualizar colección")
         }
     )
@@ -106,10 +106,10 @@ public class ControllerColeccionAdministrativo {
         try {
             String id = ctx.pathParam("id");
             ColeccionUpdateDTO updateDTO = ctx.bodyAsClass(ColeccionUpdateDTO.class);
-            this.serviceColeccion.actualizarColeccion(id, updateDTO);
-            ctx.status(200).result("Colección actualizada exitosamente");
+            ColeccionDTO coleccionActualizada = this.serviceColeccion.actualizarColeccion(id, updateDTO);
+            ctx.status(200).json(coleccionActualizada);
         } catch (Exception e) {
-            ctx.status(400).result("Error al actualizar colección: " + e.getMessage());
+            ctx.status(400).json(Map.of("error", "Error al actualizar colección: " + e.getMessage()));
         }
     }
 
@@ -130,9 +130,9 @@ public class ControllerColeccionAdministrativo {
         try {
             String id = ctx.pathParam("id");
             this.serviceColeccion.eliminarColeccion(id);
-            ctx.status(200).result("Colección eliminada exitosamente");
+            ctx.status(200).json(Map.of("message", "Colección eliminada exitosamente"));
         } catch (Exception e) {
-            ctx.status(400).result("Error al eliminar colección: " + e.getMessage());
+            ctx.status(400).json(Map.of("error", "Error al eliminar colección: " + e.getMessage()));
         }
     }
 

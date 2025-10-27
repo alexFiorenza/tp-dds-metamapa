@@ -376,4 +376,60 @@ export class ApiClient {
 
     return response.json()
   }
+
+  // Actualizar colección
+  static async actualizarColeccion(handle: string, coleccion: ColeccionCreateDTO, token?: string | null): Promise<ColeccionDTO> {
+    if (USE_MOCK) {
+      const index = mockColecciones.findIndex(c => c.handle === handle)
+      if (index !== -1) {
+        const coleccionActualizada: ColeccionDTO = {
+          handle,
+          titulo: coleccion.titulo,
+          descripcion: coleccion.descripcion,
+          fuentes: mockColecciones[index].fuentes,
+          criteriosDePertenencia: coleccion.criteriosDePertenencia,
+        }
+        mockColecciones[index] = coleccionActualizada
+        return coleccionActualizada
+      }
+      throw new Error('Colección no encontrada')
+    }
+
+    const response = await fetch(`/api/administrador/colecciones/${handle}`, {
+      method: "PUT",
+      headers: this.createHeaders(token),
+      body: JSON.stringify(coleccion),
+      cache: 'no-store'
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || `Error al actualizar colección: ${response.statusText}`)
+    }
+
+    return response.json()
+  }
+
+  // Eliminar colección
+  static async eliminarColeccion(handle: string, token?: string | null): Promise<void> {
+    if (USE_MOCK) {
+      const index = mockColecciones.findIndex(c => c.handle === handle)
+      if (index !== -1) {
+        mockColecciones.splice(index, 1)
+        return
+      }
+      throw new Error('Colección no encontrada')
+    }
+
+    const response = await fetch(`/api/administrador/colecciones/${handle}`, {
+      method: "DELETE",
+      headers: this.createHeaders(token),
+      cache: 'no-store'
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || `Error al eliminar colección: ${response.statusText}`)
+    }
+  }
 }

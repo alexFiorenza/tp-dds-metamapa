@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { ApiClient } from "@/lib/api-client"
 import { MapWrapper } from "@/components/map-wrapper"
 import { FormularioColeccion } from "@/components/formulario-coleccion"
-import { Button, Card, CardBody, Chip } from "@heroui/react"
+import { Button, Card, CardBody, Chip, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@heroui/react"
 import { useRouter } from "next/navigation"
 import type { ColeccionDTO, ColeccionCreateDTO, FuenteDTO } from "@/types/api"
 import { useAuth } from "@clerk/nextjs"
@@ -20,6 +20,9 @@ export function AdminColeccionesView({ coleccionesIniciales, totalElementos }: A
   const [colecciones, setColecciones] = useState<ColeccionDTO[]>(coleccionesIniciales)
   const [fuentes, setFuentes] = useState<FuenteDTO[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [coleccionAEditar, setColeccionAEditar] = useState<ColeccionDTO | null>(null)
+  const [coleccionAEliminar, setColeccionAEliminar] = useState<ColeccionDTO | null>(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -48,12 +51,64 @@ export function AdminColeccionesView({ coleccionesIniciales, totalElementos }: A
       const nuevaColeccion = await ApiClient.crearColeccion(coleccion, token)
       setColecciones([nuevaColeccion, ...colecciones])
       setIsModalOpen(false)
+      setColeccionAEditar(null)
     } catch (error) {
       console.error("Error al crear colección:", error)
       throw error
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleEditarColeccion = async (coleccion: ColeccionCreateDTO) => {
+    if (!coleccionAEditar) return
+
+    setLoading(true)
+    try {
+      const token = await getToken()
+      const coleccionActualizada = await ApiClient.actualizarColeccion(coleccionAEditar.handle, coleccion, token)
+      setColecciones(colecciones.map(c => c.handle === coleccionAEditar.handle ? coleccionActualizada : c))
+      setIsModalOpen(false)
+      setColeccionAEditar(null)
+    } catch (error) {
+      console.error("Error al editar colección:", error)
+      throw error
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleEliminarColeccion = async () => {
+    if (!coleccionAEliminar) return
+
+    setLoading(true)
+    try {
+      const token = await getToken()
+      await ApiClient.eliminarColeccion(coleccionAEliminar.handle, token)
+      setColecciones(colecciones.filter(c => c.handle !== coleccionAEliminar.handle))
+      setIsDeleteModalOpen(false)
+      setColeccionAEliminar(null)
+    } catch (error) {
+      console.error("Error al eliminar colección:", error)
+      throw error
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const abrirModalEdicion = (coleccion: ColeccionDTO) => {
+    setColeccionAEditar(coleccion)
+    setIsModalOpen(true)
+  }
+
+  const abrirModalEliminacion = (coleccion: ColeccionDTO) => {
+    setColeccionAEliminar(coleccion)
+    setIsDeleteModalOpen(true)
+  }
+
+  const cerrarModalCreacion = () => {
+    setIsModalOpen(false)
+    setColeccionAEditar(null)
   }
 
   const handleVerHechos = (handle: string) => {
@@ -115,18 +170,29 @@ export function AdminColeccionesView({ coleccionesIniciales, totalElementos }: A
                         )}
 
                         <div className="flex gap-2 flex-wrap">
-                          <Button 
-                            color="primary" 
-                            size="sm" 
+                          <Button
+                            color="primary"
+                            size="sm"
                             startContent={<i className="ri-eye-line w-4 h-4" />}
                             onPress={() => handleVerHechos(coleccion.handle)}
                           >
                             Ver Hechos
                           </Button>
-                          <Button variant="flat" size="sm" startContent={<i className="ri-edit-line w-4 h-4" />}>
+                          <Button
+                            variant="flat"
+                            size="sm"
+                            startContent={<i className="ri-edit-line w-4 h-4" />}
+                            onPress={() => abrirModalEdicion(coleccion)}
+                          >
                             Editar
                           </Button>
-                          <Button variant="flat" color="danger" size="sm" startContent={<i className="ri-delete-bin-line w-4 h-4" />}>
+                          <Button
+                            variant="flat"
+                            color="danger"
+                            size="sm"
+                            startContent={<i className="ri-delete-bin-line w-4 h-4" />}
+                            onPress={() => abrirModalEliminacion(coleccion)}
+                          >
                             Eliminar
                           </Button>
                         </div>
@@ -145,14 +211,85 @@ export function AdminColeccionesView({ coleccionesIniciales, totalElementos }: A
         </div>
       </div>
 
-      {/* Modal de creación */}
+      {/* Modal de creación/edición */}
       <FormularioColeccion
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleCrearColeccion}
+        onClose={cerrarModalCreacion}
+        onSubmit={coleccionAEditar ? handleEditarColeccion : handleCrearColeccion}
         fuentes={fuentes}
-        titulo="Nueva Colección"
+        titulo={coleccionAEditar ? "Editar Colección" : "Nueva Colección"}
+        coleccionInicial={coleccionAEditar ? {
+          titulo: coleccionAEditar.titulo,
+          descripcion: coleccionAEditar.descripcion,
+          fuentesIds: coleccionAEditar.fuentes.map(f => f.uuid),
+          criteriosDePertenencia: coleccionAEditar.criteriosDePertenencia,
+        } : undefined}
       />
+
+      {/* Modal de confirmación de eliminación */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false)
+          setColeccionAEliminar(null)
+        }}
+        size="md"
+        backdrop="opaque"
+        placement="center"
+        classNames={{
+          backdrop: "bg-black/70 backdrop-blur-md",
+          wrapper: "items-center",
+          base: "bg-content1",
+        }}
+      >
+        <ModalContent className="bg-content1">
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1 border-b border-divider px-6 py-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 flex items-center justify-center bg-danger/10 rounded-lg">
+                    <i className="ri-alert-line w-5 h-5 text-danger" />
+                  </div>
+                  <span>Confirmar Eliminación</span>
+                </div>
+              </ModalHeader>
+              <ModalBody className="px-6 py-6">
+                <p className="text-default-600">
+                  ¿Estás seguro de que deseas eliminar la colección{" "}
+                  <span className="font-semibold text-foreground">
+                    "{coleccionAEliminar?.titulo}"
+                  </span>
+                  ?
+                </p>
+                <p className="text-sm text-danger mt-2">
+                  Esta acción no se puede deshacer.
+                </p>
+              </ModalBody>
+              <ModalFooter className="border-t border-divider px-6 py-4">
+                <Button
+                  variant="light"
+                  onPress={() => {
+                    setIsDeleteModalOpen(false)
+                    setColeccionAEliminar(null)
+                    onClose()
+                  }}
+                  isDisabled={loading}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  color="danger"
+                  onPress={handleEliminarColeccion}
+                  isLoading={loading}
+                  startContent={!loading ? <i className="ri-delete-bin-line" /> : undefined}
+                >
+                  {loading ? "Eliminando..." : "Eliminar"}
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </>
   )
 }

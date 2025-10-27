@@ -71,7 +71,7 @@ public class ServiceColeccion {
         return entity != null ? ColeccionDTO.from(entity) : null;
     }
 
-    public void crearColeccion(ColeccionCreateDTO coleccionCreateDTO) {
+    public ColeccionDTO crearColeccion(ColeccionCreateDTO coleccionCreateDTO) {
         // Crear Coleccion directamente desde el DTO
         Coleccion coleccion = new Coleccion();
         coleccion.setTitulo(coleccionCreateDTO.getTitulo());
@@ -111,6 +111,9 @@ public class ServiceColeccion {
 
         // 6. Guardar la colección directamente (con las relaciones ManyToMany)
         guardarColeccionConEntidades(coleccion);
+
+        // 7. Retornar la colección creada como DTO
+        return ColeccionDTO.from(coleccion);
     }
 
     private List<Fuente> buscarFuentesPorIds(List<String> fuentesIds) {
@@ -189,7 +192,7 @@ public class ServiceColeccion {
         coleccionDAO.save(coleccion);
     }
 
-    public void actualizarColeccion(String id, utn.dds.dto.ColeccionUpdateDTO updateDTO) {
+    public ColeccionDTO actualizarColeccion(String id, utn.dds.dto.ColeccionUpdateDTO updateDTO) {
         // Verificar que la colección existe (entity is already domain)
         Coleccion entity = this.coleccionRepository.obtenerPorId(id);
         if (entity == null) {
@@ -222,6 +225,10 @@ public class ServiceColeccion {
         if (actualizarCamposBasicos) {
             this.coleccionRepository.actualizarCamposBasicos(id, updateDTO.getTitulo(), updateDTO.getDescripcion());
         }
+
+        // Obtener la colección actualizada y retornarla como DTO
+        Coleccion coleccionActualizada = this.coleccionRepository.obtenerPorId(id);
+        return ColeccionDTO.from(coleccionActualizada);
     }
 
     private void actualizarCriteriosYFuentes(String id, List<HechoStrategy> nuevosCriterios,
