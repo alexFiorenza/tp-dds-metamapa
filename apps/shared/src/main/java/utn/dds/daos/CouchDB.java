@@ -96,32 +96,6 @@ public class CouchDB<T> implements IDAO<T> {
         }
     }
 
-    // Me pide que tenga esto para que compile, sino tira error (preguntar)
-    @Override
-    public InputStream read() {
-        try {
-            logger.info("Leyendo todos los documentos de CouchDB como InputStream...");
-            String response = request("GET", "_all_docs?include_docs=true", null);
-            return new ByteArrayInputStream(response.getBytes(StandardCharsets.UTF_8));
-        } catch (Exception e) {
-            logger.error("Error al leer documentos: {}", e.getMessage(), e);
-            throw new RuntimeException("Error al leer documentos de CouchDB", e);
-        }
-    }
-
-    @Override
-    public InputStream read(String path) {
-        try {
-            logger.info("Leyendo todos los documentos de CouchDB como InputStream...");
-            String response = request("GET", "_all_docs?include_docs=true", null);
-            return new ByteArrayInputStream(response.getBytes(StandardCharsets.UTF_8));
-        } catch (Exception e) {
-            logger.error("Error al leer documentos: {}", e.getMessage(), e);
-            throw new RuntimeException("Error al leer documentos de CouchDB", e);
-        }
-    }
-    // Hasta aca deberia borrar porque no lo necesito
-
     /**
      * Obtiene todos los documentos de la base.
      */
@@ -202,5 +176,19 @@ public class CouchDB<T> implements IDAO<T> {
         BulkDocs(List<T> docs) {
             this.docs = docs;
         }
+    }
+
+
+    /*
+     * Estas operaciones no son soportadas, estan para que compile el codigo
+     */
+    @Override
+    public InputStream read() {
+        throw new UnsupportedOperationException("CouchDB no soporta operaciones de InputStream. Use find() para obtener entidades.");
+    }
+
+    @Override
+    public InputStream read(String path) {
+        throw new UnsupportedOperationException("CouchDB no soporta operaciones de InputStream. Use find() para obtener entidades.");
     }
 }
