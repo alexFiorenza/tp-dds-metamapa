@@ -96,7 +96,11 @@ services:
     container_name: metamapa-fuente-dinamica
     restart: unless-stopped
     environment:
-      - DAO_TYPE=${FUENTE_DINAMICA_DAO_TYPE:-filesystem}
+      - DAO_TYPE=${FUENTE_DINAMICA_DAO_TYPE:-couchdb}
+      - COUCHDB_URL=${COUCHDB_URL:-http://couchdb:5984}
+      - COUCHDB_USER=${COUCHDB_USER:-admin}
+      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-admin123}
+      - COUCHDB_DB=${COUCHDB_DB_DINAMICA:-dinamica_db}
     depends_on:
       - couchdb
     networks:
@@ -126,7 +130,11 @@ services:
     container_name: metamapa-fuente-proxy-demo
     restart: unless-stopped
     environment:
-      - DAO_TYPE=${FUENTE_PROXY_DEMO_DAO_TYPE:-filesystem}
+      - DAO_TYPE=${FUENTE_PROXY_DEMO_DAO_TYPE:-couchdb}
+      - COUCHDB_URL=${COUCHDB_URL:-http://couchdb:5984}
+      - COUCHDB_USER=${COUCHDB_USER:-admin}
+      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-admin123}
+      - COUCHDB_DB=${COUCHDB_DB_PROXY_DEMO:-proxy_demo_db}
     depends_on:
       - couchdb
     networks:
