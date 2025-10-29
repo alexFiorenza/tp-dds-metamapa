@@ -97,9 +97,10 @@ services:
     restart: unless-stopped
     environment:
       - DAO_TYPE=${FUENTE_DINAMICA_DAO_TYPE:-couchdb}
-      - DB_URL=http://couchdb:5984/${COUCHDB_DB_DINAMICA:-dinamica_db} # Cambiarle a la URL completa
-      - DB_USER=${COUCHDB_USER:-admin}
-      - DB_PASSWORD=${COUCHDB_PASSWORD:-admin123}
+      - COUCHDB_URL=${COUCHDB_URL:-http://couchdb:5984}
+      - COUCHDB_USER=${COUCHDB_USER:-admin}
+      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-admin123}
+      - COUCHDB_DB=${COUCHDB_DB_DINAMICA:-dinamica_db}
     depends_on:
       - couchdb
     networks:
@@ -130,9 +131,10 @@ services:
     restart: unless-stopped
     environment:
       - DAO_TYPE=${FUENTE_PROXY_DEMO_DAO_TYPE:-couchdb}
-      - DB_URL=http://couchdb:5984/${COUCHDB_DB_PROXY_DEMO:-proxy_demo_db} # Cambiarle a la URL completa
-      - DB_USER=${COUCHDB_USER:-admin}
-      - DB_PASSWORD=${COUCHDB_PASSWORD:-admin123}
+      - COUCHDB_URL=${COUCHDB_URL:-http://couchdb:5984}
+      - COUCHDB_USER=${COUCHDB_USER:-admin}
+      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-admin123}
+      - COUCHDB_DB=${COUCHDB_DB_PROXY_DEMO:-proxy_demo_db}
     depends_on:
       - couchdb
     networks:

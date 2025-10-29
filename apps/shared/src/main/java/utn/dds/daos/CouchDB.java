@@ -39,6 +39,40 @@ public class CouchDB<T> implements IDAO<T> {
         logger.info("Inicializando CouchDB DAO con configuración:");
         logger.info("  URL base: {}", this.databaseUrl);
         logger.info("  Usuario: {}", username != null ? username : "anónimo");
+
+        // Intentar crear la base de datos si no existe
+        ensureDatabaseExists();
+    }
+
+    /**
+     * Verifica que la base de datos exista, y si no existe, la crea automáticamente.
+     */
+    private void ensureDatabaseExists() {
+        try {
+            // Intentar hacer un GET a la base de datos para verificar si existe
+            logger.info("Verificando si la base de datos existe...");
+            request("GET", "", null);
+            logger.info("Base de datos existe correctamente");
+        } catch (RuntimeException e) {
+            // Verificar si es un error 404 (base de datos no existe)
+            boolean is404 = e.getCause() != null && e.getCause().getMessage() != null &&
+                           e.getCause().getMessage().contains("404");
+
+            if (is404) {
+                logger.warn("Base de datos no existe. Intentando crearla...");
+                try {
+                    // Crear la base de datos con un PUT request
+                    String response = request("PUT", "", null);
+                    logger.info("Base de datos creada exitosamente: {}", response);
+                } catch (RuntimeException createError) {
+                    logger.error("Error al crear la base de datos: {}", createError.getMessage());
+                    throw new RuntimeException("No se pudo crear la base de datos en CouchDB", createError);
+                }
+            } else {
+                // Si es otro error (ej: Connection refused), lo propagamos
+                throw e;
+            }
+        }
     }
 
     // Constructor sin credenciales (por ejemplo para acceso local sin auth)
@@ -56,6 +90,7 @@ public class CouchDB<T> implements IDAO<T> {
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod(method);
             connection.setRequestProperty("Content-Type", "application/json");
+            connection.setRequestProperty("Accept", "application/json");
 
             // Autenticación básica si hay usuario y contraseña
             if (username != null && password != null) {

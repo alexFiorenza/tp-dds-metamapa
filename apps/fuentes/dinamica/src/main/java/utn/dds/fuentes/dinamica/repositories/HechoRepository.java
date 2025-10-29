@@ -58,8 +58,8 @@ public class HechoRepository {
     }
 
     public HechoDTO aportarHecho(HechoDTO hecho) throws IOException {
-        // Asignar fecha de carga actual automáticamente
-        hecho.setFechaCarga(java.time.LocalDateTime.now());
+        // Asignar fecha de carga actual automáticamente en formato ISO-8601
+        hecho.setFechaCarga(java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         dao.save(hecho);
         return hecho;
     }

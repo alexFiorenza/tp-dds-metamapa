@@ -6,28 +6,29 @@ import utn.dds.dominio.TipoHecho;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class HechoDTO {
     private String titulo;
     private String descripcion;
     private String categoria;
-    private LocalDate fechaAcontecimiento;
+    private String fechaAcontecimiento; // ISO-8601: "2025-10-29"
     private String origen;
     private String contribuyenteNombre;
     private TipoHecho tipo;
     private double longitud;
     private double latitud;
-    private LocalDateTime fechaCarga;
+    private String fechaCarga; // ISO-8601: "2025-10-29T22:24:15"
     private EstadoHecho estado;
     private List<String> etiquetas;
     private String uuid;
 
     public HechoDTO() {}
 
-    public HechoDTO(String titulo, String descripcion, String categoria, LocalDate fechaAcontecimiento,
+    public HechoDTO(String titulo, String descripcion, String categoria, String fechaAcontecimiento,
                     String origen, String contribuyenteNombre, TipoHecho tipo,
-                    double longitud, double latitud, LocalDateTime fechaCarga,
+                    double longitud, double latitud, String fechaCarga,
                     EstadoHecho estado, List<String> etiquetas, String uuid) {
         this.titulo = titulo;
         this.descripcion = descripcion;
@@ -49,13 +50,13 @@ public class HechoDTO {
             hecho.getTitulo(),
             hecho.getDescripcion(),
             hecho.getCategoria(),
-            hecho.getFechaAcontecimiento(),
+            hecho.getFechaAcontecimiento() != null ? hecho.getFechaAcontecimiento().format(DateTimeFormatter.ISO_LOCAL_DATE) : null,
             hecho.getOrigen(),
             hecho.getContribuyente() != null ? hecho.getContribuyente().getNombre() : null,
             hecho.getTipo(),
             hecho.getLongitud(),
             hecho.getLatitud(),
-            hecho.getFechaCarga(),
+            hecho.getFechaCarga() != null ? hecho.getFechaCarga().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null,
             hecho.getEstado(),
             hecho.getEtiquetas(),
             hecho.getUuid()
@@ -67,13 +68,13 @@ public class HechoDTO {
             this.titulo,
             this.descripcion,
             this.categoria,
-            this.fechaAcontecimiento,
+            this.fechaAcontecimiento != null ? LocalDate.parse(this.fechaAcontecimiento, DateTimeFormatter.ISO_LOCAL_DATE) : null,
             this.origen,
             null, // contribuyente - en el mock es null
             this.tipo,
             this.longitud,
             this.latitud,
-            this.fechaCarga,
+            this.fechaCarga != null ? LocalDateTime.parse(this.fechaCarga, DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null,
             this.estado,
             this.etiquetas
         );
@@ -103,11 +104,11 @@ public class HechoDTO {
         this.categoria = categoria;
     }
 
-    public LocalDate getFechaAcontecimiento() {
+    public String getFechaAcontecimiento() {
         return fechaAcontecimiento;
     }
 
-    public void setFechaAcontecimiento(LocalDate fechaAcontecimiento) {
+    public void setFechaAcontecimiento(String fechaAcontecimiento) {
         this.fechaAcontecimiento = fechaAcontecimiento;
     }
 
@@ -151,11 +152,11 @@ public class HechoDTO {
         this.latitud = latitud;
     }
 
-    public LocalDateTime getFechaCarga() {
+    public String getFechaCarga() {
         return fechaCarga;
     }
 
-    public void setFechaCarga(LocalDateTime fechaCarga) {
+    public void setFechaCarga(String fechaCarga) {
         this.fechaCarga = fechaCarga;
     }
 
