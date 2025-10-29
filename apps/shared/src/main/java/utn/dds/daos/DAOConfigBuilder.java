@@ -116,6 +116,8 @@ public class DAOConfigBuilder {
                 return buildS3Config();
             case "hibernate":
                 return buildHibernateConfig();
+            case "couchdb":
+                return buildCouchDBConfig();
             default:
                 throw new IllegalArgumentException("Tipo de DAO no soportado: " + daoType);
         }
