@@ -80,6 +80,18 @@ public class DAOConfigBuilder {
         return config;
     }
 
+    // Agrego esta configuracion para CouchDB (ver si es correcta)
+    public static Map<String, Object> buildCouchDBConfig() {
+        Map<String, Object> config = new HashMap<>();
+
+        config.put("url", getEnvOrDefault("COUCHDB_URL", "http://localhost:5984"));
+        config.put("user", getEnvOrDefault("COUCHDB_USER", "admin"));
+        config.put("password", getEnvOrDefault("COUCHDB_PASSWORD", "password"));
+        config.put("dbName", getEnvOrDefault("COUCHDB_DB", "metamapa_db"));
+
+        return config;
+    }
+
 
     public static Map<String, Object> buildDAOConfig(String daoType, String dataUrl) {
         switch (daoType.toLowerCase()) {
@@ -89,6 +101,8 @@ public class DAOConfigBuilder {
                 return buildS3Config(dataUrl);
             case "hibernate":
                 return buildHibernateConfig();
+            case "couchdb":
+                return buildCouchDBConfig();
             default:
                 throw new IllegalArgumentException("Tipo de DAO no soportado: " + daoType);
         }
