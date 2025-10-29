@@ -102,7 +102,7 @@ public class DAOConfigBuilder {
             case "hibernate":
                 return buildHibernateConfig();
             case "couchdb":
-                return buildCouchDBConfig();
+                return buildCouchDBConfig();  // Preguntar si aca tengo que poner dataURL
             default:
                 throw new IllegalArgumentException("Tipo de DAO no soportado: " + daoType);
         }
