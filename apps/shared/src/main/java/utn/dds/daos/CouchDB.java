@@ -5,11 +5,14 @@ import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Scanner;
 
@@ -18,7 +21,6 @@ import java.util.Scanner;
  * Permite conectar, leer y guardar documentos en una base CouchDB.
  */
 public class CouchDB<T> implements IDAO<T> {
-
     private static final Logger logger = LoggerFactory.getLogger(CouchDB.class);
 
     private final String databaseUrl;
@@ -65,18 +67,24 @@ public class CouchDB<T> implements IDAO<T> {
             if (body != null) {
                 connection.setDoOutput(true);
                 try (OutputStream os = connection.getOutputStream()) {
-                    os.write(body.getBytes());
+                    os.write(body.getBytes(StandardCharsets.UTF_8));
                 }
             }
 
             int responseCode = connection.getResponseCode();
             logger.info("HTTP {} -> {} {}", method, url, responseCode);
 
-            Scanner scanner = new Scanner(connection.getInputStream());
-            String responseBody = scanner.useDelimiter("\\A").next();
-            scanner.close();
+            InputStream inputStream = (responseCode >= 200 && responseCode < 300)
+                    ? connection.getInputStream()
+                    : connection.getErrorStream();
 
-            return responseBody;
+            try (Scanner scanner = new Scanner(inputStream, StandardCharsets.UTF_8.name())) {
+                String responseBody = scanner.useDelimiter("\\A").hasNext() ? scanner.next() : "";
+                if (responseCode >= 300) {
+                    throw new IOException("Respuesta HTTP " + responseCode + ": " + responseBody);
+                }
+                return responseBody;
+            }
 
         } catch (IOException e) {
             logger.error("Error en la solicitud HTTP {} a CouchDB: {}", method, e.getMessage(), e);
@@ -88,6 +96,32 @@ public class CouchDB<T> implements IDAO<T> {
         }
     }
 
+    // Me pide que tenga esto para que compile, sino tira error (preguntar)
+    @Override
+    public InputStream read() {
+        try {
+            logger.info("Leyendo todos los documentos de CouchDB como InputStream...");
+            String response = request("GET", "_all_docs?include_docs=true", null);
+            return new ByteArrayInputStream(response.getBytes(StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            logger.error("Error al leer documentos: {}", e.getMessage(), e);
+            throw new RuntimeException("Error al leer documentos de CouchDB", e);
+        }
+    }
+
+    @Override
+    public InputStream read(String path) {
+        try {
+            logger.info("Leyendo todos los documentos de CouchDB como InputStream...");
+            String response = request("GET", "_all_docs?include_docs=true", null);
+            return new ByteArrayInputStream(response.getBytes(StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            logger.error("Error al leer documentos: {}", e.getMessage(), e);
+            throw new RuntimeException("Error al leer documentos de CouchDB", e);
+        }
+    }
+    // Hasta aca deberia borrar porque no lo necesito
+
     /**
      * Obtiene todos los documentos de la base.
      */
@@ -97,9 +131,18 @@ public class CouchDB<T> implements IDAO<T> {
             logger.info("Buscando todos los documentos en CouchDB...");
             String response = request("GET", "_all_docs?include_docs=true", null);
 
-            Type listType = TypeToken.getParameterized(List.class, type).getType();
-            // CouchDB devuelve una estructura más compleja; aquí simplificamos el parseo
-            return gson.fromJson(response, listType);
+            // El tipo de respuesta de CouchDB para _all_docs es un objeto que contiene 'rows'
+            Type responseType = TypeToken.getParameterized(CouchDbAllDocsResponse.class, type).getType();
+            CouchDbAllDocsResponse<T> allDocsResponse = gson.fromJson(response, responseType);
+
+            if (allDocsResponse == null || allDocsResponse.rows == null) {
+                return java.util.Collections.emptyList();
+            }
+
+            // Extraemos el documento de cada fila
+            return allDocsResponse.rows.stream()
+                    .map(row -> row.doc)
+                    .collect(java.util.stream.Collectors.toList());
 
         } catch (Exception e) {
             logger.error("Error al buscar documentos: {}", e.getMessage(), e);
@@ -142,6 +185,15 @@ public class CouchDB<T> implements IDAO<T> {
     @Override
     public void addAll(List<T> objects) {
         saveAll(objects);
+    }
+
+    // Clases auxiliares para parsear la respuesta de _all_docs
+    private static class CouchDbAllDocsResponse<T> {
+        List<Row<T>> rows;
+    }
+
+    private static class Row<T> {
+        T doc;
     }
 
     // Clase auxiliar para bulk insert en CouchDB
