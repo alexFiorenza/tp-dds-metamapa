@@ -11,6 +11,8 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
 public class S3<T> implements IDAO<T> {
@@ -175,6 +177,38 @@ public class S3<T> implements IDAO<T> {
         } else {
             // For direct object key paths, return as is
             return path;
+        }
+    }
+
+    /**
+     * Sube un archivo binario a S3.
+     *
+     * @param key           La clave (path) donde se almacenará el archivo en el bucket.
+     * @param inputStream   El InputStream del archivo a subir.
+     * @param contentLength La longitud del contenido a subir.
+     */
+    public void uploadBinary(String key, InputStream inputStream, long contentLength) {
+        S3Client s3Client = createS3Client();
+        try {
+            logger.info("Subiendo archivo a S3. Bucket: {}, Key: {}", bucket, key);
+
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .build();
+
+            RequestBody requestBody = RequestBody.fromInputStream(inputStream, contentLength);
+
+            s3Client.putObject(putObjectRequest, requestBody);
+
+            logger.info("Archivo subido exitosamente a S3. Key: {}", key);
+
+        } catch (S3Exception e) {
+            logger.error("Error al subir archivo a S3. Key: {}. Error: {}", key, e.getMessage(), e);
+            throw new RuntimeException("Error de S3 al subir el archivo: " + e.awsErrorDetails().errorMessage(), e);
+        } catch (Exception e) {
+            logger.error("Error inesperado al subir archivo a S3. Key: {}", key, e);
+            throw new RuntimeException("Error inesperado al subir el archivo a S3", e);
         }
     }
 
