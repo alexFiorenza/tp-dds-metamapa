@@ -24,6 +24,19 @@ public class HechoRepository {
             Map<String, Object> config = new java.util.HashMap<>();
             config.put("url", "src/main/resources/mocks/hechos.json");
             this.dao = DAOFactory.createDAO(HechoDTO.class, daoType, config);
+        } else if ("couchdb".equals(daoType)) {
+            // Para CouchDB, crear una DB específica para hechos
+            Map<String, Object> configHechos = new java.util.HashMap<>(daoConfig);
+            String baseUrl = (String) configHechos.get("baseUrl");
+            String dbPrefix = (String) configHechos.get("dbPrefix");
+
+            // Crear URL completa: http://localhost:5984/dinamica_db_hechos
+            String fullUrl = baseUrl.endsWith("/")
+                ? baseUrl + dbPrefix + "_hechos"
+                : baseUrl + "/" + dbPrefix + "_hechos";
+
+            configHechos.put("url", fullUrl);
+            this.dao = DAOFactory.createDAO(HechoDTO.class, daoType, configHechos);
         } else {
             this.dao = DAOFactory.createDAO(HechoDTO.class, daoType, daoConfig);
         }

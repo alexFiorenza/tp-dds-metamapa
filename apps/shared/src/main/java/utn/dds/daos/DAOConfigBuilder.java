@@ -85,12 +85,11 @@ public class DAOConfigBuilder {
         Map<String, Object> config = new HashMap<>();
 
         String baseUrl = getEnvOrDefault("COUCHDB_URL", "http://localhost:5984");
-        String dbName = getEnvOrDefault("COUCHDB_DB", "metamapa_db");
+        String dbPrefix = getEnvOrDefault("COUCHDB_DB", "metamapa_db");
 
-        // Combinar URL base con nombre de DB: http://localhost:5984/metamapa_db
-        String fullUrl = baseUrl.endsWith("/") ? baseUrl + dbName : baseUrl + "/" + dbName;
-
-        config.put("url", fullUrl);
+        // Guardar URL base y prefijo de DB para que los repositorios lo usen
+        config.put("baseUrl", baseUrl);
+        config.put("dbPrefix", dbPrefix);
         config.put("username", getEnvOrDefault("COUCHDB_USER", "admin"));
         config.put("password", getEnvOrDefault("COUCHDB_PASSWORD", "admin123"));
 
