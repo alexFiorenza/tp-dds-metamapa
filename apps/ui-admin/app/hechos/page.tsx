@@ -1,13 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ApiClient } from "@/lib/api-client"
 import { HechosMapView } from "@/components/hechos-map-view"
 import { FiltrosHechos } from "@/components/filtros-hechos"
 import type { RespuestaPaginadaDTO, HechoDTO, FiltrosHechos as FiltrosHechosType } from "@/types/api"
 
-export default function HechosPage() {
+function HechosPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [initialData, setInitialData] = useState<RespuestaPaginadaDTO<HechoDTO> | null>(null)
@@ -24,10 +24,10 @@ export default function HechosPage() {
       if (key === 'latitud' || key === 'longitud') {
         const numValue = parseFloat(value)
         if (!isNaN(numValue)) {
-          filtrosDesdeUrl[key] = numValue
+          (filtrosDesdeUrl as any)[key] = numValue
         }
       } else {
-        filtrosDesdeUrl[key] = value
+        (filtrosDesdeUrl as any)[key] = value
       }
     })
 
@@ -42,10 +42,10 @@ export default function HechosPage() {
           if (key === 'latitud' || key === 'longitud') {
             const numValue = parseFloat(value)
             if (!isNaN(numValue)) {
-              filtros[key] = numValue
+              (filtros as any)[key] = numValue
             }
           } else {
-            filtros[key] = value
+            (filtros as any)[key] = value
           }
         })
 
@@ -164,5 +164,20 @@ export default function HechosPage() {
         <HechosMapView initialData={initialData} fetchPage={fetchPage} />
       </div>
     </div>
+  )
+}
+
+export default function HechosPage() {
+  return (
+    <Suspense fallback={
+      <div className="h-full w-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Cargando...</p>
+        </div>
+      </div>
+    }>
+      <HechosPageContent />
+    </Suspense>
   )
 }
