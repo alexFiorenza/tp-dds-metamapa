@@ -86,13 +86,9 @@ public class Main {
                                         .title("MetaMapa - Fuentes Estáticas API")
                                         .version("1.0.0")
                                         .description("API para acceso a fuentes de datos estáticas (CSV) en MetaMapa")
-                                        .contact("Equipo MetaMapa", "http://localhost:7001", "contacto@metamapa.com");
-                                })
-                                .withServer(openApiServer -> {
-                                    openApiServer
-                                        .url("http://localhost:7001")
-                                        .description("Servidor de desarrollo");
+                                        .contact("Equipo MetaMapa", "", "contacto@metamapa.com");
                                 });
+                                // No especificamos servidor - Swagger UI usará la URL actual automáticamente
                         });
                 }));
                 

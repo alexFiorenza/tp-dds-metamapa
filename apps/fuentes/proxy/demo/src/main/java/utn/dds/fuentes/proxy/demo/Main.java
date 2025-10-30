@@ -68,13 +68,9 @@ public class Main {
                                         .title("MetaMapa - Proxy Demo API")
                                         .version("1.0.0")
                                         .description("API proxy demo para pruebas y desarrollo en MetaMapa")
-                                        .contact("Equipo MetaMapa", "http://localhost:7004", "contacto@metamapa.com");
-                                })
-                                .withServer(openApiServer -> {
-                                    openApiServer
-                                        .url("http://localhost:7004")
-                                        .description("Servidor de desarrollo");
+                                        .contact("Equipo MetaMapa", "", "contacto@metamapa.com");
                                 });
+                                // No especificamos servidor - Swagger UI usará la URL actual automáticamente
                         });
                 }));
                 
