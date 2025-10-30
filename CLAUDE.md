@@ -80,6 +80,9 @@ mvn exec:java -Dexec.mainClass="utn.dds.metamapa.Main"
 ```
 
 ### Docker Operations
+
+**IMPORTANT: All Docker images are built for AMD64 (linux/amd64) architecture to ensure compatibility across different platforms.**
+
 ```bash
 # Build all Docker images and JARs locally
 ./build-and-dockerize.sh
@@ -89,7 +92,15 @@ docker-compose up -d
 
 # Stop all services
 docker-compose down
+
+# Build for specific platform (if needed)
+docker buildx build --platform linux/amd64 -t image-name .
 ```
+
+**Platform Configuration:**
+- All services in `docker-compose.yml` specify `platform: linux/amd64`
+- GitHub Actions workflows build images with `platforms: linux/amd64`
+- This ensures consistency across ARM (Apple Silicon) and AMD64 systems
 
 ### CI/CD Pipeline
 

@@ -43,6 +43,7 @@ jobs:
       with:
         context: ./apps/fuentes/estatica
         push: true
+        platforms: linux/amd64
         tags: ${{ secrets.DOCKERHUB_USERNAME }}/metamapa-fuentes-estatica:${{ env.DOCKER_TAG }}
         cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/metamapa-fuentes-estatica:buildcache
         cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/metamapa-fuentes-estatica:buildcache,mode=max
@@ -53,6 +54,7 @@ jobs:
       with:
         context: ./apps/fuentes/dinamica
         push: true
+        platforms: linux/amd64
         tags: ${{ secrets.DOCKERHUB_USERNAME }}/metamapa-fuentes-dinamica:${{ env.DOCKER_TAG }}
         cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/metamapa-fuentes-dinamica:buildcache
         cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/metamapa-fuentes-dinamica:buildcache,mode=max
@@ -63,6 +65,7 @@ jobs:
       with:
         context: ./apps/fuentes/proxy/metamapa
         push: true
+        platforms: linux/amd64
         tags: ${{ secrets.DOCKERHUB_USERNAME }}/metamapa-proxy-metamapa:${{ env.DOCKER_TAG }}
         cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/metamapa-proxy-metamapa:buildcache
         cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/metamapa-proxy-metamapa:buildcache,mode=max
@@ -73,6 +76,7 @@ jobs:
       with:
         context: ./apps/fuentes/proxy/demo
         push: true
+        platforms: linux/amd64
         tags: ${{ secrets.DOCKERHUB_USERNAME }}/metamapa-proxy-demo:${{ env.DOCKER_TAG }}
         cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/metamapa-proxy-demo:buildcache
         cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/metamapa-proxy-demo:buildcache,mode=max
@@ -83,6 +87,7 @@ jobs:
       with:
         context: ./apps/agregador
         push: true
+        platforms: linux/amd64
         tags: ${{ secrets.DOCKERHUB_USERNAME }}/metamapa-agregador:${{ env.DOCKER_TAG }}
         cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/metamapa-agregador:buildcache
         cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/metamapa-agregador:buildcache,mode=max
@@ -93,6 +98,7 @@ jobs:
       with:
         context: ./apps/metamapa
         push: true
+        platforms: linux/amd64
         tags: ${{ secrets.DOCKERHUB_USERNAME }}/metamapa-gestor:${{ env.DOCKER_TAG }}
         cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/metamapa-gestor:buildcache
         cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/metamapa-gestor:buildcache,mode=max
