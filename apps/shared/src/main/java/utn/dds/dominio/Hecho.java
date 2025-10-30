@@ -50,6 +50,9 @@ public class Hecho {
     @Column(name = "estado")
     private EstadoHecho estado;
 
+    @Column(name = "multimedia")
+    private List<String> multimedia;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "hecho_etiquetas", joinColumns = @JoinColumn(name = "hecho_uuid"))
     @Column(name = "etiqueta")
@@ -77,6 +80,7 @@ public class Hecho {
         this.fechaCarga = fechaCarga;
         this.estado = estado;
         this.etiquetas = etiquetas;
+        this.multimedia = multimedia;
     }
 
     public Hecho(Map<String, Object> datos) {
@@ -96,6 +100,7 @@ public class Hecho {
         this.fechaCarga = (LocalDateTime) datos.get("fecha_carga");
         this.estado = EstadoHecho.ACTIVO;
         this.etiquetas = (List<String>) datos.get("etiquetas");
+        this.multimedia = (List<String>) datos.get("multimedia");
     }
 
     // Getters
