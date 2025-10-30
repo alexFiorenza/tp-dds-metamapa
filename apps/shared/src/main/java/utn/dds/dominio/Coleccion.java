@@ -1,27 +1,62 @@
 package utn.dds.dominio;
 
+import jakarta.persistence.*;
 import utn.dds.dominio.criterios.HechoStrategy;
 
 import java.util.List;
 import java.util.ArrayList;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+@Entity
+@Table(name = "colecciones")
 public class Coleccion {
 
-    private final String titulo;
-    private String descripcion;
-    private List<Hecho> hechos;
-    private List<HechoStrategy> criteriosDePertenencia;
+    @Id
+    @Column(name = "handle")
     private String handle;
+
+    @Column(name = "titulo", nullable = false)
+    private String titulo;
+
+    @Column(name = "descripcion")
+    private String descripcion;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "coleccion_hechos",
+        joinColumns = @JoinColumn(name = "coleccion_handle"),
+        inverseJoinColumns = @JoinColumn(name = "hecho_uuid")
+    )
+    private List<Hecho> hechos;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "coleccion_fuentes",
+        joinColumns = @JoinColumn(name = "coleccion_handle"),
+        inverseJoinColumns = @JoinColumn(name = "fuente_uuid")
+    )
+    private List<Fuente> fuentes;
+
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @JoinColumn(name = "coleccion_handle")
+    private List<Criterio> criteriosDePertenencia;
+
+    public Coleccion() {
+        this.handle = UUID.randomUUID().toString();
+        this.hechos = new ArrayList<>();
+        this.fuentes = new ArrayList<>();
+        this.criteriosDePertenencia = new ArrayList<>();
+    }
 
     // Constructor
     public Coleccion(String titulo, String descripcion,
-                     List<Hecho> hechos, List<HechoStrategy> criteriosDePertenencia) {
+                     List<Hecho> hechos, List<Criterio> criteriosDePertenencia) {
+        this();
         this.titulo = titulo;
         this.descripcion = descripcion;
         this.hechos = hechos;
         this.criteriosDePertenencia = criteriosDePertenencia;
-        this.handle = UUID.randomUUID().toString();
     }
 
     public List<Hecho> buscarHechos(List<HechoStrategy> filtros) {
@@ -43,12 +78,30 @@ public class Coleccion {
         return resultados;
     }
 
+    // Método auxiliar para obtener criterios como HechoStrategy
+    public List<HechoStrategy> getCriteriosDePertenenciaAsStrategies() {
+        if (criteriosDePertenencia == null) {
+            return new ArrayList<>();
+        }
+        return criteriosDePertenencia.stream()
+                .map(Criterio::toHechoStrategy)
+                .collect(Collectors.toList());
+    }
+
     // Getters
+    public String getHandle() {
+        return handle;
+    }
+
     public String getTitulo(){
         return titulo;
     }
 
-    public List<HechoStrategy> getCriteriosDePertenencia(){
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public List<Criterio> getCriteriosDePertenencia(){
         return criteriosDePertenencia;
     }
 
@@ -56,8 +109,32 @@ public class Coleccion {
         return hechos;
     }
 
+    public List<Fuente> getFuentes() {
+        return fuentes;
+    }
+
     // Setters
+    public void setHandle(String handle) {
+        this.handle = handle;
+    }
+
+    public void setTitulo(String titulo) {
+        this.titulo = titulo;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
     public void setHechos(List<Hecho> hechos){
         this.hechos = hechos;
+    }
+
+    public void setFuentes(List<Fuente> fuentes) {
+        this.fuentes = fuentes;
+    }
+
+    public void setCriteriosDePertenencia(List<Criterio> criteriosDePertenencia) {
+        this.criteriosDePertenencia = criteriosDePertenencia;
     }
 } 

@@ -27,6 +27,13 @@ public class DAOFactory {
                 } else {
                     return new S3<>(accessKey, secretKey, bucket, endpoint, region);
                 }
+            case "hibernate":
+                return new Hibernate<>(clazz, config);
+            case "couchdb":
+                String urlDb = (String) config.get("url");
+                String username = (String) config.get("username");
+                String password = (String) config.get("password");
+                return new CouchDB<>(urlDb, username, password, clazz);
             default:
                 throw new IllegalArgumentException("Tipo de DAO no soportado: " + type);
         }

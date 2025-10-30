@@ -64,14 +64,49 @@ public class DAOConfigBuilder {
         
         return config;
     }
-    
-    
+
+    public static Map<String, Object> buildHibernateConfig() {
+        Map<String, Object> config = new HashMap<>();
+
+        // Configuración desde variables de entorno
+        config.put("jakarta.persistence.jdbc.url",
+            getEnvOrDefault("DB_URL", "jdbc:postgresql://localhost:5432/metamapa_db"));
+        config.put("jakarta.persistence.jdbc.user",
+            getEnvOrDefault("DB_USER", "metamapa"));
+        config.put("jakarta.persistence.jdbc.password",
+            getEnvOrDefault("DB_PASSWORD", "metamapa123"));
+        config.put("persistenceUnit", "metamapa-db");
+
+        return config;
+    }
+
+    // Agrego esta configuracion para CouchDB (ver si es correcta)
+    public static Map<String, Object> buildCouchDBConfig() {
+        Map<String, Object> config = new HashMap<>();
+
+        String baseUrl = getEnvOrDefault("COUCHDB_URL", "http://localhost:5984");
+        String dbPrefix = getEnvOrDefault("COUCHDB_DB", "metamapa_db");
+
+        // Guardar URL base y prefijo de DB para que los repositorios lo usen
+        config.put("baseUrl", baseUrl);
+        config.put("dbPrefix", dbPrefix);
+        config.put("username", getEnvOrDefault("COUCHDB_USER", "admin"));
+        config.put("password", getEnvOrDefault("COUCHDB_PASSWORD", "admin123"));
+
+        return config;
+    }
+
+
     public static Map<String, Object> buildDAOConfig(String daoType, String dataUrl) {
         switch (daoType.toLowerCase()) {
             case "filesystem":
                 return buildFileSystemConfig(dataUrl);
             case "s3":
                 return buildS3Config(dataUrl);
+            case "hibernate":
+                return buildHibernateConfig();
+            case "couchdb":
+                return buildCouchDBConfig();
             default:
                 throw new IllegalArgumentException("Tipo de DAO no soportado: " + daoType);
         }
@@ -83,6 +118,10 @@ public class DAOConfigBuilder {
                 return buildFileSystemConfig();
             case "s3":
                 return buildS3Config();
+            case "hibernate":
+                return buildHibernateConfig();
+            case "couchdb":
+                return buildCouchDBConfig();
             default:
                 throw new IllegalArgumentException("Tipo de DAO no soportado: " + daoType);
         }

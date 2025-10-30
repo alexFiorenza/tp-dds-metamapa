@@ -1,0 +1,115 @@
+flowchart TD
+
+%% ===== C4-ish Styles =====
+classDef ext stroke-dasharray: 4 4,stroke:#6b7280,fill:#f9fafb,color:#111827;
+classDef svc stroke:#2563eb,fill:#eff6ff,color:#1e3a8a,rounded:4px;
+classDef ctrl stroke:#92400e,fill:#fff7ed,color:#7c2d12,rounded:4px;
+classDef core stroke:#4b5563,fill:#f3f4f6,color:#111827,rounded:6px;
+classDef db stroke:#047857,fill:#ecfdf5,color:#065f46,rounded:6px,font-weight:bold;
+classDef ui stroke:#b45309,fill:#fffbeb,color:#7c2d12,rounded:6px,font-weight:bold;
+
+%% ===== Fuentes =====
+subgraph FuenteProxyDemo["Fuente Proxy Demo"]
+  FPDC[Controller<br/>adapter]:::ctrl
+  FPDS[Service<br/>FuenteProxyDemoService]:::svc
+  FPDR[Repository]:::svc
+end
+
+subgraph FuenteEstatica["Fuente Estatica"]
+  FEC[Controller]:::ctrl
+  FES[Service]:::svc
+  FER[Repository]:::svc
+end
+
+subgraph FuenteProxyMetaMapa["Fuente Proxy MetaMapa"]
+  FPMC[Controller]:::ctrl
+  FPMS[Service]:::svc
+  FPMR[Repository]:::svc
+end
+
+subgraph FuenteDinamica["Fuente Dinamica"]
+  FDC[Controller]:::ctrl
+  FDS[Service]:::svc
+  FDR[Repository]:::svc
+end
+
+DemoExt["DEMO<br/>(externo)"]:::ext
+MetamapaExt["METAMAPA<br/>(externo)"]:::ext
+RepoArchivos["Repositorio de archivos"]:::ext
+
+%% Fix: Service → externo (no controller)
+FPDS --> DemoExt
+
+RepoArchivos --> FES
+MetamapaExt --> FPMS
+
+%% ===== Core =====
+subgraph Scheduler
+end
+
+subgraph Agregador
+  AgC[Controller]:::ctrl
+  AgS[Service]:::svc
+  AgR[Repository]:::svc
+end
+
+subgraph Normalizador
+end
+
+subgraph GestorMetaMapa["Gestor Metamapa"]
+  GMC[Controller]:::ctrl
+  GMS[Service]:::svc
+  GMR[Repository]:::svc
+end
+
+subgraph GestorAlertas
+end
+
+subgraph RecepcionDenuncias
+end
+
+subgraph MetricCollector["Metric Collector"]
+end
+
+subgraph Dashboard["Dashboard<br/>Observabilidad"]
+end
+
+UI["UI"]:::ui
+OAuth2["OAuth2<br/>(externo)"]:::ext
+
+%% ===== DB compartida =====
+GHDB["DB HECHOS,<br/>COLECCIONES<br/>Y SOLICITUDES"]:::db
+
+%% ===== Conexiones =====
+
+%% Fuente inputs → Agregador
+FES --> Agregador
+FPMS --> Agregador
+FDS --> Agregador
+
+%% Fix: scheduler calls Proxy Demo + Agregador
+Scheduler --> FuenteProxyDemo
+Scheduler --> Agregador
+
+%% Fix: Agregador → Normalizador
+Agregador --> Normalizador
+
+%% DB compartida
+Agregador --> GHDB
+GestorMetaMapa --> GHDB
+
+%% UI → Gestor Metamapa + OAuth2 + Fuente Dinámica
+UI --> GestorMetaMapa
+UI --> OAuth2
+UI --> FDC
+
+%% Fix: Gestor Metamapa → OAuth2
+GestorMetaMapa --> OAuth2
+
+%% Recepción →
+RecepcionDenuncias --> GestorMetaMapa
+
+%% Observabilidad
+MetricCollector --> Dashboard
+MetricCollector --> GestorAlertas
+GestorAlertas --> Dashboard

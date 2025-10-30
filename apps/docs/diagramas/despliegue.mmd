@@ -1,0 +1,99 @@
+flowchart TD
+
+%% ===== Estilos tipo C4 (compatibles) =====
+classDef node stroke:#111827,fill:#f9fafb,stroke-width:1px;
+classDef app stroke:#2563eb,fill:#eff6ff,stroke-width:1px,color:#1e3a8a;
+classDef db stroke:#065f46,fill:#ecfdf5,color:#065f46,font-weight:bold,stroke-width:1px;
+classDef ext stroke-dasharray: 4 4,stroke:#6b7280,fill:#fafafa,color:#111827;
+classDef ui stroke:#b45309,fill:#fff7ed,color:#7c2d12,font-weight:bold,stroke-width:1px;
+
+%% ===== Observabilidad =====
+subgraph Stats["Estadisticas y Observabilidad"]
+  MetricCollector[Metric Collector]
+  AlertMgr[Gestor Alertas]
+  Dashboard[Dashboard Observabilidad]
+  MetricCollector --> AlertMgr
+  AlertMgr --> Dashboard
+end
+
+%% ===== Nodo Agregador =====
+subgraph AgregadorNode["Nodo Agregador"]
+  AGScheduler[Scheduler]
+  AGSvc[Agregador]
+  AGNorm[Normalizador]
+end
+
+DBMain[DB principal Hechos y Colecciones]
+
+%% ===== Fuente Estatica =====
+subgraph StaticNode["Nodo Fuente Estatica"]
+  StaticAPI[API REST Fuente Estatica]
+end
+
+Dataset[Dataset Fileset]
+
+%% ===== Proxies =====
+subgraph ProxyNode["Nodo Proxies"]
+  ProxyDemoAPI[API REST Proxy Demo]
+  ProxyMetaAPI[API REST Proxy MetaMapa]
+  ProxySched[Scheduler Proxies]
+end
+
+CouchDB[CouchDB]
+
+MetaMapaExt[MetaMapa Demo]
+
+%% ===== Nodo MetaMapa =====
+subgraph MetaMapaNode["Nodo MetaMapa"]
+  MetaMapaSvc[Gestor MetaMapa]
+  Reports[Recepcion Denuncias]
+end
+
+%% ===== Fuente Dinamica =====
+subgraph DynamicNode["Nodo Fuente Dinamica"]
+  DynamicAPI[API REST Fuente Dinamica]
+end
+
+%% ===== Web App =====
+subgraph WebFrontend["Web App"]
+  UI[UI Web]
+end
+
+OAuth[OAuth2 Provider]
+
+%% ===== Conexiones =====
+ProxyDemoAPI -->|HTTP| AGSvc
+ProxyMetaAPI -->|HTTP| AGSvc
+StaticAPI -->|HTTP| AGSvc
+DynamicAPI -->|HTTP| AGSvc
+
+AGScheduler --> ProxyDemoAPI
+AGScheduler --> AGSvc
+
+AGSvc --> AGNorm
+
+AGSvc -->|TCP IP| DBMain
+MetaMapaSvc -->|TCP IP| DBMain
+
+StaticAPI -->|TCP| Dataset
+
+DynamicAPI -->|TCP IP| CouchDB
+ProxyDemoAPI -->|TCP IP| CouchDB
+
+ProxyMetaAPI -->|HTTPS| MetaMapaExt
+
+UI -->|HTTPS| DynamicAPI
+UI -->|HTTPS| MetaMapaSvc
+UI -->|HTTPS| OAuth
+MetaMapaSvc -->|HTTPS| OAuth
+
+AGSvc -->|HTTP| MetricCollector
+MetaMapaSvc -->|HTTP| MetricCollector
+DynamicAPI -->|HTTP| MetricCollector
+
+%% ===== Clases visuales =====
+class Stats,AgregadorNode,StaticNode,ProxyNode,MetaMapaNode,DynamicNode,WebFrontend node;
+class MetricCollector,AlertMgr,Dashboard,AGScheduler,AGSvc,AGNorm,StaticAPI,ProxyDemoAPI,ProxyMetaAPI,ProxySched,MetaMapaSvc,Reports,DynamicAPI,UI app;
+class DBMain,CouchDB,Dataset db;
+class MetaMapaExt,OAuth ext;
+class UI ui;

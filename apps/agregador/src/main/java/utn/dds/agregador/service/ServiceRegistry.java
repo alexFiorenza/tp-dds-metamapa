@@ -1,6 +1,6 @@
 package utn.dds.agregador.service;
 
-import utn.dds.agregador.persistencia.FuentesRepository;
+import utn.dds.persistencia.FuentesRepository;
 import utn.dds.dto.FuenteDTO;
 import java.util.List;
 import java.util.Map;

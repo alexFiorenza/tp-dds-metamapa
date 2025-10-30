@@ -8,11 +8,12 @@ import io.javalin.openapi.plugin.OpenApiPlugin;
 import io.javalin.openapi.plugin.redoc.ReDocPlugin;
 import io.javalin.openapi.plugin.swagger.SwaggerPlugin;
 import utn.dds.agregador.config.AppConfig;
+import utn.dds.agregador.config.MetricsConfig;
 import utn.dds.agregador.controller.RegistryController;
 import utn.dds.agregador.controller.ControllerAgregador;
 import utn.dds.agregador.service.ServiceRegistry;
 import utn.dds.agregador.service.ServiceAgregador;
-import utn.dds.agregador.persistencia.FuentesRepository;
+import utn.dds.persistencia.FuentesRepository;
 import utn.dds.agregador.persistencia.HechoRepository;
 
 public class Main {
@@ -49,9 +50,10 @@ public class Main {
 
     public static void main(String[] args) {
         AppConfig appConfig = AppConfig.fromEnvironment();
-        
-        FuentesRepository fuentesRepository = new FuentesRepository(appConfig.getDaoType(), appConfig.getDaoConfig());
-        HechoRepository hechoRepository = new HechoRepository(appConfig.getDaoType(), appConfig.getDaoConfig());
+        MetricsConfig metricsConfig = new MetricsConfig();
+
+        FuentesRepository fuentesRepository = new FuentesRepository(appConfig.getDaoConfig());
+        HechoRepository hechoRepository = new HechoRepository(appConfig.getDaoConfig());
         ServiceRegistry serviceRegistry = new ServiceRegistry(fuentesRepository);
         ServiceAgregador serviceAgregador = new ServiceAgregador(hechoRepository, serviceRegistry);
         RegistryController registryController = new RegistryController(serviceRegistry);
@@ -91,12 +93,13 @@ public class Main {
 
         app.get("/health", Main::healthCheck);
         app.get("/", Main::infoServicio);
-        
+        app.get("/metrics", ctx -> ctx.contentType("text/plain; version=0.0.4").result(metricsConfig.scrape()));
+
         app.post("/fuentes", registryController::registrar);
         app.get("/fuentes", registryController::obtenerFuentes);
         app.get("/fuentes/{host}", registryController::obtenerFuentePorHost);
         app.delete("/fuentes/{uuid}", registryController::eliminarFuente);
-        
+
         app.post("/agregacion", controllerAgregador::agregacion);
         app.get("/hechos", controllerAgregador::obtenerHechos);
 

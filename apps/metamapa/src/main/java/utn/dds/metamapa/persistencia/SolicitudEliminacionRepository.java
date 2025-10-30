@@ -2,56 +2,130 @@ package utn.dds.metamapa.persistencia;
 
 import utn.dds.daos.IDAO;
 import utn.dds.daos.DAOFactory;
+import utn.dds.daos.Hibernate;
 import utn.dds.dominio.SolicitudEliminacion;
 import utn.dds.dominio.EstadoSolicitud;
+import utn.dds.dto.SolicitudEliminacionDTO;
+import utn.dds.dto.RespuestaPaginadaDTO;
 
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 public class SolicitudEliminacionRepository {
-    private final IDAO<SolicitudEliminacion> dao;
+    private IDAO<SolicitudEliminacion> dao;
 
-    public SolicitudEliminacionRepository(String daoType, Map<String, Object> daoConfig) {
-        this.dao = DAOFactory.createDAO(SolicitudEliminacion.class, daoType, daoConfig);
+    public SolicitudEliminacionRepository() {
+        this(new HashMap<>());
+    }
+
+    public SolicitudEliminacionRepository(Map<String, Object> daoConfig) {
+        Map<String, Object> hibernateConfig = new HashMap<>(daoConfig);
+
+        // Configurar valores por defecto desde variables de entorno
+        hibernateConfig.putIfAbsent("jakarta.persistence.jdbc.url",
+            System.getenv().getOrDefault("DB_URL", "jdbc:postgresql://localhost:5432/metamapa_db"));
+        hibernateConfig.putIfAbsent("jakarta.persistence.jdbc.user",
+            System.getenv().getOrDefault("DB_USER", "metamapa"));
+        hibernateConfig.putIfAbsent("jakarta.persistence.jdbc.password",
+            System.getenv().getOrDefault("DB_PASSWORD", "metamapa123"));
+        hibernateConfig.putIfAbsent("persistenceUnit", "metamapa-db");
+
+        this.dao = DAOFactory.createDAO(SolicitudEliminacion.class, "hibernate", hibernateConfig);
     }
 
     public List<SolicitudEliminacion> obtenerTodas() {
-        return this.dao.find();
+        return dao.find();
     }
 
     public List<SolicitudEliminacion> obtenerPorEstado(EstadoSolicitud estado) {
-        return this.dao.find().stream()
-            .filter(s -> s.getEstado() == estado)
-            .collect(Collectors.toList());
+        return dao.find().stream()
+                .filter(s -> s.getEstado() == estado)
+                .collect(Collectors.toList());
     }
 
     public SolicitudEliminacion obtenerPorId(String id) {
-        List<SolicitudEliminacion> solicitudes = this.dao.find();
-        return solicitudes.stream()
-            .filter(s -> s.getUuid().equals(id))
-            .findFirst()
-            .orElse(null);
+        if (dao instanceof Hibernate) {
+            Hibernate<SolicitudEliminacion> hibernateDAO = (Hibernate<SolicitudEliminacion>) dao;
+            return hibernateDAO.findById(id);
+        }
+        return null;
     }
 
     public void crear(SolicitudEliminacion solicitud) {
-        this.dao.save(solicitud);
+        dao.save(solicitud);
     }
 
     public void actualizar(String id, SolicitudEliminacion solicitudActualizada) {
-        List<SolicitudEliminacion> solicitudes = this.dao.find();
-        for (int i = 0; i < solicitudes.size(); i++) {
-            if (solicitudes.get(i).getUuid().equals(id)) {
-                solicitudes.set(i, solicitudActualizada);
-                break;
+        if (dao instanceof Hibernate) {
+            Hibernate<SolicitudEliminacion> hibernateDAO = (Hibernate<SolicitudEliminacion>) dao;
+            SolicitudEliminacion solicitud = hibernateDAO.findById(id);
+            if (solicitud != null) {
+                solicitud.setEstado(solicitudActualizada.getEstado());
+                dao.save(solicitud);
             }
         }
-        this.dao.saveAll(solicitudes);
     }
 
     public void eliminar(String id) {
-        List<SolicitudEliminacion> solicitudes = this.dao.find();
-        solicitudes.removeIf(s -> s.getUuid().equals(id));
-        this.dao.saveAll(solicitudes);
+        if (dao instanceof Hibernate) {
+            Hibernate<SolicitudEliminacion> hibernateDAO = (Hibernate<SolicitudEliminacion>) dao;
+            SolicitudEliminacion solicitud = hibernateDAO.findById(id);
+            if (solicitud != null) {
+                hibernateDAO.delete(solicitud);
+            }
+        }
+    }
+
+    public RespuestaPaginadaDTO<SolicitudEliminacionDTO> obtenerTodos(int page, int size) {
+        if (dao instanceof Hibernate) {
+            Hibernate<SolicitudEliminacion> hibernateDAO = (Hibernate<SolicitudEliminacion>) dao;
+
+            return hibernateDAO.executeQuery(em -> {
+                // Consulta para contar total de elementos
+                Long totalElements = em.createQuery(
+                    "SELECT COUNT(s) FROM SolicitudEliminacion s",
+                    Long.class)
+                    .getSingleResult();
+
+                // Consulta paginada ordenada por fecha (más recientes primero)
+                List<SolicitudEliminacion> solicitudes = em.createQuery(
+                    "SELECT s FROM SolicitudEliminacion s ORDER BY s.fechaSolicitud DESC",
+                    SolicitudEliminacion.class)
+                    .setFirstResult(page * size)
+                    .setMaxResults(size)
+                    .getResultList();
+
+                // Convertir a DTO
+                List<SolicitudEliminacionDTO> dtos = solicitudes.stream()
+                        .map(SolicitudEliminacionDTO::fromSolicitudEliminacion)
+                        .collect(Collectors.toList());
+
+                return new RespuestaPaginadaDTO<>(dtos, page, size, totalElements);
+            });
+        }
+
+        // Fallback sin paginación para otros tipos de DAO
+        List<SolicitudEliminacion> solicitudes = dao.find();
+        List<SolicitudEliminacionDTO> dtos = solicitudes.stream()
+                .map(SolicitudEliminacionDTO::fromSolicitudEliminacion)
+                .collect(Collectors.toList());
+
+        // Simular paginación manualmente
+        int fromIndex = page * size;
+        int toIndex = Math.min(fromIndex + size, dtos.size());
+        List<SolicitudEliminacionDTO> paginatedData = fromIndex < dtos.size() ?
+            dtos.subList(fromIndex, toIndex) : new ArrayList<>();
+
+        return new RespuestaPaginadaDTO<>(paginatedData, page, size, dtos.size());
+    }
+
+    public void close() {
+        if (dao instanceof Hibernate) {
+            Hibernate<SolicitudEliminacion> hibernateDAO = (Hibernate<SolicitudEliminacion>) dao;
+            hibernateDAO.close();
+        }
     }
 }
