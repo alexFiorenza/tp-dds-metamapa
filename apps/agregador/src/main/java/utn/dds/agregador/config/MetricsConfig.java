@@ -16,7 +16,14 @@ public class MetricsConfig {
         new ClassLoaderMetrics().bindTo(registry);
         new JvmMemoryMetrics().bindTo(registry);
         new JvmGcMetrics().bindTo(registry);
-        new ProcessorMetrics().bindTo(registry);
+
+        // ProcessorMetrics puede fallar en algunos entornos de contenedores
+        try {
+            new ProcessorMetrics().bindTo(registry);
+        } catch (Exception e) {
+            System.err.println("Warning: No se pudieron registrar ProcessorMetrics: " + e.getMessage());
+        }
+
         new JvmThreadMetrics().bindTo(registry);
         new UptimeMetrics().bindTo(registry);
         new JvmInfoMetrics().bindTo(registry);
