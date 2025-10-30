@@ -4,6 +4,7 @@ import utn.dds.daos.IDAO;
 import utn.dds.daos.DAOFactory;
 import utn.dds.daos.Hibernate;
 import utn.dds.dominio.Hecho;
+import utn.dds.dominio.Coleccion;
 import utn.dds.dominio.criterios.HechoStrategy;
 import utn.dds.dto.RespuestaPaginadaDTO;
 import utn.dds.dto.HechoDTO;
@@ -182,32 +183,79 @@ public class HechoRepository {
             Hibernate<Hecho> hibernateDAO = (Hibernate<Hecho>) dao;
 
             return hibernateDAO.executeQuery(em -> {
-                // Obtener todos los hechos de la colección (sin paginación para filtrar en memoria)
-                List<Hecho> todosLosHechos = em.createQuery(
-                    "SELECT h FROM Hecho h " +
-                    "JOIN Coleccion c ON h MEMBER OF c.hechos " +
-                    "WHERE c.handle = :handle",
-                    Hecho.class)
-                    .setParameter("handle", coleccionHandle)
-                    .getResultList();
-
-                // Aplicar filtros si existen
-                List<Hecho> hechosFiltrados;
-                if (filtros == null || filtros.isEmpty()) {
-                    hechosFiltrados = todosLosHechos;
-                } else {
-                    hechosFiltrados = todosLosHechos.stream()
-                            .filter(hecho -> filtros.stream().allMatch(filtro -> filtro.cumple(hecho)))
-                            .collect(Collectors.toList());
+                // Filtrar solo los strategies que se pueden aplicar en SQL
+                List<HechoStrategy> filtrosSoportados = new java.util.ArrayList<>();
+                if (filtros != null && !filtros.isEmpty()) {
+                    filtrosSoportados = filtros.stream()
+                        .filter(StrategyToSQLAdapter::esSoportadoPorSQL)
+                        .collect(Collectors.toList());
                 }
 
-                long totalElementos = hechosFiltrados.size();
+                Long totalElementos;
+                List<Hecho> hechosPaginados;
 
-                // Aplicar paginación en memoria
-                int inicio = pagina * tamanioPagina;
-                int fin = Math.min(inicio + tamanioPagina, hechosFiltrados.size());
-                List<Hecho> hechosPaginados = inicio < hechosFiltrados.size() ?
-                    hechosFiltrados.subList(inicio, fin) : List.of();
+                if (!filtrosSoportados.isEmpty()) {
+                    // CON FILTROS: Usar Criteria API para filtros dinámicos
+                    CriteriaBuilder cb = em.getCriteriaBuilder();
+
+                    // Query 1: COUNT
+                    CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
+                    Root<Hecho> countRoot = countQuery.from(Hecho.class);
+
+                    jakarta.persistence.criteria.Subquery<String> countSubquery = countQuery.subquery(String.class);
+                    Root<Coleccion> countColeccionRoot = countSubquery.from(Coleccion.class);
+                    var countHechosJoin = countColeccionRoot.join("hechos");
+                    countSubquery.select(countHechosJoin.get("uuid"));
+                    countSubquery.where(cb.equal(countColeccionRoot.get("handle"), coleccionHandle));
+
+                    List<Predicate> countPredicates = new java.util.ArrayList<>();
+                    countPredicates.add(countRoot.get("uuid").in(countSubquery));
+                    countPredicates.addAll(StrategyToSQLAdapter.convertirStrategiasASQL(filtrosSoportados, cb, countRoot));
+                    countQuery.where(cb.and(countPredicates.toArray(new Predicate[0])));
+                    countQuery.select(cb.count(countRoot));
+                    totalElementos = em.createQuery(countQuery).getSingleResult();
+
+                    // Query 2: DATA con paginación
+                    CriteriaQuery<Hecho> dataQuery = cb.createQuery(Hecho.class);
+                    Root<Hecho> dataRoot = dataQuery.from(Hecho.class);
+
+                    jakarta.persistence.criteria.Subquery<String> dataSubquery = dataQuery.subquery(String.class);
+                    Root<Coleccion> dataColeccionRoot = dataSubquery.from(Coleccion.class);
+                    var dataHechosJoin = dataColeccionRoot.join("hechos");
+                    dataSubquery.select(dataHechosJoin.get("uuid"));
+                    dataSubquery.where(cb.equal(dataColeccionRoot.get("handle"), coleccionHandle));
+
+                    List<Predicate> dataPredicates = new java.util.ArrayList<>();
+                    dataPredicates.add(dataRoot.get("uuid").in(dataSubquery));
+                    dataPredicates.addAll(StrategyToSQLAdapter.convertirStrategiasASQL(filtrosSoportados, cb, dataRoot));
+                    dataQuery.where(cb.and(dataPredicates.toArray(new Predicate[0])));
+                    dataQuery.select(dataRoot);
+
+                    hechosPaginados = em.createQuery(dataQuery)
+                        .setFirstResult(pagina * tamanioPagina)
+                        .setMaxResults(tamanioPagina)
+                        .getResultList();
+
+                } else {
+                    // SIN FILTROS: Usar JPQL simple
+                    String countJpql = "SELECT COUNT(h) FROM Hecho h WHERE h.uuid IN " +
+                        "(SELECT hecho.uuid FROM Coleccion c JOIN c.hechos hecho WHERE c.handle = :handle)";
+
+                    String dataJpql = "SELECT h FROM Hecho h WHERE h.uuid IN " +
+                        "(SELECT hecho.uuid FROM Coleccion c JOIN c.hechos hecho WHERE c.handle = :handle)";
+
+                    // Query 1: COUNT
+                    totalElementos = em.createQuery(countJpql, Long.class)
+                        .setParameter("handle", coleccionHandle)
+                        .getSingleResult();
+
+                    // Query 2: DATA con paginación
+                    hechosPaginados = em.createQuery(dataJpql, Hecho.class)
+                        .setParameter("handle", coleccionHandle)
+                        .setFirstResult(pagina * tamanioPagina)
+                        .setMaxResults(tamanioPagina)
+                        .getResultList();
+                }
 
                 // Convertir a DTO
                 List<HechoDTO> hechosDTO = hechosPaginados.stream()

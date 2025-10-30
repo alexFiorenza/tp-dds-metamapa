@@ -1,4 +1,4 @@
-import type { HechoDTO, ColeccionDTO, SolicitudEliminacionDTO, RespuestaPaginadaDTO, FiltrosHechos } from "@/types/api"
+import type { HechoDTO, ColeccionDTO, SolicitudEliminacionDTO, RespuestaPaginadaDTO, FiltrosHechos, ColeccionCreateDTO, FuenteDTO } from "@/types/api"
 import { mockHechos, mockColecciones, mockSolicitudes, crearRespuestaPaginada } from "./mock-data"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7006"
@@ -48,7 +48,7 @@ export class ApiClient {
       }
     })
 
-    const response = await fetch(`${API_BASE_URL}/api/hechos?${params}`, {
+    const response = await fetch(`/api/hechos?${params}`, {
       cache: 'no-store' // Asegurar datos frescos en cada request
     })
 
@@ -59,7 +59,27 @@ export class ApiClient {
     return response.json()
   }
 
-  // Obtener colecciones
+  // Obtener colecciones (API pública - no requiere autenticación)
+  static async obtenerColeccionesPublicas(pagina = 0, tamanioPagina = 10): Promise<RespuestaPaginadaDTO<ColeccionDTO>> {
+    if (USE_MOCK) {
+      return crearRespuestaPaginada(mockColecciones, pagina, tamanioPagina)
+    }
+
+    const response = await fetch(
+      `/api/colecciones?page=${pagina}&size=${tamanioPagina}`,
+      {
+        cache: 'no-store'
+      }
+    )
+
+    if (!response.ok) {
+      throw new Error(`Error al obtener colecciones: ${response.statusText}`)
+    }
+
+    return response.json()
+  }
+
+  // Obtener colecciones (API administrativa - requiere autenticación)
   static async obtenerColecciones(pagina = 0, tamanioPagina = 10, token?: string | null): Promise<RespuestaPaginadaDTO<ColeccionDTO>> {
     if (USE_MOCK) {
       return crearRespuestaPaginada(mockColecciones, pagina, tamanioPagina)
@@ -80,7 +100,29 @@ export class ApiClient {
     return response.json()
   }
 
-  // Obtener colección por identificador
+  // Obtener colección por identificador (API pública - no requiere autenticación)
+  static async obtenerColeccionPublica(identificador: string): Promise<ColeccionDTO> {
+    if (USE_MOCK) {
+      const coleccion = mockColecciones.find((c) => c.handle === identificador)
+      if (!coleccion) throw new Error("Colección no encontrada")
+      return coleccion
+    }
+
+    const response = await fetch(
+      `/api/colecciones/${identificador}`,
+      {
+        cache: 'no-store'
+      }
+    )
+
+    if (!response.ok) {
+      throw new Error(`Error al obtener colección: ${response.statusText}`)
+    }
+
+    return response.json()
+  }
+
+  // Obtener colección por identificador (API administrativa - requiere autenticación)
   static async obtenerColeccion(identificador: string, token?: string | null): Promise<ColeccionDTO> {
     if (USE_MOCK) {
       const coleccion = mockColecciones.find((c) => c.handle === identificador)
@@ -194,7 +236,7 @@ export class ApiClient {
     })
 
     const response = await fetch(
-      `${API_BASE_URL}/api/colecciones/${identificador}/hechos?${params}`,
+      `/api/colecciones/${identificador}/hechos?${params}`,
       { cache: 'no-store' }
     )
 
@@ -281,6 +323,113 @@ export class ApiClient {
 
     if (!response.ok) {
       throw new Error(`Error al rechazar solicitud: ${response.statusText}`)
+    }
+  }
+
+  // Obtener fuentes disponibles
+  static async obtenerFuentes(token?: string | null): Promise<FuenteDTO[]> {
+    if (USE_MOCK) {
+      return [
+        { uuid: "1", host: "http://fuente-estatica:7001", params: {} },
+        { uuid: "2", host: "http://fuente-dinamica:7002", params: {} },
+      ]
+    }
+
+    const response = await fetch('/api/administrador/fuentes', {
+      cache: 'no-store',
+      headers: this.createHeaders(token)
+    })
+
+    if (!response.ok) {
+      throw new Error(`Error al obtener fuentes: ${response.statusText}`)
+    }
+
+    const data: RespuestaPaginadaDTO<FuenteDTO> = await response.json()
+    return data.datos
+  }
+
+  // Crear colección
+  static async crearColeccion(coleccion: ColeccionCreateDTO, token?: string | null): Promise<ColeccionDTO> {
+    if (USE_MOCK) {
+      const nuevaColeccion: ColeccionDTO = {
+        handle: coleccion.titulo.toLowerCase().replace(/\s+/g, '-'),
+        titulo: coleccion.titulo,
+        descripcion: coleccion.descripcion,
+        fuentes: [],
+        criteriosDePertenencia: coleccion.criteriosDePertenencia,
+      }
+      mockColecciones.push(nuevaColeccion)
+      return nuevaColeccion
+    }
+
+    const response = await fetch('/api/administrador/colecciones', {
+      method: "POST",
+      headers: this.createHeaders(token),
+      body: JSON.stringify(coleccion),
+      cache: 'no-store'
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || `Error al crear colección: ${response.statusText}`)
+    }
+
+    return response.json()
+  }
+
+  // Actualizar colección
+  static async actualizarColeccion(handle: string, coleccion: ColeccionCreateDTO, token?: string | null): Promise<ColeccionDTO> {
+    if (USE_MOCK) {
+      const index = mockColecciones.findIndex(c => c.handle === handle)
+      if (index !== -1) {
+        const coleccionActualizada: ColeccionDTO = {
+          handle,
+          titulo: coleccion.titulo,
+          descripcion: coleccion.descripcion,
+          fuentes: mockColecciones[index].fuentes,
+          criteriosDePertenencia: coleccion.criteriosDePertenencia,
+        }
+        mockColecciones[index] = coleccionActualizada
+        return coleccionActualizada
+      }
+      throw new Error('Colección no encontrada')
+    }
+
+    const response = await fetch(`/api/administrador/colecciones/${handle}`, {
+      method: "PUT",
+      headers: this.createHeaders(token),
+      body: JSON.stringify(coleccion),
+      cache: 'no-store'
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || `Error al actualizar colección: ${response.statusText}`)
+    }
+
+    return response.json()
+  }
+
+  // Eliminar colección
+  static async eliminarColeccion(handle: string, token?: string | null): Promise<void> {
+    if (USE_MOCK) {
+      const index = mockColecciones.findIndex(c => c.handle === handle)
+      if (index !== -1) {
+        mockColecciones.splice(index, 1)
+        return
+      }
+      throw new Error('Colección no encontrada')
+    }
+
+    const response = await fetch(`/api/administrador/colecciones/${handle}`, {
+      method: "DELETE",
+      headers: this.createHeaders(token),
+      cache: 'no-store'
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || `Error al eliminar colección: ${response.statusText}`)
     }
   }
 }

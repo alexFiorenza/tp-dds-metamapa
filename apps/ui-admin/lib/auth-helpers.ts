@@ -11,7 +11,6 @@ import { auth } from '@clerk/nextjs/server';
 export async function getAuthToken(): Promise<string | null> {
   try {
     const { getToken, userId } = await auth();
-    console.log('[auth-helpers] userId:', userId);
 
     if (!userId) {
       console.warn('[auth-helpers] No hay userId, usuario no autenticado');
@@ -19,7 +18,6 @@ export async function getAuthToken(): Promise<string | null> {
     }
 
     const token = await getToken();
-    console.log('[auth-helpers] Token obtenido:', token ? `${token.substring(0, 20)}...` : 'null');
 
     return token;
   } catch (error) {

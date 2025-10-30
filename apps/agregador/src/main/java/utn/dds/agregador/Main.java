@@ -13,7 +13,7 @@ import utn.dds.agregador.controller.RegistryController;
 import utn.dds.agregador.controller.ControllerAgregador;
 import utn.dds.agregador.service.ServiceRegistry;
 import utn.dds.agregador.service.ServiceAgregador;
-import utn.dds.agregador.persistencia.FuentesRepository;
+import utn.dds.persistencia.FuentesRepository;
 import utn.dds.agregador.persistencia.HechoRepository;
 
 public class Main {

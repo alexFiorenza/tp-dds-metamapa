@@ -169,12 +169,22 @@ public class ColeccionRepository {
     public void actualizarCamposBasicos(String id, String titulo, String descripcion) {
         if (dao instanceof Hibernate) {
             Hibernate<Coleccion> hibernateDAO = (Hibernate<Coleccion>) dao;
-            Coleccion entity = hibernateDAO.findById(id);
-            if (entity != null) {
-                if (titulo != null) entity.setTitulo(titulo);
-                if (descripcion != null) entity.setDescripcion(descripcion);
-                dao.save(entity);
-            }
+            hibernateDAO.executeQuery(em -> {
+                em.getTransaction().begin();
+                try {
+                    Coleccion entity = em.find(Coleccion.class, id);
+                    if (entity != null) {
+                        if (titulo != null) entity.setTitulo(titulo);
+                        if (descripcion != null) entity.setDescripcion(descripcion);
+                        em.merge(entity);
+                    }
+                    em.getTransaction().commit();
+                    return null;
+                } catch (Exception e) {
+                    em.getTransaction().rollback();
+                    throw new RuntimeException("Error al actualizar campos básicos", e);
+                }
+            });
         }
     }
 

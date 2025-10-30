@@ -39,6 +39,13 @@ El sistema está compuesto por 6 microservicios independientes:
    - Persistencia con Hibernate/PostgreSQL
    - Gestión de solicitudes de eliminación
 
+7. **UI Admin** (Puerto 3000)
+   - Interfaz web de administración con Next.js 15
+   - Visualización de hechos en mapa interactivo (Mapbox)
+   - Sistema de filtrado avanzado con sincronización de URL
+   - Gestión de colecciones y solicitudes de eliminación
+   - Autenticación con Clerk.js
+
 ### Bases de Datos
 
 - **PostgreSQL**: Base de datos relacional principal para Agregador y MetaMapa
@@ -75,6 +82,12 @@ MetaMapa/
 │   │       └── demo/                # Proxy Demo
 │   ├── agregador/                   # Microservicio agregador
 │   ├── metamapa/                    # Microservicio principal MetaMapa
+│   ├── ui-admin/                    # Interfaz de administración (Next.js)
+│   │   ├── app/                     # Pages (Next.js App Router)
+│   │   ├── components/              # Componentes React
+│   │   ├── lib/                     # API client y utilidades
+│   │   ├── types/                   # Definiciones TypeScript
+│   │   └── hooks/                   # Custom React hooks
 │   ├── scheduler/                   # Servicio de programación de tareas
 │   ├── normalizador/                # Servicio de normalización
 │   └── estadisticas/                # Stack de monitoreo
@@ -86,9 +99,13 @@ MetaMapa/
 ## APIs Principales
 
 ### API Pública (Puerto 7006)
+- `GET /api/hechos` - Obtener hechos con filtros y paginación
+  - Filtros: `categoria`, `titulo`, `descripcion`, `origen`, `estado`, `fechaAcontecimiento`, `latitud`, `longitud`, `etiquetas`
+  - Paginación: `pagina` (0-indexed), `tamanioPagina` (default: 10, max: 100)
+- `POST /api/hechos/{uuid}/reportar` - Reportar un hecho
 - `GET /api/colecciones` - Listar colecciones con paginación
-- `GET /api/coleccion/{id}` - Obtener colección por ID
-- `GET /api/coleccion/{id}/hechos` - Obtener hechos de una colección
+- `GET /api/colecciones/{identificador}` - Obtener colección por identificador
+- `GET /api/colecciones/{identificador}/hechos` - Obtener hechos de una colección
 - `POST /api/solicitudes` - Crear solicitud de eliminación
 
 ### API Administrativa (Puerto 7006)
@@ -190,7 +207,24 @@ FUENTE_PROXY_DEMO_DAO_TYPE=filesystem
    mvn exec:java -Dexec.mainClass="utn.dds.metamapa.Main"
    ```
 
-3. **Crear JARs ejecutables:**
+3. **Ejecutar UI Admin (Next.js):**
+   ```bash
+   cd apps/ui-admin
+
+   # Instalar dependencias (primera vez)
+   yarn install
+
+   # Configurar variables de entorno
+   cp .env.example .env.local
+   # Editar .env.local con tus credenciales
+
+   # Ejecutar servidor de desarrollo
+   yarn dev
+   ```
+
+   La aplicación estará disponible en http://localhost:3000
+
+4. **Crear JARs ejecutables:**
    ```bash
    mvn clean package
    ```
@@ -204,6 +238,13 @@ FUENTE_PROXY_DEMO_DAO_TYPE=filesystem
 - **Proxy Demo**: http://localhost:7004
 - **Agregador**: http://localhost:7005
 - **MetaMapa**: http://localhost:7006
+
+### Interfaz Web
+- **UI Admin**: http://localhost:3000
+  - `/hechos` - Vista de hechos con mapa y filtros
+  - `/colecciones` - Listado de colecciones
+  - `/solicitudes` - Solicitudes de eliminación
+  - `/admin` - Dashboard administrativo (requiere autenticación)
 
 ### Bases de Datos
 - **PostgreSQL**: localhost:5432
@@ -300,6 +341,17 @@ mvn test
 - **Jackson** (JSON)
 - **SLF4J** (logging)
 - **OpenCSV** (CSV processing)
+
+### Frontend (UI Admin)
+- **Next.js 15** (React 19)
+- **TypeScript**
+- **HeroUI** (component library)
+- **Tailwind CSS v4** (styling)
+- **Mapbox GL** (map visualization)
+- **Clerk.js** (authentication)
+- **React Hook Form** + **Zod** (forms & validation)
+- **Framer Motion** (animations)
+- **Recharts** (data visualization)
 
 ### Bases de Datos
 - **PostgreSQL 15** (relacional)

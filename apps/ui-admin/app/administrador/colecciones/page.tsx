@@ -1,84 +1,46 @@
-import { ApiClient } from "@/lib/api-client"
-import { getAuthToken } from "@/lib/auth-helpers"
-import { SidebarLayout } from "@/components/sidebar-layout"
-import { MapWrapper } from "@/components/map-wrapper"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Folder, Plus, Eye, Edit, Trash2 } from "lucide-react"
-import Link from "next/link"
+"use client"
 
-export default async function AdminColeccionesPage() {
-  const token = await getAuthToken()
-  const respuesta = await ApiClient.obtenerColecciones(0, 10, token)
+import { useState, useEffect } from "react"
+import { ApiClient } from "@/lib/api-client"
+import { AdminColeccionesView } from "@/components/admin-colecciones-view"
+import type { ColeccionDTO } from "@/types/api"
+
+export default function AdminColeccionesPage() {
+  const [colecciones, setColecciones] = useState<ColeccionDTO[]>([])
+  const [total, setTotal] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const loadColecciones = async () => {
+      try {
+        const respuesta = await ApiClient.obtenerColeccionesPublicas(0, 100)
+        setColecciones(respuesta.datos)
+        setTotal(respuesta.totalElementos)
+      } catch (error) {
+        console.error("Error loading colecciones:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadColecciones()
+  }, [])
+
+  if (isLoading) {
+    return (
+      <div className="h-full w-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-default-500">Cargando colecciones...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <SidebarLayout
-      sidebar={
-        <div className="flex flex-col h-full">
-          {/* Header */}
-          <div className="p-4 border-b border-border">
-            <Link href="/administrador">
-              <Button variant="ghost" size="sm" className="mb-3">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Volver
-              </Button>
-            </Link>
-            <div className="flex items-center justify-between mb-2">
-              <h1 className="text-2xl font-bold">Colecciones</h1>
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Nueva
-              </Button>
-            </div>
-            <p className="text-sm text-muted-foreground">{respuesta.totalElementos} colecciones</p>
-          </div>
-
-          {/* List */}
-          <div className="flex-1 overflow-y-auto p-4">
-            <div className="space-y-3">
-              {respuesta.datos.map((coleccion) => (
-                <Card key={coleccion.handle} className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      <Folder className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-sm mb-1">{coleccion.titulo}</h3>
-                      <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{coleccion.descripcion}</p>
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {coleccion.criteriosDePertenencia.map((criterio, idx) => (
-                          <Badge key={idx} variant="outline" className="text-xs">
-                            {criterio.categoria}
-                          </Badge>
-                        ))}
-                      </div>
-                      <div className="flex gap-2">
-                        <Link href={`/administrador/colecciones/${coleccion.handle}`}>
-                          <Button variant="default" size="sm">
-                            <Eye className="h-4 w-4 mr-2" />
-                            Ver
-                          </Button>
-                        </Link>
-                        <Button variant="outline" size="sm">
-                          <Edit className="h-4 w-4 mr-2" />
-                          Editar
-                        </Button>
-                        <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Eliminar
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </div>
-      }
-    >
-      <MapWrapper />
-    </SidebarLayout>
+    <AdminColeccionesView
+      coleccionesIniciales={colecciones}
+      totalElementos={total}
+    />
   )
 }

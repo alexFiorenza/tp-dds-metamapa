@@ -4,6 +4,8 @@ import dynamic from 'next/dynamic'
 import { MapPlaceholder } from './map-placeholder'
 import type { MapComponentProps } from './map'
 import type { HechoDTO } from '@/types/api'
+import { useTheme } from 'next-themes'
+import { useEffect, useState } from 'react'
 
 // Dynamically import the map component with SSR disabled
 // This ensures that Mapbox GL only loads on the client side
@@ -37,8 +39,25 @@ const MapComponent = dynamic(
  * }
  * ```
  */
-export function MapWrapper(props: MapComponentProps) {
-  return <MapComponent {...props} />
+export function MapWrapper({ mapStyle, ...props }: MapComponentProps) {
+  const { theme, resolvedTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Determinar el estilo del mapa basado en el tema
+  const currentTheme = mounted ? (resolvedTheme || theme) : 'light'
+  const dynamicMapStyle = mapStyle || (currentTheme === 'dark'
+    ? 'mapbox://styles/mapbox/dark-v11'
+    : 'mapbox://styles/mapbox/light-v11')
+
+  return (
+    <div className="w-full h-full">
+      <MapComponent {...props} mapStyle={dynamicMapStyle} />
+    </div>
+  )
 }
 
 export type { MapComponentProps, HechoDTO }

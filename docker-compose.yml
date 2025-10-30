@@ -96,7 +96,11 @@ services:
     container_name: metamapa-fuente-dinamica
     restart: unless-stopped
     environment:
-      - DAO_TYPE=${FUENTE_DINAMICA_DAO_TYPE:-filesystem}
+      - DAO_TYPE=${FUENTE_DINAMICA_DAO_TYPE:-couchdb}
+      - COUCHDB_URL=${COUCHDB_URL:-http://couchdb:5984}
+      - COUCHDB_USER=${COUCHDB_USER:-admin}
+      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-admin123}
+      - COUCHDB_DB=${COUCHDB_DB_DINAMICA:-dinamica_db}
     depends_on:
       - couchdb
     networks:
@@ -126,7 +130,11 @@ services:
     container_name: metamapa-fuente-proxy-demo
     restart: unless-stopped
     environment:
-      - DAO_TYPE=${FUENTE_PROXY_DEMO_DAO_TYPE:-filesystem}
+      - DAO_TYPE=${FUENTE_PROXY_DEMO_DAO_TYPE:-couchdb}
+      - COUCHDB_URL=${COUCHDB_URL:-http://couchdb:5984}
+      - COUCHDB_USER=${COUCHDB_USER:-admin}
+      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-admin123}
+      - COUCHDB_DB=${COUCHDB_DB_PROXY_DEMO:-proxy_demo_db}
     depends_on:
       - couchdb
     networks:
@@ -231,38 +239,6 @@ services:
     restart: unless-stopped
     networks:
       - metamapa-network
-
-  # Scheduler para Proxy Demo
-  scheduler-proxy-demo:
-    build:
-      context: ./apps/scheduler
-      dockerfile: Dockerfile
-    container_name: scheduler-proxy-demo
-    restart: unless-stopped
-    environment:
-      - TARGET_URL=http://fuente-proxy-demo:7004/hechos
-      - HTTP_METHOD=PUT
-      - INTERVAL_SECONDS=3600
-    depends_on:
-      - fuente-proxy-demo
-    networks:
-      - metamapa-network
-  # Scheduler para Agregador
-  scheduler-agregador:
-    build:
-      context: ./apps/scheduler
-      dockerfile: Dockerfile
-    container_name: scheduler-agregador
-    restart: unless-stopped
-    environment:
-      - TARGET_URL=http://agregador:7005/agregacion
-      - HTTP_METHOD=POST
-      - INTERVAL_SECONDS=60
-    depends_on:
-      - agregador
-    networks:
-      - metamapa-network
-
 volumes:
   minio_data:
   postgres_data:

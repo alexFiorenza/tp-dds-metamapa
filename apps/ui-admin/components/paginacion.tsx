@@ -1,7 +1,6 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { Button } from "@heroui/react"
 
 interface PaginacionProps {
   paginaActual: number
@@ -13,12 +12,12 @@ export function Paginacion({ paginaActual, totalPaginas, onCambioPagina }: Pagin
   return (
     <div className="flex items-center justify-between p-4 border-t border-border">
       <Button
-        variant="outline"
+        variant="bordered"
         size="sm"
-        onClick={() => onCambioPagina(paginaActual - 1)}
-        disabled={paginaActual === 0}
+        onPress={() => onCambioPagina(paginaActual - 1)}
+        isDisabled={paginaActual === 0}
       >
-        <ChevronLeft className="h-4 w-4 mr-1" />
+        <i className="ri-arrow-left-s-line h-4 w-4 mr-1" />
         Anterior
       </Button>
 
@@ -27,13 +26,13 @@ export function Paginacion({ paginaActual, totalPaginas, onCambioPagina }: Pagin
       </span>
 
       <Button
-        variant="outline"
+        variant="bordered"
         size="sm"
-        onClick={() => onCambioPagina(paginaActual + 1)}
-        disabled={paginaActual >= totalPaginas - 1}
+        onPress={() => onCambioPagina(paginaActual + 1)}
+        isDisabled={paginaActual >= totalPaginas - 1}
       >
         Siguiente
-        <ChevronRight className="h-4 w-4 ml-1" />
+        <i className="ri-arrow-right-s-line h-4 w-4 ml-1" />
       </Button>
     </div>
   )

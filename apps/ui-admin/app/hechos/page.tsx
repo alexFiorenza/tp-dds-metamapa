@@ -1,64 +1,168 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { ApiClient } from "@/lib/api-client"
-import { SidebarLayout } from "@/components/sidebar-layout"
-import { InfiniteScrollHechos } from "@/components/infinite-scroll-hechos"
-import { MapWrapper } from "@/components/map-wrapper"
-import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
-import Link from "next/link"
+import { HechosMapView } from "@/components/hechos-map-view"
+import { FiltrosHechos } from "@/components/filtros-hechos"
+import type { RespuestaPaginadaDTO, HechoDTO, FiltrosHechos as FiltrosHechosType } from "@/types/api"
 
-interface HechosPageProps {
-  searchParams: Promise<{
-    categoria?: string
-    titulo?: string
-  }>
-}
+export default function HechosPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [initialData, setInitialData] = useState<RespuestaPaginadaDTO<HechoDTO> | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [filtrosAplicados, setFiltrosAplicados] = useState<FiltrosHechosType>({})
 
-export default async function HechosPage({ searchParams }: HechosPageProps) {
-  const params = await searchParams
-  const respuesta = await ApiClient.obtenerHechos({
-    pagina: 0,
-    tamanioPagina: 10,
-    categoria: params.categoria,
-    titulo: params.titulo,
-  })
+  // Cargar filtros iniciales desde la URL
+  useEffect(() => {
+    const filtrosDesdeUrl: FiltrosHechosType = {}
+
+    searchParams.forEach((value, key) => {
+      if (key === 'pagina' || key === 'tamanioPagina') return
+
+      if (key === 'latitud' || key === 'longitud') {
+        const numValue = parseFloat(value)
+        if (!isNaN(numValue)) {
+          filtrosDesdeUrl[key] = numValue
+        }
+      } else {
+        filtrosDesdeUrl[key] = value
+      }
+    })
+
+    setFiltrosAplicados(filtrosDesdeUrl)
+  }, [searchParams])
+
+  useEffect(() => {
+    const loadInitialData = async () => {
+      try {
+        const filtros: FiltrosHechosType = {}
+        searchParams.forEach((value, key) => {
+          if (key === 'latitud' || key === 'longitud') {
+            const numValue = parseFloat(value)
+            if (!isNaN(numValue)) {
+              filtros[key] = numValue
+            }
+          } else {
+            filtros[key] = value
+          }
+        })
+
+        const respuesta = await ApiClient.obtenerHechos({
+          ...filtros,
+          pagina: 0,
+          tamanioPagina: 10,
+        })
+        setInitialData(respuesta)
+      } catch (error) {
+        console.error('Error loading initial data:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadInitialData()
+  }, [searchParams])
+
+  // Función para fetch de páginas
+  const fetchPage = async (page: number) => {
+    return await ApiClient.obtenerHechos({
+      ...filtrosAplicados,
+      pagina: page,
+      tamanioPagina: 10,
+    })
+  }
+
+  // Actualizar la URL con los filtros aplicados
+  const actualizarUrl = (filtros: FiltrosHechosType) => {
+    const params = new URLSearchParams()
+
+    Object.entries(filtros).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        params.set(key, String(value))
+      }
+    })
+
+    const queryString = params.toString()
+    router.push(queryString ? `/hechos?${queryString}` : '/hechos', { scroll: false })
+  }
+
+  const handleFiltrar = async (filtros: FiltrosHechosType) => {
+    setIsLoading(true)
+
+    // Limpiar filtros vacíos antes de aplicar
+    const filtrosLimpios = Object.fromEntries(
+      Object.entries(filtros).filter(([_, value]) =>
+        value !== undefined && value !== null && value !== ""
+      )
+    ) as FiltrosHechosType
+
+    setFiltrosAplicados(filtrosLimpios)
+
+    // Actualizar URL con los filtros
+    actualizarUrl(filtrosLimpios)
+
+    try {
+      const nuevaData = await ApiClient.obtenerHechos({
+        ...filtrosLimpios,
+        pagina: 0,
+        tamanioPagina: 10,
+      })
+      setInitialData(nuevaData)
+    } catch (error) {
+      console.error('Error al filtrar hechos:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleLimpiar = async () => {
+    setIsLoading(true)
+    setFiltrosAplicados({})
+
+    // Limpiar la URL
+    router.push('/hechos', { scroll: false })
+
+    try {
+      const nuevaData = await ApiClient.obtenerHechos({
+        pagina: 0,
+        tamanioPagina: 10,
+      })
+      setInitialData(nuevaData)
+    } catch (error) {
+      console.error('Error al limpiar filtros:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  if (isLoading || !initialData) {
+    return (
+      <div className="h-full w-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Cargando hechos...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <SidebarLayout
-      sidebar={
-        <div className="flex flex-col h-full">
-          <div className="p-4 border-b border-border">
-            <Link href="/">
-              <Button variant="ghost" size="sm" className="mb-3">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Volver
-              </Button>
-            </Link>
-            <h1 className="text-2xl font-bold">Todos los Hechos</h1>
-            <p className="text-sm text-muted-foreground mt-1">{respuesta.totalElementos} hechos encontrados</p>
-          </div>
+    <div className="h-full w-full flex flex-col">
+      {/* Filtros */}
+      <div className="flex-shrink-0">
+        <FiltrosHechos
+          onFiltrar={handleFiltrar}
+          onLimpiar={handleLimpiar}
+          filtrosIniciales={filtrosAplicados}
+        />
+      </div>
 
-          <div className="p-4 border-b border-border">
-            <p className="text-xs text-muted-foreground">Filtros disponibles próximamente</p>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-4">
-            <InfiniteScrollHechos
-              datosIniciales={respuesta}
-              fetchMas={async (pagina) => {
-                "use server"
-                return ApiClient.obtenerHechos({
-                  pagina,
-                  tamanioPagina: 10,
-                  categoria: params.categoria,
-                  titulo: params.titulo,
-                })
-              }}
-            />
-          </div>
-        </div>
-      }
-    >
-      <MapWrapper hechos={respuesta.datos} />
-    </SidebarLayout>
+      {/* Contenido principal */}
+      <div className="flex-1 min-h-0">
+        <HechosMapView initialData={initialData} fetchPage={fetchPage} />
+      </div>
+    </div>
   )
 }

@@ -1,0 +1,82 @@
+erDiagram
+
+    Filtros {
+        BIGINT uuid PK
+        BIGINT id_coleccion FK
+        NVARCHAR(255) descripcion
+        NVARCHAR(255) categoria
+        DATETIME2 fecha_acontecimiento
+        NVARCHAR(255) origen
+        NVARCHAR(255) tipo
+        BIGINT longitud
+        BIGINT latitud
+        DATETIME2 fecha_carga
+        NVARCHAR(255) etiquetas
+    }
+
+    Coleccion {
+        BIGINT id_coleccion PK
+        NVARCHAR(255) titulo
+        NVARCHAR(255) descripcion
+        NVARCHAR(255) handle
+    }
+
+    "Coleccion X Fuente" {
+        BIGINT id_coleccion PK, FK
+        BIGINT id_Fuente PK, FK
+    }
+
+    FuenteDeDatos {
+        BIGINT uuid PK
+        NVARCHAR(255) host
+        NVARCHAR(255) descripcion
+        JSON params
+    }
+
+    "Coleccion X Hecho" {
+        BIGINT id_coleccion PK, FK
+        BIGINT uuidHecho PK, FK
+    }
+
+    Hecho {
+        BIGINT uuid PK
+        NVARCHAR(255) titulo
+        NVARCHAR(2000) descripcion
+        NVARCHAR(255) categoria
+        DATETIME2 fecha_acontecimiento
+        NVARCHAR(255) origen
+        BIGINT id_contribuyente FK
+        NVARCHAR(255) tipo
+        BIGINT longitud
+        BIGINT latitud
+        DATETIME2 fecha_carga
+        NVARCHAR(255) etiquetas
+    }
+
+    Contribuyente {
+        BIGINT uuid PK
+        NVARCHAR(255) nombre
+        NVARCHAR(255) apellido
+        NVARCHAR(255) edad
+    }
+
+    SolicitudDeEliminacion {
+        BIGINT uuid PK
+        NVARCHAR(255) texto
+        NVARCHAR(255) estado
+        NVARCHAR(255) edad
+        BIGINT contribuyente FK
+        BIGINT hecho FK
+    }
+
+    %% Relaciones
+    Filtros }o--|| Coleccion : "pertenece a"
+    Coleccion ||--o{ "Coleccion X Fuente" : "relaciona"
+    FuenteDeDatos ||--o{ "Coleccion X Fuente" : "relaciona"
+
+    Coleccion ||--o{ "Coleccion X Hecho" : contiene
+    Hecho ||--o{ "Coleccion X Hecho" : pertenece
+
+    Hecho }o--|| Contribuyente : "aportado por"
+    SolicitudDeEliminacion }o--|| Contribuyente : "realizada por"
+    SolicitudDeEliminacion }o--|| Hecho : "sobre"

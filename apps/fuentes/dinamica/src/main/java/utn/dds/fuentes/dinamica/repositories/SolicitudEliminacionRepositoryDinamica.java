@@ -20,6 +20,19 @@ public class SolicitudEliminacionRepositoryDinamica {
             Map<String, Object> config = new java.util.HashMap<>();
             config.put("url", "src/main/resources/mocks/solicitudes.json");
             this.dao = DAOFactory.createDAO(SolicitudEliminacionDTO.class, daoType, config);
+        } else if ("couchdb".equals(daoType)) {
+            // Para CouchDB, crear una DB específica para solicitudes de eliminación
+            Map<String, Object> configSolicitudes = new java.util.HashMap<>(daoConfig);
+            String baseUrl = (String) configSolicitudes.get("baseUrl");
+            String dbPrefix = (String) configSolicitudes.get("dbPrefix");
+
+            // Crear URL completa: http://localhost:5984/dinamica_db_solicitudes
+            String fullUrl = baseUrl.endsWith("/")
+                ? baseUrl + dbPrefix + "_solicitudes"
+                : baseUrl + "/" + dbPrefix + "_solicitudes";
+
+            configSolicitudes.put("url", fullUrl);
+            this.dao = DAOFactory.createDAO(SolicitudEliminacionDTO.class, daoType, configSolicitudes);
         } else {
             this.dao = DAOFactory.createDAO(SolicitudEliminacionDTO.class, daoType, daoConfig);
         }
