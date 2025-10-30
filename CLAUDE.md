@@ -14,6 +14,28 @@ MetaMapa is a full-stack system for managing and aggregating data from various s
 - **Frontend**: Next.js 15 admin application with TypeScript
 - **Docker containerization** with compose orchestration
 - **Monitoring stack** (Prometheus, Grafana, Alertmanager)
+- **Documentation**: Mermaid.js diagram viewer at `apps/docs`
+
+### IMPORTANT: Architecture Documentation and Compliance
+
+**All architectural decisions and code changes MUST strictly follow the diagrams defined in `apps/docs/diagramas/`.**
+
+The `apps/docs/diagramas/` directory contains all project architecture diagrams in Mermaid format (.mmd files).
+
+**Compliance Rules:**
+1. **ALWAYS consult relevant diagrams in `apps/docs/diagramas/`** before making architectural changes
+2. **ANY deviation from documented architecture MUST be flagged to the user** before implementation
+3. If a change requires updating the architecture, **explicitly notify the user** and suggest updating the corresponding `.mmd` file
+4. When adding new components, endpoints, or services, **verify they align** with existing architecture patterns shown in the diagrams
+5. If diagrams are outdated or conflicting with code, **alert the user immediately**
+
+To view and edit diagrams:
+```bash
+cd apps/docs
+npm install
+npm start
+# Open http://localhost:8080
+```
 
 ### Key Technologies
 
@@ -59,7 +81,7 @@ mvn exec:java -Dexec.mainClass="utn.dds.metamapa.Main"
 
 ### Docker Operations
 ```bash
-# Build all Docker images and JARs
+# Build all Docker images and JARs locally
 ./build-and-dockerize.sh
 
 # Start all services with monitoring stack
@@ -68,6 +90,41 @@ docker-compose up -d
 # Stop all services
 docker-compose down
 ```
+
+### CI/CD Pipeline
+
+The project uses GitHub Actions for automated build and deployment:
+
+**Workflow Files:**
+- `.github/workflows/develop.yml` - Develop branch CI/CD
+- `.github/workflows/main.yml` - Main branch CI/CD
+
+**Automated Process:**
+1. Trigger on push to `develop` or `main` branches
+2. Build project with Maven (`mvn clean package -DskipTests`)
+3. Build Docker images for all microservices
+4. Push images to Docker Hub with appropriate tags
+
+**Docker Image Tags:**
+- `develop` branch → `:experimental` tag
+- `main` branch → `:latest` tag
+
+**Required GitHub Secrets:**
+- `DOCKERHUB_USERNAME` - Your Docker Hub username
+- `DOCKERHUB_TOKEN` - Docker Hub access token
+
+**Docker Hub Images:**
+- `{username}/metamapa-fuentes-estatica`
+- `{username}/metamapa-fuentes-dinamica`
+- `{username}/metamapa-proxy-metamapa`
+- `{username}/metamapa-proxy-demo`
+- `{username}/metamapa-agregador`
+- `{username}/metamapa-gestor`
+
+**Notes:**
+- Pull requests only run build and test, no push to Docker Hub
+- Pushes to branches trigger full CI/CD pipeline with Docker push
+- Build cache is used to speed up subsequent builds
 
 ### Frontend Development (ui-admin)
 ```bash
@@ -123,6 +180,10 @@ apps/
 │   ├── lib/         # API client and utilities
 │   ├── types/       # TypeScript type definitions
 │   └── hooks/       # Custom React hooks
+├── docs/            # Mermaid.js diagram viewer (port 8080)
+│   ├── diagramas/   # Architecture diagrams (.mmd files)
+│   ├── public/      # Web interface
+│   └── server.js    # Express server
 └── estadisticas/    # Monitoring configuration
 ```
 
@@ -142,6 +203,7 @@ The `apps/shared` module contains:
 - Agregador: 7005
 - MetaMapa: 7006
 - UI Admin: 3000
+- Docs (Mermaid viewer): 8080
 - Prometheus: 9090
 - Alertmanager: 9093
 - Grafana: 3000
