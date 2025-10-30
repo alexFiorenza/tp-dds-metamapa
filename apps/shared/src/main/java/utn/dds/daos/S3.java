@@ -187,7 +187,7 @@ public class S3<T> implements IDAO<T> {
      * @param inputStream   El InputStream del archivo a subir.
      * @param contentLength La longitud del contenido a subir.
      */
-    public void uploadBinary(String key, InputStream inputStream, long contentLength) {
+    public String uploadBinary(String key, InputStream inputStream, long contentLength) {
         S3Client s3Client = createS3Client();
         try {
             logger.info("Subiendo archivo a S3. Bucket: {}, Key: {}", bucket, key);
@@ -198,10 +198,12 @@ public class S3<T> implements IDAO<T> {
                     .build();
 
             RequestBody requestBody = RequestBody.fromInputStream(inputStream, contentLength);
-
             s3Client.putObject(putObjectRequest, requestBody);
 
-            logger.info("Archivo subido exitosamente a S3. Key: {}", key);
+            String fileUrl = String.format("%s/%s/%s", endpoint, bucket, key);
+
+            logger.info("Archivo subido exitosamente a S3. URL: {}", fileUrl);
+            return fileUrl;
 
         } catch (S3Exception e) {
             logger.error("Error al subir archivo a S3. Key: {}. Error: {}", key, e.getMessage(), e);
@@ -211,6 +213,7 @@ public class S3<T> implements IDAO<T> {
             throw new RuntimeException("Error inesperado al subir el archivo a S3", e);
         }
     }
+
 
     @Override
     public List<T> find() {

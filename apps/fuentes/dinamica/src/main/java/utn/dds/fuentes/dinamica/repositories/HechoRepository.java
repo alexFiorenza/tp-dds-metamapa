@@ -1,6 +1,7 @@
 package utn.dds.fuentes.dinamica.repositories;
 
 import utn.dds.daos.DAOFactory;
+import utn.dds.daos.DaoDobleDinamica;
 import utn.dds.daos.IDAO;
 import utn.dds.dominio.EstadoHecho;
 import utn.dds.dominio.Hecho;
@@ -16,6 +17,9 @@ import java.util.stream.Collectors;
 
 public class HechoRepository {
     private final IDAO<HechoDTO> dao;
+
+    // private final DaoDobleDinamica daoDoble;  // Pensar si estaria bien asi
+
     private static final Logger loggerRepository = LoggerFactory.getLogger(HechoRepository.class);
 
     public HechoRepository(String daoType, Map<String, Object> daoConfig) {
@@ -73,7 +77,7 @@ public class HechoRepository {
     public HechoDTO aportarHecho(HechoDTO hecho) throws IOException {
         // Asignar fecha de carga actual automáticamente en formato ISO-8601
         hecho.setFechaCarga(java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-        dao.save(hecho);
+        dao.save(hecho);   // Aca podriamos poner daoDoble en lugar de dao y se solucionaria
         return hecho;
     }
 

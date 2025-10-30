@@ -209,6 +209,10 @@ public class Hecho {
         this.etiquetas = etiquetas;
     }
 
+    public void setMultimedia(List<String> multimedia) { this.multimedia = multimedia; }
+
+    public List<String> getMultimedia() { return multimedia; }
+
     // Acciones
     public void ocultar() {
         this.estado = EstadoHecho.OCULTO;
