@@ -27,6 +27,29 @@ jobs:
     - name: Compilar con Maven
       run: mvn clean package -DskipTests
 
+    - name: Configurar Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'yarn'
+        cache-dependency-path: apps/ui-admin/yarn.lock
+
+    - name: Instalar dependencias ui-admin
+      run: |
+        cd apps/ui-admin
+        yarn install --frozen-lockfile
+
+    - name: Compilar ui-admin
+      env:
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+        CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+        NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+        NEXT_PUBLIC_MAPBOX_TOKEN: ${{ secrets.NEXT_PUBLIC_MAPBOX_TOKEN }}
+        NEXT_PUBLIC_USE_MOCK: ${{ secrets.NEXT_PUBLIC_USE_MOCK }}
+      run: |
+        cd apps/ui-admin
+        yarn build
+
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 

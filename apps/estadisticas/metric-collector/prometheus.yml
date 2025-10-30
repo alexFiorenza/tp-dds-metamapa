@@ -7,4 +7,4 @@ scrape_configs:
     static_configs:
       - targets:
           - 'agregador:7005'
-          - 'metamapa:7006'
+          - 'gestor-metamapa:7006'

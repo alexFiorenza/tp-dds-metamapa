@@ -305,12 +305,9 @@ export function FormularioColeccion({
                         listboxWrapper: "max-h-[400px]",
                         popoverContent: "bg-content1",
                       }}
+                      items={TIPOS_CRITERIO.map(tipo => ({ key: tipo.value, label: tipo.label }))}
                     >
-                      {TIPOS_CRITERIO.map((tipo) => (
-                        <SelectItem key={tipo.value} value={tipo.value}>
-                          {tipo.label}
-                        </SelectItem>
-                      ))}
+                      {(item) => <SelectItem key={item.key}>{item.label}</SelectItem>}
                     </Select>
                   </div>
 
@@ -345,12 +342,9 @@ export function FormularioColeccion({
                           listboxWrapper: "max-h-[400px]",
                           popoverContent: "bg-content1",
                         }}
+                        items={CATEGORIAS.map(cat => ({ key: cat, label: cat }))}
                       >
-                        {CATEGORIAS.map((cat) => (
-                          <SelectItem key={cat} value={cat}>
-                            {cat}
-                          </SelectItem>
-                        ))}
+                        {(item) => <SelectItem key={item.key}>{item.label}</SelectItem>}
                       </Select>
                     </div>
                   )}
@@ -399,12 +393,9 @@ export function FormularioColeccion({
                           listboxWrapper: "max-h-[400px]",
                           popoverContent: "bg-content1",
                         }}
+                        items={ESTADOS.map(estado => ({ key: estado, label: estado }))}
                       >
-                        {ESTADOS.map((estado) => (
-                          <SelectItem key={estado} value={estado}>
-                            {estado}
-                          </SelectItem>
-                        ))}
+                        {(item) => <SelectItem key={item.key}>{item.label}</SelectItem>}
                       </Select>
                     </div>
                   )}

@@ -73,13 +73,9 @@ public class Main {
                                         .title("MetaMapa - Servicio Principal API")
                                         .version("1.0.0")
                                         .description("API del servicio principal MetaMapa para administración y consultas")
-                                        .contact("Equipo MetaMapa", "http://localhost:7006", "contacto@metamapa.com");
+                                        .contact("Equipo MetaMapa", "", "contacto@metamapa.com");
                                 })
-                                .withServer(openApiServer -> {
-                                    openApiServer
-                                        .url("http://localhost:7006")
-                                        .description("Servidor de desarrollo");
-                                })
+                                // No especificamos servidor - Swagger UI usará la URL actual automáticamente
                                 .withSecurity(security -> {
                                     security.withBearerAuth();
                                 });

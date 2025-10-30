@@ -29,10 +29,10 @@ export function ColeccionPageClient({ handle, coleccion }: ColeccionPageClientPr
       if (key === 'latitud' || key === 'longitud') {
         const numValue = parseFloat(value)
         if (!isNaN(numValue)) {
-          filtrosDesdeUrl[key] = numValue
+          (filtrosDesdeUrl as any)[key] = numValue
         }
       } else {
-        filtrosDesdeUrl[key] = value
+        (filtrosDesdeUrl as any)[key] = value
       }
     })
 
@@ -48,10 +48,10 @@ export function ColeccionPageClient({ handle, coleccion }: ColeccionPageClientPr
           if (key === 'latitud' || key === 'longitud') {
             const numValue = parseFloat(value)
             if (!isNaN(numValue)) {
-              filtros[key] = numValue
+              (filtros as any)[key] = numValue
             }
           } else {
-            filtros[key] = value
+            (filtros as any)[key] = value
           }
         })
 
