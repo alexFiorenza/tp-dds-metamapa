@@ -1,7 +1,9 @@
 package utn.dds.fuentes.dinamica.repositories;
 
+import utn.dds.daos.DAOConfigBuilder;
 import utn.dds.daos.DAOFactory;
 import utn.dds.daos.IDAO;
+import utn.dds.daos.S3;
 import utn.dds.dominio.EstadoHecho;
 import utn.dds.dominio.Hecho;
 import utn.dds.dto.HechoDTO;
@@ -15,12 +17,23 @@ import java.util.stream.Collectors;
 
 public class HechoRepository {
     private final IDAO<HechoDTO> dao;
-    private final IDAO<HechoDTO> hechoS3;
+    private final S3 hechoS3;
+    Map<String, Object> s3Config = DAOConfigBuilder.buildS3Config();
+
+    {
+        hechoS3 = new S3(
+                (String) s3Config.get("accessKey"),
+                (String) s3Config.get("secretKey"),
+                (String) s3Config.get("bucket"),
+                (String) s3Config.get("endpoint"),
+                (String) s3Config.get("region")
+        );
+    }
 
     private static final Logger loggerRepository = LoggerFactory.getLogger(HechoRepository.class);
 
     public HechoRepository(String daoType, Map<String, Object> daoConfig) {
-        hechoS3 = DAOFactory.createDAO(HechoDTO.class, "s3", daoConfig);
+
         if ("filesystem".equals(daoType)) {
             //loggerRepository.info("Estoy dentro de HechoRepository");  -- Logger comentado para debuggeo.
             Map<String, Object> config = new java.util.HashMap<>();
@@ -101,7 +114,7 @@ public class HechoRepository {
     public HechoDTO aportarHecho(HechoDTO hecho) throws IOException {
         // Asignar fecha de carga actual automáticamente en formato ISO-8601
         hecho.setFechaCarga(java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-        saveProvisional(hecho);   // Funcion provisional para guardar los hechos en couchdb con multimedia en minio s3
+        this.saveProvisional(hecho);   // Funcion provisional para guardar los hechos en couchdb con multimedia en minio s3
         return hecho;
     }
 
