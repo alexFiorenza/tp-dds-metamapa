@@ -17,11 +17,11 @@ import java.util.stream.Collectors;
 
 public class HechoRepository {
     private final IDAO<HechoDTO> dao;
-    private final S3 hechoS3;
+    private final S3 s3;
     Map<String, Object> s3Config = DAOConfigBuilder.buildS3Config();
 
     {
-        hechoS3 = new S3(
+        s3 = new S3(
                 (String) s3Config.get("accessKey"),
                 (String) s3Config.get("secretKey"),
                 (String) s3Config.get("bucket"),
@@ -99,7 +99,7 @@ public class HechoRepository {
 
                 // Convierte el byte[] a InputStream
                 try (ByteArrayInputStream bais = new ByteArrayInputStream(datosBinarios)) {
-                    String url = hechoS3.uploadBinary(nombreArchivo, bais, contentLength);  // Solucionar esto y listo
+                    String url = s3.uploadBinary(nombreArchivo, bais, contentLength);  // Solucionar esto y listo
                     multimediaUrls.add(url);
                 } catch (Exception e) {
                     // manejar error/rollback según tu lógica (loguear, lanzar excepción, etc.)
