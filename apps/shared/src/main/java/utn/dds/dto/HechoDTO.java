@@ -30,7 +30,7 @@ public class HechoDTO {
     public HechoDTO(String titulo, String descripcion, String categoria, String fechaAcontecimiento,
                     String origen, String contribuyenteNombre, TipoHecho tipo,
                     double longitud, double latitud, String fechaCarga,
-                    EstadoHecho estado, List<String> etiquetas, String uuid) {
+                    EstadoHecho estado, List<String> etiquetas, String uuid,List<String> multimedia) {
         this.titulo = titulo;
         this.descripcion = descripcion;
         this.categoria = categoria;
@@ -44,6 +44,7 @@ public class HechoDTO {
         this.estado = estado;
         this.etiquetas = etiquetas;
         this.uuid = uuid;
+        this.multimedia = multimedia;
     }
 
     public static HechoDTO fromHecho(Hecho hecho) {

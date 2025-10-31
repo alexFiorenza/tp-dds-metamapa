@@ -66,7 +66,7 @@ public class Hecho {
     public Hecho(String titulo, String descripcion, String categoria, LocalDate fechaAcontecimiento,
                  String origen, Contribuyente contribuyente, TipoHecho tipo,
                  double longitud, double latitud, LocalDateTime fechaCarga,
-                 EstadoHecho estado, List<String> etiquetas) {
+                 EstadoHecho estado, List<String> etiquetas, List<String> multimedia) {
         this();
         this.titulo = titulo;
         this.descripcion = descripcion;
