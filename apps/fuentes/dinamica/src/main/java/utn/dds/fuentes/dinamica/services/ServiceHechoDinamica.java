@@ -1,5 +1,6 @@
 package utn.dds.fuentes.dinamica.services;
 
+import io.javalin.http.UploadedFile;
 import utn.dds.daos.IDAO;
 import utn.dds.dominio.Hecho;
 import utn.dds.dto.HechoDTO;
@@ -45,6 +46,10 @@ public class ServiceHechoDinamica {
 
     public HechoDTO aportarHecho(HechoDTO hecho) throws IOException {
         return repository.aportarHecho(hecho);
+    }
+
+    public HechoDTO aportarHechoConArchivos(HechoDTO hecho, List<UploadedFile> archivos) throws IOException {
+        return repository.aportarHechoConArchivos(hecho, archivos);
     }
 
     public Hecho cambiarEstado(Hecho hecho) throws IOException {

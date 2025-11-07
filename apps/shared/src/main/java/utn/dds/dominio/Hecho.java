@@ -50,7 +50,9 @@ public class Hecho {
     @Column(name = "estado")
     private EstadoHecho estado;
 
-    @Column(name = "multimedia")
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "hecho_multimedia", joinColumns = @JoinColumn(name = "hecho_uuid"))
+    @Column(name = "url", length = 1000)
     private List<String> multimedia;
 
     @ElementCollection(fetch = FetchType.EAGER)
