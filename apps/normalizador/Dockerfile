@@ -1,4 +1,5 @@
-FROM openjdk:17-jdk-slim
+# Usar Eclipse Temurin JRE 17 como imagen base (reemplazo oficial de OpenJDK, con soporte ARM64)
+FROM eclipse-temurin:17-jre
 
 # Establecer directorio de trabajo
 WORKDIR /app

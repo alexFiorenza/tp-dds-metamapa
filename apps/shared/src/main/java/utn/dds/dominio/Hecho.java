@@ -51,6 +51,11 @@ public class Hecho {
     private EstadoHecho estado;
 
     @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "hecho_multimedia", joinColumns = @JoinColumn(name = "hecho_uuid"))
+    @Column(name = "url", length = 1000)
+    private List<String> multimedia;
+
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "hecho_etiquetas", joinColumns = @JoinColumn(name = "hecho_uuid"))
     @Column(name = "etiqueta")
     private List<String> etiquetas;
@@ -63,7 +68,7 @@ public class Hecho {
     public Hecho(String titulo, String descripcion, String categoria, LocalDate fechaAcontecimiento,
                  String origen, Contribuyente contribuyente, TipoHecho tipo,
                  double longitud, double latitud, LocalDateTime fechaCarga,
-                 EstadoHecho estado, List<String> etiquetas) {
+                 EstadoHecho estado, List<String> etiquetas, List<String> multimedia) {
         this();
         this.titulo = titulo;
         this.descripcion = descripcion;
@@ -77,6 +82,7 @@ public class Hecho {
         this.fechaCarga = fechaCarga;
         this.estado = estado;
         this.etiquetas = etiquetas;
+        this.multimedia = multimedia;
     }
 
     public Hecho(Map<String, Object> datos) {
@@ -96,6 +102,7 @@ public class Hecho {
         this.fechaCarga = (LocalDateTime) datos.get("fecha_carga");
         this.estado = EstadoHecho.ACTIVO;
         this.etiquetas = (List<String>) datos.get("etiquetas");
+        this.multimedia = (List<String>) datos.get("multimedia");
     }
 
     // Getters
@@ -203,6 +210,10 @@ public class Hecho {
     public void setEtiquetas(List<String> etiquetas) {
         this.etiquetas = etiquetas;
     }
+
+    public void setMultimedia(List<String> multimedia) { this.multimedia = multimedia; }
+
+    public List<String> getMultimedia() { return multimedia; }
 
     // Acciones
     public void ocultar() {

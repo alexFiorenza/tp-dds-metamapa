@@ -22,6 +22,7 @@ public class HechoDTO {
     private String fechaCarga; // ISO-8601: "2025-10-29T22:24:15"
     private EstadoHecho estado;
     private List<String> etiquetas;
+    private List<String> multimedia;
     private String uuid;
 
     public HechoDTO() {}
@@ -29,7 +30,7 @@ public class HechoDTO {
     public HechoDTO(String titulo, String descripcion, String categoria, String fechaAcontecimiento,
                     String origen, String contribuyenteNombre, TipoHecho tipo,
                     double longitud, double latitud, String fechaCarga,
-                    EstadoHecho estado, List<String> etiquetas, String uuid) {
+                    EstadoHecho estado, List<String> etiquetas, String uuid,List<String> multimedia) {
         this.titulo = titulo;
         this.descripcion = descripcion;
         this.categoria = categoria;
@@ -43,6 +44,7 @@ public class HechoDTO {
         this.estado = estado;
         this.etiquetas = etiquetas;
         this.uuid = uuid;
+        this.multimedia = multimedia;
     }
 
     public static HechoDTO fromHecho(Hecho hecho) {
@@ -59,7 +61,8 @@ public class HechoDTO {
             hecho.getFechaCarga() != null ? hecho.getFechaCarga().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null,
             hecho.getEstado(),
             hecho.getEtiquetas(),
-            hecho.getUuid()
+            hecho.getUuid(),
+            hecho.getMultimedia()
         );
     }
 
@@ -76,7 +79,8 @@ public class HechoDTO {
             this.latitud,
             this.fechaCarga != null ? LocalDateTime.parse(this.fechaCarga, DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null,
             this.estado,
-            this.etiquetas
+            this.etiquetas,
+            this.multimedia
         );
     }
 
@@ -183,4 +187,8 @@ public class HechoDTO {
     public void setUuid(String uuid) {
         this.uuid = uuid;
     }
+
+    public List<String> getMultimedia() { return multimedia; }
+
+    public void setMultimedia(List<String> multimedia) {this.multimedia = multimedia;}
 }

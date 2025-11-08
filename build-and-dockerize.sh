@@ -1,59 +1,78 @@
 #!/bin/bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$ROOT_DIR"
+
+# ---------- Configurables ----------
+BUCKET_PRIVATE="${BUCKET_PRIVATE:-metamapa-data}"
+BUCKET_PUBLIC="${BUCKET_PUBLIC:-dinamica-multimedia}"
+# -----------------------------------
 
 echo "🚀 Construyendo proyecto MetaMapa..."
-echo ""
-
-# Detener contenedores en ejecución
-echo "🛑 Deteniendo contenedores existentes..."
-docker compose down
-
-# Eliminar imágenes existentes del proyecto
-echo "🗑️  Eliminando imágenes Docker existentes..."
-docker rmi -f metamapa/fuentes-estatica:latest 2>/dev/null || true
-docker rmi -f metamapa/fuentes-dinamica:latest 2>/dev/null || true
-docker rmi -f metamapa/proxy-metamapa:latest 2>/dev/null || true
-docker rmi -f metamapa/proxy-demo:latest 2>/dev/null || true
-docker rmi -f metamapa/agregador:latest 2>/dev/null || true
-docker rmi -f metamapa/metamapa:latest 2>/dev/null || true
-
-echo "✅ Imágenes antiguas eliminadas!"
-echo ""
-
-# Compilar todo el proyecto
-echo "📦 Compilando módulos con Maven..."
+echo "📦 Compilando módulos Maven (tests omitidos)..."
 mvn clean package -DskipTests
+echo "✅ Compilación exitosa"
 
-if [ $? -ne 0 ]; then
-    echo "❌ Error en la compilación. Abortando."
-    exit 1
-fi
+echo "🐳 Limpiando imágenes Docker antiguas..."
+# Detener servicios si están corriendo
+docker compose down 2>/dev/null || true
 
-echo "✅ Compilación exitosa!"
+# Limpiar imágenes antiguas (opcional, para forzar rebuild completo)
+echo "   ♻️ Eliminando imágenes previas de MetaMapa..."
+docker images | grep metamapa | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
+
+echo "✅ Limpieza completada"
+
+echo "🔧 Construyendo y levantando stack con docker compose..."
+docker compose up -d --build
+echo "✅ Stack arriba y construido"
+
+echo "⚙️ Configurando MinIO (buckets y política pública)..."
+
+docker compose exec -T minio sh -c "
+  set -eu
+
+  MINIO_USER=\${MINIO_ROOT_USER:-\${MINIO_ACCESS_KEY}}
+  MINIO_PASS=\${MINIO_ROOT_PASSWORD:-\${MINIO_SECRET_KEY}}
+
+  # Retry helper (máx ~20s)
+  try() { n=0; until \"\$@\"; do n=\$((n+1)); [ \$n -ge 10 ] && return 1; sleep 2; done; }
+
+  # Alias a MinIO local del contenedor
+  try mc alias set minio http://127.0.0.1:9000 \"\$MINIO_USER\" \"\$MINIO_PASS\"
+
+  # Crear buckets (idempotente)
+  mc mb --ignore-existing minio/${BUCKET_PRIVATE}
+  mc mb --ignore-existing minio/${BUCKET_PUBLIC}
+
+  # Hacer público (solo GetObject) el bucket público
+  mc anonymous set download minio/${BUCKET_PUBLIC}
+
+  # Verificar política aplicada (no detiene el script si falla el listado)
+  mc anonymous list minio/${BUCKET_PUBLIC} || true
+
+  echo '→ Buckets:'
+  mc ls minio/ || true
+"
+
+echo ""
+echo "✅ MinIO configurado:"
+echo "   • Bucket privado: ${BUCKET_PRIVATE}"
+echo "   • Bucket público: ${BUCKET_PUBLIC}"
+echo "   • URL (path-style): http://localhost:9000/${BUCKET_PUBLIC}/<ruta/archivo>"
 echo ""
 
-# Levantar servicios con Docker Compose
-echo "🐳 Levantando servicios con Docker Compose..."
-docker compose up -d
-
-if [ $? -ne 0 ]; then
-    echo "❌ Error al levantar los servicios. Verifica docker-compose.yml"
-    exit 1
-fi
-
+echo "🚀 Para ver logs rápidos:"
+echo "   docker compose logs -f --tail=200"
 echo ""
-echo "✅ Todos los servicios están corriendo!"
+echo "📊 Servicios disponibles:"
+echo "   • Fuente Estática:    http://localhost:7001"
+echo "   • Fuente Dinámica:    http://localhost:7002"
+echo "   • Proxy MetaMapa:     http://localhost:7003"
+echo "   • Proxy Demo:         http://localhost:7004"
+echo "   • Agregador:          http://localhost:7005"
+echo "   • MetaMapa API:       http://localhost:7006"
+echo "   • Grafana:            http://localhost:3000 (admin/admin)"
+echo "   • MinIO Console:      http://localhost:9001"
 echo ""
-echo "📋 Servicios disponibles:"
-echo "  - Fuentes Estáticas:    http://localhost:7001"
-echo "  - Fuentes Dinámicas:    http://localhost:7002"
-echo "  - Proxy MetaMapa:       http://localhost:7003"
-echo "  - Proxy Demo:           http://localhost:7004"
-echo "  - Agregador:            http://localhost:7005"
-echo "  - MetaMapa:             http://localhost:7006"
-echo "  - Prometheus:           http://localhost:9090"
-echo "  - Alertmanager:         http://localhost:9093"
-echo "  - Grafana:              http://localhost:3000 (admin/admin)"
-echo ""
-echo "📊 Para ver logs:         docker compose logs -f"
-echo "🛑 Para detener todo:     docker compose down"
-echo "" 
