@@ -252,6 +252,26 @@ services:
     restart: unless-stopped
     networks:
       - metamapa-network
+
+  # Scheduler de Estadísticas usando Ofelia
+  scheduler:
+    image: mcuadros/ofelia:latest
+    container_name: metamapa-scheduler
+    command: daemon --docker
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - metamapa-network
+    labels:
+      ofelia.job-exec.actualizar-estadisticas.schedule: "@every 10m"
+      ofelia.job-exec.actualizar-estadisticas.container: "metamapa-postgres"
+      ofelia.job-exec.actualizar-estadisticas.user: "postgres"
+      ofelia.job-exec.actualizar-estadisticas.command: >
+        sh -c 'PGPASSWORD=$$POSTGRES_PASSWORD psql -U $$POSTGRES_USER -d $$POSTGRES_DB -c "SELECT analiticas.actualizar_estadisticas();"'
+
 volumes:
   minio_data:
   postgres_data:
