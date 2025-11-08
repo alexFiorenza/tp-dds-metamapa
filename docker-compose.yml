@@ -78,6 +78,7 @@ services:
       - DAO_TYPE=${FUENTE_ESTATICA_DAO_TYPE:-s3}
       - PROCESSOR_TYPE=csv
       - S3_ENDPOINT=${S3_ENDPOINT}
+      - S3_PUBLIC_ENDPOINT=${S3_PUBLIC_ENDPOINT}
       - S3_ACCESS_KEY=${MINIO_ACCESS_KEY}
       - S3_SECRET_KEY=${MINIO_SECRET_KEY}
       - S3_BUCKET=${S3_BUCKET}
@@ -102,9 +103,10 @@ services:
       - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-admin123}
       - COUCHDB_DB=${COUCHDB_DB_DINAMICA:-dinamica_db}
       - S3_ENDPOINT=${S3_ENDPOINT}
+      - S3_PUBLIC_ENDPOINT=${S3_PUBLIC_ENDPOINT}
       - S3_ACCESS_KEY=${MINIO_ACCESS_KEY}
       - S3_SECRET_KEY=${MINIO_SECRET_KEY}
-      - S3_BUCKET=${S3_BUCKET}
+      - S3_BUCKET=${S3_BUCKET_DINAMICA}
     depends_on:
       - couchdb
     networks:
@@ -241,37 +243,6 @@ services:
       - postgres
       - metric-collector
     restart: unless-stopped
-    networks:
-      - metamapa-network
-
-  # Scheduler para Proxy Demo
-  scheduler-proxy-demo:
-    build:
-      context: ./apps/scheduler
-      dockerfile: Dockerfile
-    container_name: scheduler-proxy-demo
-    restart: unless-stopped
-    environment:
-      - TARGET_URL=http://fuente-proxy-demo:7004/hechos
-      - HTTP_METHOD=PUT
-      - INTERVAL_SECONDS=3600
-    depends_on:
-      - fuente-proxy-demo
-    networks:
-      - metamapa-network
-  # Scheduler para Agregador
-  scheduler-agregador:
-    build:
-      context: ./apps/scheduler
-      dockerfile: Dockerfile
-    container_name: scheduler-agregador
-    restart: unless-stopped
-    environment:
-      - TARGET_URL=http://agregador:7005/agregacion
-      - HTTP_METHOD=POST
-      - INTERVAL_SECONDS=60
-    depends_on:
-      - agregador
     networks:
       - metamapa-network
 

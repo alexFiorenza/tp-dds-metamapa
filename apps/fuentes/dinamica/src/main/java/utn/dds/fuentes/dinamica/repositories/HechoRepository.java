@@ -34,10 +34,12 @@ public class HechoRepository {
 
     {
         s3 = new S3(
+                null, // url
                 (String) s3Config.get("accessKey"),
                 (String) s3Config.get("secretKey"),
                 (String) s3Config.get("bucket"),
                 (String) s3Config.get("endpoint"),
+                (String) s3Config.get("publicEndpoint"),
                 (String) s3Config.get("region")
         );
     }

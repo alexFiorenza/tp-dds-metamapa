@@ -23,19 +23,22 @@ public class S3<T> implements IDAO<T> {
     private final String secretKey;
     private final String bucket;
     private final String endpoint;
+    private final String publicEndpoint;
     private final String region;
 
-    public S3(String url, String accessKey, String secretKey, String bucket, String endpoint, String region) {
+    public S3(String url, String accessKey, String secretKey, String bucket, String endpoint, String publicEndpoint, String region) {
         this.url = url;
         this.accessKey = accessKey;
         this.secretKey = secretKey;
         this.bucket = bucket;
         this.endpoint = endpoint;
+        this.publicEndpoint = publicEndpoint != null ? publicEndpoint : endpoint;
         this.region = region;
-        
+
         logger.info("Inicializando S3 DAO con configuración:");
         logger.info("  URL: {}", url);
         logger.info("  Endpoint: {}", endpoint);
+        logger.info("  Public Endpoint: {}", this.publicEndpoint);
         logger.info("  Bucket: {}", bucket);
         logger.info("  Region: {}", region);
         logger.info("  AccessKey: {}", accessKey != null ? "***" + accessKey.substring(Math.max(0, accessKey.length() - 4)) : "null");
@@ -43,23 +46,17 @@ public class S3<T> implements IDAO<T> {
 
     // Constructor backward compatible
     public S3(String url) {
-        this(url, null, null, null, null, "us-east-1");
+        this(url, null, null, null, null, null, "us-east-1");
     }
 
-    // Constructor without URL for dynamic path usage
+    // Constructor without URL for dynamic path usage (backward compatible)
     public S3(String accessKey, String secretKey, String bucket, String endpoint, String region) {
-        this.url = null;
-        this.accessKey = accessKey;
-        this.secretKey = secretKey;
-        this.bucket = bucket;
-        this.endpoint = endpoint;
-        this.region = region;
-        
-        logger.info("Inicializando S3 DAO (sin URL) con configuración:");
-        logger.info("  Endpoint: {}", endpoint);
-        logger.info("  Bucket: {}", bucket);
-        logger.info("  Region: {}", region);
-        logger.info("  AccessKey: {}", accessKey != null ? "***" + accessKey.substring(Math.max(0, accessKey.length() - 4)) : "null");
+        this(null, accessKey, secretKey, bucket, endpoint, endpoint, region);
+    }
+
+    // Constructor without URL but with separate publicEndpoint
+    public S3(String accessKey, String secretKey, String bucket, String endpoint, String publicEndpoint, String region) {
+        this(null, accessKey, secretKey, bucket, endpoint, publicEndpoint, region);
     }
 
     @Override
@@ -200,9 +197,10 @@ public class S3<T> implements IDAO<T> {
             RequestBody requestBody = RequestBody.fromInputStream(inputStream, contentLength);
             s3Client.putObject(putObjectRequest, requestBody);
 
-            String fileUrl = String.format("%s/%s/%s", endpoint, bucket, key);
+            // Usar publicEndpoint para generar la URL accesible públicamente
+            String fileUrl = String.format("%s/%s/%s", publicEndpoint, bucket, key);
 
-            logger.info("Archivo subido exitosamente a S3. URL: {}", fileUrl);
+            logger.info("Archivo subido exitosamente a S3. URL pública: {}", fileUrl);
             return fileUrl;
 
         } catch (S3Exception e) {

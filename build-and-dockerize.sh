@@ -14,47 +14,21 @@ echo "📦 Compilando módulos Maven (tests omitidos)..."
 mvn clean package -DskipTests
 echo "✅ Compilación exitosa"
 
-echo "🐳 Construyendo imágenes Docker..."
-IMAGES=(
-  "metamapa/fuentes-estatica:latest"
-  "metamapa/fuentes-dinamica:latest"
-  "metamapa/proxy-metamapa:latest"
-  "metamapa/proxy-demo:latest"
-  "metamapa/agregador:latest"
-  "metamapa/normalizador:latest"
-  "metamapa/scheduler:latest"
-  "metamapa/metamapa:latest"
-)
+echo "🐳 Limpiando imágenes Docker antiguas..."
+# Detener servicios si están corriendo
+docker compose down 2>/dev/null || true
 
-# Limpieza opcional de tags previos (no falla si no existen)
-for IMAGE in "${IMAGES[@]}"; do
-  if docker image inspect "$IMAGE" >/dev/null 2>&1; then
-    echo "   ♻️ Eliminando imagen previa: $IMAGE"
-    docker image rm -f "$IMAGE" >/dev/null 2>&1 || true
-  fi
-done
+# Limpiar imágenes antiguas (opcional, para forzar rebuild completo)
+echo "   ♻️ Eliminando imágenes previas de MetaMapa..."
+docker images | grep metamapa | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
 
-# Builds
-docker build -t metamapa/fuentes-estatica:latest     ./apps/fuentes/estatica/
-docker build -t metamapa/fuentes-dinamica:latest     ./apps/fuentes/dinamica/
-docker build -t metamapa/proxy-metamapa:latest       ./apps/fuentes/proxy/metamapa/
-docker build -t metamapa/proxy-demo:latest           ./apps/fuentes/proxy/demo/
-docker build -t metamapa/agregador:latest            ./apps/agregador/
-docker build -t metamapa/normalizador:latest         ./apps/normalizador/
-docker build -t metamapa/scheduler:latest            ./apps/scheduler/
-docker build -t metamapa/metamapa:latest             ./apps/metamapa/
+echo "✅ Limpieza completada"
 
-echo "✅ Todas las imágenes Docker construidas"
-
-echo "🔧 Levantando TODO el stack con docker compose..."
-docker compose up -d
-echo "✅ Stack arriba"
+echo "🔧 Construyendo y levantando stack con docker compose..."
+docker compose up -d --build
+echo "✅ Stack arriba y construido"
 
 echo "⚙️ Configurando MinIO (buckets y política pública)..."
-# Notas:
-# - Ejecutamos *dentro* del contenedor de MinIO (servicio: 'minio')
-# - Usamos creds nuevas si están, o legacy si no.
-# - Retry corto para evitar carreras sin complicar el script.
 
 docker compose exec -T minio sh -c "
   set -eu
@@ -89,11 +63,16 @@ echo "   • Bucket público: ${BUCKET_PUBLIC}"
 echo "   • URL (path-style): http://localhost:9000/${BUCKET_PUBLIC}/<ruta/archivo>"
 echo ""
 
-echo "📋 Imágenes disponibles:"
-printf '  - %s\n' "${IMAGES[@]}"
-
-echo ""
 echo "🚀 Para ver logs rápidos:"
 echo "   docker compose logs -f --tail=200"
 echo ""
-echo "📊 Grafana: http://localhost:3000 (usuario: \${GRAFANA_USER:-admin}, pass: \${GRAFANA_PASSWORD:-admin})"
+echo "📊 Servicios disponibles:"
+echo "   • Fuente Estática:    http://localhost:7001"
+echo "   • Fuente Dinámica:    http://localhost:7002"
+echo "   • Proxy MetaMapa:     http://localhost:7003"
+echo "   • Proxy Demo:         http://localhost:7004"
+echo "   • Agregador:          http://localhost:7005"
+echo "   • MetaMapa API:       http://localhost:7006"
+echo "   • Grafana:            http://localhost:3000 (admin/admin)"
+echo "   • MinIO Console:      http://localhost:9001"
+echo ""
