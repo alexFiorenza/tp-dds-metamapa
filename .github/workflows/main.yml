@@ -1,13 +1,13 @@
-name: CI/CD Rama Develop
+name: CI/CD Rama Main
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ main ]
   pull_request:
-    branches: [ develop ]
+    branches: [ main ]
 
 env:
-  DOCKER_TAG: experimental
+  DOCKER_TAG: latest
 
 jobs:
   build-and-push:

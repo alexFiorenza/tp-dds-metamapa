@@ -1,0 +1,40 @@
+erDiagram
+
+  DIM_UBICACION {
+    INTEGER ubicacion_id PK
+    TEXT    provincia
+    DOUBLE  latitud
+    DOUBLE  longitud
+  }
+
+  DIM_CATEGORIA {
+    INTEGER categoria_id PK
+    TEXT    categoria
+  }
+
+  DIM_TIEMPO {
+    INTEGER tiempo_id PK
+    INTEGER hora
+    INTEGER dia
+    INTEGER mes
+    INTEGER anio
+  }
+
+  DIM_COLECCION {
+    INTEGER coleccion_id PK
+    TEXT    coleccion_handle
+  }
+
+  FACT_HECHOS {
+    TEXT    hecho_uuid PK
+    INTEGER coleccion_id PK, FK
+    INTEGER ubicacion_id FK
+    INTEGER categoria_id FK
+    INTEGER tiempo_id FK
+  }
+
+  %% Relaciones (muchos HECHOS a una DIM)
+  FACT_HECHOS }o--|| DIM_UBICACION : "ubicacion_id"
+  FACT_HECHOS }o--|| DIM_CATEGORIA : "categoria_id"
+  FACT_HECHOS }o--|| DIM_TIEMPO    : "tiempo_id"
+  FACT_HECHOS }o--|| DIM_COLECCION : "coleccion_id"

@@ -101,13 +101,9 @@ export function FiltrosHechos({ onFiltrar, onLimpiar, filtrosIniciales = {} }: F
               }}
               size="sm"
               className="h-9"
+              items={[{ key: "all", label: "Todas" }, ...categorias.map(cat => ({ key: cat, label: cat }))]}
             >
-              <SelectItem key="all" value="all">Todas</SelectItem>
-              {categorias.map((cat) => (
-                <SelectItem key={cat} value={cat}>
-                  {cat}
-                </SelectItem>
-              ))}
+              {(item) => <SelectItem key={item.key}>{item.label}</SelectItem>}
             </Select>
           </div>
 
@@ -173,13 +169,9 @@ export function FiltrosHechos({ onFiltrar, onLimpiar, filtrosIniciales = {} }: F
                   }}
                   size="sm"
                   className="h-8"
+                  items={[{ key: "all", label: "Todos" }, ...estados.map(estado => ({ key: estado, label: estado }))]}
                 >
-                  <SelectItem key="all" value="all">Todos</SelectItem>
-                  {estados.map((estado) => (
-                    <SelectItem key={estado} value={estado}>
-                      {estado}
-                    </SelectItem>
-                  ))}
+                  {(item) => <SelectItem key={item.key}>{item.label}</SelectItem>}
                 </Select>
 
                 {/* Fecha de acontecimiento */}

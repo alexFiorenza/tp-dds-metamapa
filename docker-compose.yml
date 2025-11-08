@@ -70,6 +70,7 @@ services:
     build:
       context: ./apps/fuentes/estatica
       dockerfile: Dockerfile
+    platform: linux/amd64
     ports:
       - "7001:7001"
     container_name: metamapa-fuente-estatica
@@ -92,6 +93,7 @@ services:
     build:
       context: ./apps/fuentes/dinamica
       dockerfile: Dockerfile
+    platform: linux/amd64
     ports:
       - "7002:7002"
     container_name: metamapa-fuente-dinamica
@@ -117,6 +119,7 @@ services:
     build:
       context: ./apps/fuentes/proxy/metamapa
       dockerfile: Dockerfile
+    platform: linux/amd64
     ports:
       - "7003:7003"
     container_name: metamapa-fuente-proxy-metamapa
@@ -131,6 +134,7 @@ services:
     build:
       context: ./apps/fuentes/proxy/demo
       dockerfile: Dockerfile
+    platform: linux/amd64
     ports:
       - "7004:7004"
     container_name: metamapa-fuente-proxy-demo
@@ -151,6 +155,7 @@ services:
     build:
       context: ./apps/agregador
       dockerfile: Dockerfile
+    platform: linux/amd64
     ports:
       - "7005:7005"
     container_name: metamapa-agregador
@@ -170,6 +175,7 @@ services:
     build:
       context: ./apps/normalizador
       dockerfile: Dockerfile
+    platform: linux/amd64
     ports:
       - "7099:7099"
     container_name: metamapa-normalizador
@@ -182,6 +188,7 @@ services:
     build:
       context: ./apps/metamapa
       dockerfile: Dockerfile
+    platform: linux/amd64
     ports:
       - "7006:7006"
     container_name: metamapa-administrativo
@@ -245,7 +252,6 @@ services:
     restart: unless-stopped
     networks:
       - metamapa-network
-
 volumes:
   minio_data:
   postgres_data:

@@ -92,12 +92,8 @@ public class Main {
                                     .title("MetaMapa - Fuentes Dinámicas API")
                                     .version("1.0.0")
                                     .description("API para acceso a fuentes de datos dinámicas en MetaMapa");
-                            })
-                            .withServer(openApiServer -> {
-                                openApiServer
-                                    .url("http://localhost:7002")
-                                    .description("Servidor de desarrollo");
                             });
+                            // No especificamos servidor - Swagger UI usará la URL actual automáticamente
                     });
             }));
             

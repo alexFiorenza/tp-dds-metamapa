@@ -73,13 +73,9 @@ public class Main {
                                     .title("MetaMapa - Servicio Agregador API")
                                     .version("1.0.0")
                                     .description("API para la agregación y gestión de fuentes de datos en MetaMapa")
-                                    .contact("Equipo MetaMapa", "http://localhost:7005", "contacto@metamapa.com");
-                            })
-                            .withServer(openApiServer -> {
-                                openApiServer
-                                    .url("http://localhost:7005")
-                                    .description("Servidor de desarrollo");
+                                    .contact("Equipo MetaMapa", "", "contacto@metamapa.com");
                             });
+                            // No especificamos servidor - Swagger UI usará la URL actual automáticamente
                     });
             }));
             
