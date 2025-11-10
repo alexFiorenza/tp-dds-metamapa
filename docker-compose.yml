@@ -248,12 +248,9 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
       # Permitir embedding en iframes
       - GF_SECURITY_ALLOW_EMBEDDING=true
-      # Acceso anónimo para dashboards públicos
+      # Acceso anónimo con rol Viewer
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
-      # Configuración de cookies para iframe embedding
-      - GF_SECURITY_COOKIE_SAMESITE=none
-      - GF_SECURITY_COOKIE_SECURE=false
     depends_on:
       - postgres
       - metric-collector
