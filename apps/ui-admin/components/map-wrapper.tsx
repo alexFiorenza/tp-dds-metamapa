@@ -54,7 +54,7 @@ export function MapWrapper({ mapStyle, ...props }: MapComponentProps) {
     : 'mapbox://styles/mapbox/light-v11')
 
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-full absolute inset-0">
       <MapComponent {...props} mapStyle={dynamicMapStyle} />
     </div>
   )

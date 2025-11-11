@@ -34,7 +34,7 @@
         <module>apps/agregador</module>
         <module>apps/metamapa</module>
         <module>apps/scheduler</module>
-        <module>apps/normalizador</module>
+        <!-- apps/normalizador is a TypeScript/Node.js project, not Maven -->
     </modules>
 
     <dependencyManagement>

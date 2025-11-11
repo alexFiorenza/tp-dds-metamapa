@@ -10,9 +10,25 @@ BUCKET_PUBLIC="${BUCKET_PUBLIC:-dinamica-multimedia}"
 # -----------------------------------
 
 echo "🚀 Construyendo proyecto MetaMapa..."
+echo ""
 echo "📦 Compilando módulos Maven (tests omitidos)..."
 mvn clean package -DskipTests
-echo "✅ Compilación exitosa"
+echo "✅ Compilación Maven exitosa"
+echo ""
+echo "📦 Compilando Normalizador (TypeScript)..."
+cd apps/normalizador
+if [ -d "node_modules" ]; then
+  echo "   ✓ node_modules existe, actualizando dependencias..."
+  npm install
+else
+  echo "   → Instalando dependencias..."
+  npm install
+fi
+echo "   → Compilando TypeScript..."
+npm run build
+echo "✅ Compilación Normalizador exitosa"
+cd "$ROOT_DIR"
+echo ""
 
 echo "🐳 Limpiando imágenes Docker antiguas..."
 # Detener servicios si están corriendo
@@ -73,7 +89,7 @@ echo "   • Proxy MetaMapa:     http://localhost:7003"
 echo "   • Proxy Demo:         http://localhost:7004"
 echo "   • Agregador:          http://localhost:7005"
 echo "   • MetaMapa API:       http://localhost:7006"
-echo "   • Normalizador:       http://localhost:7099"
+echo "   • Normalizador:       http://localhost:3005 (health: /health)"
 echo ""
 echo "📈 Monitoreo y administración:"
 echo "   • Grafana:            http://localhost:3000 (admin/admin)"

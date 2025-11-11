@@ -9,8 +9,9 @@ MetaMapa is a full-stack system for managing and aggregating data from various s
 ### Architecture
 
 - **Backend**: Multi-module Maven project with shared domain
-- **Microservices architecture** with 6 independent Java services
-- **Javalin-based REST APIs** for each microservice
+- **Microservices architecture** with 6 independent Java services + 1 TypeScript service
+- **Javalin-based REST APIs** for each Java microservice
+- **Normalization service**: TypeScript/Node.js serverless function (Railway-ready)
 - **Frontend**: Next.js 15 admin application with TypeScript
 - **Docker containerization** with compose orchestration
 - **Monitoring stack** (Prometheus, Grafana, Alertmanager)
@@ -39,13 +40,21 @@ npm start
 
 ### Key Technologies
 
-**Backend:**
+**Backend (Java):**
 - Java 17
 - Maven (multi-module project)
 - Javalin web framework
 - Hibernate ORM with PostgreSQL
 - Docker & Docker Compose
 - Prometheus, Grafana, Alertmanager for monitoring
+
+**Normalizador (TypeScript):**
+- Node.js 20+
+- TypeScript with ES Modules
+- Native HTTP (no frameworks - ultra-lightweight)
+- Levenshtein distance for fuzzy matching
+- Pipeline architecture with 5 sequential normalizers
+- Configurable category mappings via JSON
 
 **Frontend:**
 - Next.js 15 (React 19) with TypeScript
@@ -69,14 +78,34 @@ mvn clean package -DskipTests
 ```
 
 ### Running Services
+
+**Java Services:**
 ```bash
 # Run specific microservice (example: agregador)
 cd apps/agregador
 mvn exec:java -Dexec.mainClass="utn.dds.agregador.Main"
 
 # Run MetaMapa service
-cd apps/metamapa  
+cd apps/metamapa
 mvn exec:java -Dexec.mainClass="utn.dds.metamapa.Main"
+```
+
+**Normalizador (TypeScript):**
+```bash
+# Navigate to normalizador
+cd apps/normalizador
+
+# Install dependencies (first time)
+npm install
+
+# Run development server with hot reload
+npm run dev
+
+# Build for production
+npm run build
+
+# Run production server
+PORT=3005 npm start
 ```
 
 ### Docker Operations
@@ -184,6 +213,24 @@ apps/
 │       ├── metamapa/ # MetaMapa proxy (port 7003)
 │       └── demo/     # Demo proxy (port 7004)
 ├── agregador/       # Data aggregation service (port 7005)
+├── normalizador/    # Data normalization service (port 3005, TypeScript)
+│   ├── src/
+│   │   ├── index.ts             # HTTP server entry point
+│   │   ├── pipeline.ts          # Normalization pipeline orchestrator
+│   │   ├── types.ts             # TypeScript type definitions
+│   │   ├── normalizadores/      # 5 sequential normalizers
+│   │   │   ├── texto.ts         # Text cleanup (trim, spaces)
+│   │   │   ├── categoria.ts     # Category mapping (exact, regex, fuzzy)
+│   │   │   ├── fecha.ts         # Date normalization (ISO-8601)
+│   │   │   ├── coordenadas.ts   # Coordinate validation
+│   │   │   └── etiquetas.ts     # Tag normalization
+│   │   ├── mapeos/
+│   │   │   └── categorias.json  # Configurable category mappings
+│   │   └── utils/
+│   │       └── similitud.ts     # Levenshtein distance algorithm
+│   ├── Dockerfile               # Multi-stage Node.js build
+│   ├── package.json
+│   └── tsconfig.json
 ├── metamapa/        # Main MetaMapa service (port 7006)
 ├── ui-admin/        # Next.js admin frontend (port 3000)
 │   ├── app/         # Next.js 15 App Router pages
@@ -212,6 +259,9 @@ The `apps/shared` module contains:
 - Proxy MetaMapa: 7003
 - Proxy Demo: 7004
 - Agregador: 7005
+- **Normalizador: 3005** (TypeScript/Node.js)
+  - Health: `GET /health`
+  - Normalize: `POST /normalizar`
 - MetaMapa: 7006
 - UI Admin: 3000
 - Docs (Mermaid viewer): 8080
@@ -373,10 +423,164 @@ All DTOs are typed in `types/api.ts`:
 ### Integration Pattern
 Each microservice should expose a `/health` endpoint and `/metrics` endpoint for monitoring.
 
+## Normalizador Service (TypeScript)
+
+### Overview
+The normalizador is a **stateless serverless function** built with TypeScript that normalizes hechos (facts) before they are persisted by the Agregador. It runs independently as a microservice and communicates via HTTP.
+
+### Architecture
+**Pipeline Pattern:** 5 sequential normalizers process each hecho:
+1. **TextoNormalizador** (OPCIONAL) - Trims whitespace, normalizes line breaks
+2. **CategoriaNormalizador** (ADVERTENCIA) - Maps categories using:
+   - Exact matching (case-insensitive)
+   - Regex patterns
+   - Fuzzy matching (Levenshtein distance)
+   - Fallback to "OTRO" if no match
+3. **FechaNormalizador** (ADVERTENCIA) - Converts to ISO-8601, removes timezone
+4. **CoordenadasNormalizador** (CRÍTICO) - Validates ranges, rounds to 6 decimals
+5. **EtiquetasNormalizador** (OPCIONAL) - Lowercase, deduplicate, sort
+
+**Severity Levels:**
+- **CRÍTICO**: Error rejects the hecho completely
+- **ADVERTENCIA**: Error generates warning, uses default value
+- **OPCIONAL**: Error is silently ignored
+
+### Key Features
+- **Zero runtime dependencies** (only dev dependencies for TypeScript)
+- **Native Node.js HTTP** (no Express/Fastify)
+- **Configurable categories** via `src/mapeos/categorias.json`
+- **Fuzzy matching** with Levenshtein distance algorithm
+- **Railway Function ready** (serverless deployment)
+- **Health check** endpoint for monitoring
+
+### Integration with Agregador
+The Agregador calls the normalizador via HTTP:
+
+**Flow:**
+1. Agregador obtains hechos from all sources
+2. **→ Sends hechos to Normalizador** (`POST /normalizar`)
+3. **← Receives normalized hechos + rejected hechos**
+4. Agregador filters duplicates
+5. Saves to PostgreSQL
+
+**Environment Variables:**
+- `NORMALIZADOR_URL` - URL of normalizador service (default: `http://localhost:3005`)
+- `NORMALIZADOR_ENABLED` - Enable/disable normalization (default: `true`)
+
+**Java Integration:**
+- `NormalizadorClient.java` - HTTP client for communication
+- `ConfiguracionNormalizacionDTO.java` - Configuration DTO
+- `NormalizarRequestDTO.java` - Request DTO
+- `NormalizarResponseDTO.java` - Response DTO with statistics
+
+### Configuration
+Categories are configured in `apps/normalizador/src/mapeos/categorias.json`:
+
+```json
+{
+  "categoriasValidas": ["INCENDIO", "CONTAMINACION", ...],
+  "exactos": {
+    "fuego": "INCENDIO",
+    "sismo": "TERREMOTO"
+  },
+  "regex": {
+    ".*(incendio|fuego).*": "INCENDIO"
+  }
+}
+```
+
+To add new categories:
+1. Add to `categoriasValidas` array
+2. Add exact mappings to `exactos` object (optional)
+3. Add regex patterns to `regex` object (optional)
+4. Rebuild: `npm run build`
+5. Restart service
+
+### API Endpoints
+
+**Health Check:**
+```bash
+GET /health
+Response: { status: "ok", service: "metamapa-normalizador", version: "1.0.0", ... }
+```
+
+**Normalize:**
+```bash
+POST /normalizar
+Content-Type: application/json
+
+Request:
+{
+  "hechos": [{ uuid, titulo, categoria, ... }],
+  "config": {
+    "normalizarCategorias": true,
+    "usarFuzzyMatching": true,
+    "umbralSimilitud": 0.85,
+    "rechazarCoordenadasInvalidas": true
+  }
+}
+
+Response:
+{
+  "hechosNormalizados": [...],
+  "hechosRechazados": [...],
+  "estadisticas": {
+    "totalProcesados": 10,
+    "totalNormalizados": 9,
+    "totalRechazados": 1,
+    "cambiosPorTipo": { "categoria": 5, "fecha": 3 },
+    "tiempoEjecucion": 15
+  }
+}
+```
+
+### Deployment
+
+**Docker:**
+- Multi-stage build (builder + production)
+- Alpine Linux base image
+- Non-root user for security
+- Port 3000 (mapped to 3005 in docker-compose)
+
+**Railway:**
+- Deploy directly from Dockerfile
+- Set `NODE_ENV=production` and `PORT=3000`
+- Configure `NORMALIZADOR_URL` in Agregador
+
+### Development Workflow
+
+1. **Make changes** to normalizers or configuration
+2. **Test locally:**
+   ```bash
+   cd apps/normalizador
+   npm run dev
+   curl http://localhost:3005/health
+   ```
+3. **Test integration:**
+   - Start normalizador on port 3005
+   - Start agregador (will connect automatically)
+   - Trigger aggregation and check logs
+4. **Deploy:**
+   - Docker: `./build-and-dockerize.sh`
+   - Railway: `railway up`
+
+### Monitoring
+The normalizador logs:
+- Number of hechos processed
+- Normalization statistics (processed, normalized, rejected)
+- Execution time
+- Details of rejected hechos with reasons
+
+Check Agregador logs for normalization activity:
+```bash
+docker-compose logs agregador | grep -i normalizador
+```
+
 ## Development Notes
 
-- All microservices use **Javalin** framework
+- All Java microservices use **Javalin** framework
 - Maven Shade plugin creates **fat JARs** for deployment
 - Each service has its own **Dockerfile** for containerization
 - **Shared domain logic** prevents code duplication across services
 - Alert integration sends HTTP POST to proxy services for consensus handling
+- **Normalizador** is the only TypeScript service (serverless architecture)

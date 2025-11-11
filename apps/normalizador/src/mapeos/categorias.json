@@ -1,0 +1,74 @@
+{
+  "categoriasValidas": [
+    "INCENDIO",
+    "CONTAMINACION",
+    "MANIFESTACION",
+    "INUNDACION",
+    "FAUNA",
+    "ALUD"
+  ],
+  "exactos": {
+    "incendio": "INCENDIO",
+    "fuego": "INCENDIO",
+    "fire": "INCENDIO",
+    "quema": "INCENDIO",
+    "incendio forestal": "INCENDIO",
+    "quema forestal": "INCENDIO",
+    "incendio urbano": "INCENDIO",
+    "siniestro": "INCENDIO",
+
+    "contaminacion": "CONTAMINACION",
+    "contaminación": "CONTAMINACION",
+    "polución": "CONTAMINACION",
+    "polucion": "CONTAMINACION",
+    "pollution": "CONTAMINACION",
+    "derrame": "CONTAMINACION",
+    "vertido": "CONTAMINACION",
+    "residuos": "CONTAMINACION",
+    "basura": "CONTAMINACION",
+
+    "manifestacion": "MANIFESTACION",
+    "manifestación": "MANIFESTACION",
+    "protesta": "MANIFESTACION",
+    "marcha": "MANIFESTACION",
+    "concentración": "MANIFESTACION",
+    "concentracion": "MANIFESTACION",
+    "movilización": "MANIFESTACION",
+    "movilizacion": "MANIFESTACION",
+    "piquete": "MANIFESTACION",
+
+    "inundacion": "INUNDACION",
+    "inundación": "INUNDACION",
+    "flood": "INUNDACION",
+    "desborde": "INUNDACION",
+    "anegamiento": "INUNDACION",
+    "crecida": "INUNDACION",
+    "avenida": "INUNDACION",
+
+    "fauna": "FAUNA",
+    "animal": "FAUNA",
+    "animales": "FAUNA",
+    "wildlife": "FAUNA",
+    "vida silvestre": "FAUNA",
+    "biodiversidad": "FAUNA",
+    "especies": "FAUNA",
+    "mascota": "FAUNA",
+    "mascotas": "FAUNA",
+
+    "alud": "ALUD",
+    "avalancha": "ALUD",
+    "deslizamiento": "ALUD",
+    "derrumbe": "ALUD",
+    "deslizamiento de tierra": "ALUD",
+    "remoción en masa": "ALUD"
+  },
+  "regex": {
+    ".*(incendio|fuego|quema).*forestal.*": "INCENDIO",
+    ".*(incendio|fuego).*": "INCENDIO",
+    ".*(contaminaci[oó]n|derrame|vertido|poluci[oó]n|residuos).*": "CONTAMINACION",
+    ".*(manifestaci[oó]n|protesta|marcha|piquete|movilizaci[oó]n).*": "MANIFESTACION",
+    ".*(inundaci[oó]n|desborde|anegamiento|crecida).*": "INUNDACION",
+    ".*(fauna|animal|vida silvestre|biodiversidad).*": "FAUNA",
+    ".*(alud|avalancha|deslizamiento|derrumbe|remoci[oó]n).*": "ALUD"
+  }
+}

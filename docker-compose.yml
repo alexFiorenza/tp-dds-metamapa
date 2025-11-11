@@ -165,21 +165,33 @@ services:
       - DB_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-metamapa_db}
       - DB_USER=${POSTGRES_USER:-metamapa}
       - DB_PASSWORD=${POSTGRES_PASSWORD:-metamapa123}
+      - NORMALIZADOR_URL=http://normalizador:3000
+      - NORMALIZADOR_ENABLED=${NORMALIZADOR_ENABLED:-true}
     depends_on:
       - postgres
+      - normalizador
     networks:
       - metamapa-network
 
-  # Normalizador
+  # Normalizador (TypeScript/Node.js)
   normalizador:
     build:
       context: ./apps/normalizador
       dockerfile: Dockerfile
     platform: linux/amd64
     ports:
-      - "7099:7099"
+      - "3005:3000"
     container_name: metamapa-normalizador
     restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - metamapa-network
 

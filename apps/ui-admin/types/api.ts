@@ -13,12 +13,7 @@ export interface HechoDTO {
   latitud: number
   estado: EstadoHecho
   etiquetas: string[]
-  multimedia?: MultimediaDTO[]
-}
-
-export interface MultimediaDTO {
-  tipo: "IMAGEN" | "VIDEO" | "AUDIO"
-  url: string
+  multimedia?: string[] // URLs de archivos multimedia (imágenes y videos)
 }
 
 export interface ColeccionDTO {
