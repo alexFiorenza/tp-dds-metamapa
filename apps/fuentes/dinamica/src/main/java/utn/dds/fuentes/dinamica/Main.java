@@ -76,11 +76,16 @@ public class Main {
 
         Javalin app = Javalin.create(config -> {
             config.bundledPlugins.enableDevLogging();
+            config.bundledPlugins.enableCors(cors -> {
+                cors.addRule(it -> {
+                    it.anyHost();
+                });
+            });
             config.jsonMapper(new io.javalin.json.JavalinJackson().updateMapper(mapper -> {
                 mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
                 mapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
             }));
-            
+
             // Configurar OpenAPI Plugin
             config.registerPlugin(new OpenApiPlugin(openApiConfig -> {
                 openApiConfig

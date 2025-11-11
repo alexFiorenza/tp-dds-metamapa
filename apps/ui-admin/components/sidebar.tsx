@@ -78,6 +78,7 @@ export function Sidebar({ isCollapsed: externalIsCollapsed, setIsCollapsed: exte
     { href: '/hechos', icon: 'ri-map-pin-line', label: 'Hechos' },
     { href: '/colecciones', icon: 'ri-folder-line', label: 'Colecciones' },
     { href: '/estadisticas', icon: 'ri-bar-chart-box-line', label: 'Estadísticas' },
+    { href: '/aportar', icon: 'ri-add-circle-line', label: 'Aportar Hecho' },
   ];
 
   return (
