@@ -137,6 +137,17 @@ jobs:
         cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/metamapa-gestor:buildcache
         cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/metamapa-gestor:buildcache,mode=max
 
+    - name: Build and push Normalizador
+      if: github.event_name == 'push'
+      uses: docker/build-push-action@v5
+      with:
+        context: ./apps/normalizador
+        push: true
+        platforms: linux/amd64
+        tags: ${{ secrets.DOCKERHUB_USERNAME }}/metamapa-normalizador:${{ env.DOCKER_TAG }}
+        cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/metamapa-normalizador:buildcache
+        cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/metamapa-normalizador:buildcache,mode=max
+
     - name: Summary - Pull Request
       if: github.event_name == 'pull_request'
       run: |
@@ -161,5 +172,6 @@ jobs:
         echo "  - ${{ secrets.DOCKERHUB_USERNAME }}/metamapa-proxy-demo:${{ env.DOCKER_TAG }}"
         echo "  - ${{ secrets.DOCKERHUB_USERNAME }}/metamapa-agregador:${{ env.DOCKER_TAG }}"
         echo "  - ${{ secrets.DOCKERHUB_USERNAME }}/metamapa-gestor:${{ env.DOCKER_TAG }}"
+        echo "  - ${{ secrets.DOCKERHUB_USERNAME }}/metamapa-normalizador:${{ env.DOCKER_TAG }}"
         echo ""
         echo "ℹ️  AWS Lambda: Se desplegará si hubo cambios en apps/fuentes/** (workflow separado)"
