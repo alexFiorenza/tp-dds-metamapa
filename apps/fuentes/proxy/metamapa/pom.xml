@@ -89,6 +89,16 @@
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- AWS Lambda -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-lambda-java-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.amazonaws.serverless</groupId>
+            <artifactId>aws-serverless-java-container-core</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

@@ -23,6 +23,7 @@
         <junit.version>5.9.3</junit.version>
         <hibernate.version>6.4.1.Final</hibernate.version>
         <postgresql.version>42.7.1</postgresql.version>
+        <aws.lambda.version>1.2.3</aws.lambda.version>
     </properties>
 
     <modules>
@@ -87,6 +88,19 @@
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
                 <version>${postgresql.version}</version>
+            </dependency>
+
+            <!-- AWS Lambda -->
+            <dependency>
+                <groupId>com.amazonaws</groupId>
+                <artifactId>aws-lambda-java-core</artifactId>
+                <version>${aws.lambda.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.amazonaws.serverless</groupId>
+                <artifactId>aws-serverless-java-container-core</artifactId>
+                <version>2.0.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

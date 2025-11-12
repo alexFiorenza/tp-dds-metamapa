@@ -41,11 +41,11 @@ public class Main {
         ctx.result("Proxy Demo - MetaMapa");
     }
     
-    public static void main(String[] args) {
+    public static Javalin createApp() {
         try {
             AppConfig appConfig = AppConfig.fromEnvironment();
-            
-            logger.info("Iniciando servicio proxy demo con configuración:");
+
+            logger.info("Configurando aplicación:");
             logger.info("  - DAO Type: {}", appConfig.getDaoType());
 
             ControllerFuenteProxyDemo controller = new ControllerFuenteProxyDemo(appConfig.getDaoType(), appConfig.getDaoConfig());
@@ -56,41 +56,56 @@ public class Main {
                     mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
                     mapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
                 }));
-                
-                // Configurar OpenAPI Plugin
-                config.registerPlugin(new OpenApiPlugin(openApiConfig -> {
-                    openApiConfig
-                        .withDocumentationPath("/openapi")
-                        .withDefinitionConfiguration((version, openApiDefinition) -> {
-                            openApiDefinition
-                                .withInfo(openApiInfo -> {
-                                    openApiInfo
-                                        .title("MetaMapa - Proxy Demo API")
-                                        .version("1.0.0")
-                                        .description("API proxy demo para pruebas y desarrollo en MetaMapa")
-                                        .contact("Equipo MetaMapa", "", "contacto@metamapa.com");
-                                });
-                                // No especificamos servidor - Swagger UI usará la URL actual automáticamente
-                        });
-                }));
-                
-                // Registrar Swagger Plugin
-                config.registerPlugin(new SwaggerPlugin());
-                
-                // Registrar ReDoc Plugin
-                config.registerPlugin(new ReDocPlugin());
-                
+
+                if (System.getenv("AWS_LAMBDA_FUNCTION_NAME") == null) {
+                    config.registerPlugin(new OpenApiPlugin(openApiConfig -> {
+                        openApiConfig
+                            .withDocumentationPath("/openapi")
+                            .withDefinitionConfiguration((version, openApiDefinition) -> {
+                                openApiDefinition
+                                    .withInfo(openApiInfo -> {
+                                        openApiInfo
+                                            .title("MetaMapa - Proxy Demo API")
+                                            .version("1.0.0")
+                                            .description("API proxy demo para pruebas y desarrollo en MetaMapa")
+                                            .contact("Equipo MetaMapa", "", "contacto@metamapa.com");
+                                    });
+                            });
+                    }));
+
+                    config.registerPlugin(new SwaggerPlugin());
+                    config.registerPlugin(new ReDocPlugin());
+                }
             });
-            
+
+            configureRoutes(app, controller);
+            return app;
+
+        } catch (Exception e) {
+            logger.error("Error al crear la aplicación: {}", e.getMessage(), e);
+            throw new RuntimeException("Error al crear la aplicación", e);
+        }
+    }
+
+    private static void configureRoutes(Javalin app, ControllerFuenteProxyDemo controller) {
+        if (System.getenv("AWS_LAMBDA_FUNCTION_NAME") == null) {
             app.get("/health", Main::healthCheck);
             app.get("/", Main::infoServicio);
-            app.get("/hechos", controller::obtenerHechos);
-            app.put("/hechos", controller::agregarHechos);
+        }
 
+        app.get("/hechos", controller::obtenerHechos);
+        app.put("/hechos", controller::agregarHechos);
+    }
+
+    public static void main(String[] args) {
+        if (System.getenv("AWS_LAMBDA_FUNCTION_NAME") != null) {
+            return;
+        }
+
+        try {
+            Javalin app = createApp();
             app.start(7004);
-            
             logger.info("Servicio proxy demo iniciado en puerto 7004");
-            
         } catch (Exception e) {
             logger.error("Error al iniciar el servicio: {}", e.getMessage(), e);
             System.exit(1);

@@ -576,6 +576,539 @@ Check Agregador logs for normalization activity:
 docker-compose logs agregador | grep -i normalizador
 ```
 
+## Fuentes Services (AWS Lambda)
+
+### Overview
+The fuentes (data sources) services are **dual-mode Javalin applications** that can run both as traditional Docker containers and as AWS Lambda functions. They provide data to the Agregador from various sources (static CSV, dynamic APIs, proxies).
+
+### Architecture: Dual-Mode Deployment
+
+Each fuente supports two execution modes:
+
+**1. Traditional Mode (Docker/Local):**
+- Runs Javalin on dedicated port (7001-7004)
+- Full Swagger/OpenAPI documentation available
+- Health check endpoints exposed
+- Direct HTTP server
+
+**2. Serverless Mode (AWS Lambda):**
+- Handler forwards requests to internal Javalin instance
+- No Swagger/OpenAPI (reduces cold start time)
+- No health check endpoints
+- Triggered by API Gateway HTTP API
+
+**Mode Detection:**
+- Presence of `AWS_LAMBDA_FUNCTION_NAME` environment variable determines mode
+- Docker: variable absent → starts HTTP server
+- Lambda: variable present → silent initialization
+
+### Services and Endpoints
+
+All services share a single API Gateway with path-based routing:
+
+**1. Fuente Estática** (`/estatica/*`)
+- **Endpoints:** `GET /estatica/hechos`
+- **Purpose:** Serves hechos from static CSV files stored in S3
+- **Storage:** MinIO (local) or AWS S3 (Lambda)
+- **Handler:** `utn.dds.fuentes.estatica.LambdaHandler`
+- **Environment Variables:**
+  - `DAO_TYPE`: Storage type (s3)
+  - `S3_ENDPOINT`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET`
+
+**2. Fuente Dinámica** (`/dinamica/*`)
+- **Endpoints:** `GET /dinamica/hechos`, `POST /dinamica/hechos`
+- **Purpose:** Serves and accepts hechos from CouchDB
+- **Storage:** CouchDB (Railway for Lambda)
+- **Handler:** `utn.dds.fuentes.dinamica.LambdaHandler`
+- **Environment Variables:**
+  - `DAO_TYPE`: Storage type (couchdb)
+  - `COUCHDB_URL`, `COUCHDB_USER`, `COUCHDB_PASSWORD`, `COUCHDB_DB`
+
+**3. Proxy MetaMapa** (`/metamapa/*`)
+- **Endpoints:** `GET /metamapa/hechos`
+- **Purpose:** Proxies requests to external MetaMapa API
+- **Handler:** `utn.dds.fuentes.proxy.metamapa.LambdaHandler`
+- **Environment Variables:**
+  - `URL`: External MetaMapa API URL
+
+**4. Proxy Demo** (`/demo/*`)
+- **Endpoints:** `GET /demo/hechos`, `PUT /demo/hechos`
+- **Purpose:** Demo proxy for testing with CouchDB storage
+- **Storage:** CouchDB (Railway for Lambda)
+- **Handler:** `utn.dds.fuentes.proxy.demo.LambdaHandler`
+- **Environment Variables:**
+  - `DAO_TYPE`: Storage type (couchdb)
+  - `COUCHDB_URL`, `COUCHDB_USER`, `COUCHDB_PASSWORD`, `COUCHDB_DB`
+
+### Deployment Workflow
+
+**Local/Docker:**
+```bash
+# Build JARs
+mvn clean package -DskipTests
+
+# Start with docker-compose
+docker-compose up -d
+
+# Access endpoints
+curl http://localhost:7001/hechos  # Fuente Estática
+curl http://localhost:7002/hechos  # Fuente Dinámica
+curl http://localhost:7003/hechos  # Proxy MetaMapa
+curl http://localhost:7004/hechos  # Proxy Demo
+```
+
+**AWS Lambda (via GitHub Actions):**
+```bash
+# Automatic deployment on push to develop/main
+git push origin develop  # Deploys to 'dev' stage
+git push origin main     # Deploys to 'prod' stage
+
+# Manual deployment with Serverless Framework
+cd apps/fuentes
+serverless deploy --stage dev
+
+# View deployed endpoints
+serverless info --stage dev
+```
+
+**GitHub Actions Workflow:**
+- File: `.github/workflows/deploy-fuentes-lambda.yml`
+- Triggers: Push to `develop`/`main` or changes in `apps/fuentes/**`
+- Steps:
+  1. Build all JARs with Maven
+  2. Install Serverless Framework
+  3. Deploy all 4 Lambda functions to AWS
+  4. Configure environment variables from GitHub Secrets
+
+### Required GitHub Secrets
+
+**AWS Credentials:**
+- `AWS_ACCESS_KEY_ID` - AWS access key
+- `AWS_SECRET_ACCESS_KEY` - AWS secret key
+
+**Fuente Estática (Dev/Prod):**
+- `FUENTE_ESTATICA_DAO_TYPE_DEV` / `FUENTE_ESTATICA_DAO_TYPE_PROD`
+- `S3_ENDPOINT_DEV` / `S3_ENDPOINT_PROD`
+- `S3_PUBLIC_ENDPOINT_DEV` / `S3_PUBLIC_ENDPOINT_PROD`
+- `S3_ACCESS_KEY_DEV` / `S3_ACCESS_KEY_PROD`
+- `S3_SECRET_KEY_DEV` / `S3_SECRET_KEY_PROD`
+- `S3_BUCKET_DEV` / `S3_BUCKET_PROD`
+
+**Fuente Dinámica (Dev/Prod):**
+- `FUENTE_DINAMICA_DAO_TYPE_DEV` / `FUENTE_DINAMICA_DAO_TYPE_PROD`
+- `COUCHDB_URL_DEV` / `COUCHDB_URL_PROD`
+- `COUCHDB_USER_DEV` / `COUCHDB_USER_PROD`
+- `COUCHDB_PASSWORD_DEV` / `COUCHDB_PASSWORD_PROD`
+- `COUCHDB_DB_DINAMICA_DEV` / `COUCHDB_DB_DINAMICA_PROD`
+
+**Proxy MetaMapa (Dev/Prod):**
+- `METAMAPA_PROXY_URL_DEV` / `METAMAPA_PROXY_URL_PROD`
+
+**Proxy Demo (Dev/Prod):**
+- `FUENTE_PROXY_DEMO_DAO_TYPE_DEV` / `FUENTE_PROXY_DEMO_DAO_TYPE_PROD`
+- `COUCHDB_DB_PROXY_DEMO_DEV` / `COUCHDB_DB_PROXY_DEMO_PROD`
+
+### Serverless Configuration
+
+File: `apps/fuentes/serverless.yml`
+
+Key features:
+- **Single API Gateway** for all fuentes
+- **Path-based routing** (`/estatica/*`, `/dinamica/*`, etc.)
+- **Individual packaging** (each function has its own JAR)
+- **CloudWatch Logs** with 7-day retention
+- **Environment-specific configuration** (dev/prod stages)
+- **CORS enabled** for frontend integration
+
+### Implementation Details
+
+**Main.java Pattern (all fuentes):**
+```java
+public static Javalin createApp() {
+    // App configuration
+    // Conditionally disable OpenAPI/Swagger in Lambda
+    if (System.getenv("AWS_LAMBDA_FUNCTION_NAME") == null) {
+        // Register OpenAPI, Swagger, ReDoc plugins
+    }
+    return app;
+}
+
+private static void configureRoutes(Javalin app, Controller controller) {
+    // Health/info endpoints only in non-Lambda
+    if (System.getenv("AWS_LAMBDA_FUNCTION_NAME") == null) {
+        app.get("/health", Main::healthCheck);
+        app.get("/", Main::infoServicio);
+    }
+    // Functional endpoints (available in both modes)
+    app.get("/hechos", controller::obtenerHechos);
+}
+
+public static void main(String[] args) {
+    if (System.getenv("AWS_LAMBDA_FUNCTION_NAME") != null) {
+        return; // Lambda mode - don't start server
+    }
+    Javalin app = createApp();
+    app.start(PORT);
+}
+```
+
+**LambdaHandler.java Pattern (all fuentes):**
+```java
+public class LambdaHandler implements RequestHandler<AwsProxyRequest, AwsProxyResponse> {
+    private static Javalin app;
+
+    static {
+        // Cold start initialization
+        app = Main.createApp();
+        app.start(0); // Random available port
+    }
+
+    @Override
+    public AwsProxyResponse handleRequest(AwsProxyRequest request, Context context) {
+        // Forward request to internal Javalin via localhost HTTP
+        // Return formatted AwsProxyResponse
+    }
+}
+```
+
+### Monitoring
+
+Lambda functions log to CloudWatch:
+```bash
+# View logs for specific function
+aws logs tail /aws/lambda/metamapa-fuentes-dev-fuente-estatica --follow
+
+# Filter logs
+aws logs filter-log-events \
+  --log-group-name /aws/lambda/metamapa-fuentes-dev-fuente-estatica \
+  --filter-pattern "ERROR"
+```
+
+### Cost Optimization
+
+- **Memory:** 1024-1536 MB (based on complexity)
+- **Timeout:** 28 seconds (under API Gateway 29s limit)
+- **Provisioned concurrency:** Not used (infrequent traffic)
+- **Cold start:** ~2-3 seconds (Java 17 + Javalin)
+
+### Troubleshooting
+
+**Issue: JAR not found during deployment**
+```bash
+# Ensure JARs are built before deploying
+mvn clean package -DskipTests
+```
+
+**Issue: Environment variables not set**
+```bash
+# Verify secrets in GitHub repository settings
+# Check serverless.yml environment mappings
+```
+
+**Issue: CouchDB connection failed**
+```bash
+# Verify CouchDB is accessible from Lambda
+# Check security groups and network configuration
+# Ensure COUCHDB_URL uses public Railway URL
+```
+
+**Issue: Cold start timeout**
+```bash
+# Increase timeout in serverless.yml
+# Consider reducing dependencies in pom.xml
+```
+
+## Observability Strategy (Distributed Tracing & Logging)
+
+### Current State
+
+The MetaMapa system is distributed across multiple platforms:
+- **Frontend**: Vercel (Next.js)
+- **Backend**: AWS Lambda (Fuentes)
+- **Services**: Railway (CouchDB)
+- **Monitoring**: Railway and Grafana Cloud (Prometheus, Grafana)
+
+**Problem:** No unified observability across platforms. Each platform has its own logging:
+- Vercel logs → Vercel dashboard
+- AWS Lambda → CloudWatch
+- Railway → Railway logs
+- Docker → Railway and Grafana Cloud logs
+
+**No way to:**
+- Trace a request end-to-end (Vercel → Lambda → Railway)
+- Correlate logs across services
+- Identify bottlenecks in distributed calls
+- Debug cross-platform issues
+
+### Proposed Solution: OpenTelemetry + Grafana Cloud
+
+**Chosen Strategy:** **OTLP (OpenTelemetry Protocol) + AWS Lambda Extensions**
+
+**Architecture:**
+```
+┌────────────────────────────────────────────────────────┐
+│              Grafana Cloud (Free Tier)                 │
+│  - Loki (logs): 50 GB/month                           │
+│  - Tempo (traces): 50 GB/month                        │
+│  - Prometheus (metrics): 10k series                   │
+│  - 14 days retention                                  │
+└────────────────────────────────────────────────────────┘
+           ▲              ▲              ▲
+           │              │              │
+     [OTLP Export]  [OTLP Export]  [OTLP Export]
+           │              │              │
+    ┌──────────┐   ┌──────────┐   ┌──────────┐
+    │  Vercel  │   │   AWS    │   │ Railway  │
+    │(Next.js) │   │ (Lambda) │   │          │
+    └──────────┘   └──────────┘   └──────────┘
+                       │
+                       └─> Lambda Extensions
+                           (handles OTLP buffering)
+```
+
+**Why this approach:**
+- ✅ **Vendor-neutral**: OTLP works across Vercel, AWS, Railway, Docker
+- ✅ **Lambda Extensions**: Non-blocking, automatic flushing, minimal code changes
+- ✅ **Single source of truth**: All telemetry data in Grafana Cloud
+- ✅ **End-to-end tracing**: See complete request flow across platforms
+- ✅ **Cost-effective**: Grafana Cloud free tier sufficient for development
+- ✅ **Future-proof**: OpenTelemetry is the industry standard
+
+### Lambda Implementation: AWS Lambda Extensions (CHOSEN APPROACH)
+
+**How it works:**
+```
+┌─────────────────────────────────────────────────────────┐
+│            AWS Lambda Function                          │
+│                                                         │
+│  ┌──────────────────────────────────────────────────┐  │
+│  │  Your Handler (LambdaHandler.java)              │  │
+│  │  - Creates spans automatically                   │  │
+│  │  - Sends to localhost:4318 (OTLP)              │  │
+│  └──────────────────────────────────────────────────┘  │
+│                      │                                 │
+│                      │ OTLP over localhost              │
+│                      ▼                                 │
+│  ┌──────────────────────────────────────────────────┐  │
+│  │  AWS OTel Lambda Extension (Layer)              │  │
+│  │  - Receives spans                                │  │
+│  │  - Buffers in memory                            │  │
+│  │  - Sends batch to Grafana Tempo (async)        │  │
+│  └──────────────────────────────────────────────────┘  │
+│                      │                                 │
+└──────────────────────┼─────────────────────────────────┘
+                       │ HTTPS (non-blocking)
+                       ▼
+            Grafana Tempo (remote)
+```
+
+**Why Lambda Extensions:**
+- ✅ **Non-blocking**: Extension runs in parallel, doesn't block handler response
+- ✅ **Auto-instrumentation**: Traces HTTP requests automatically
+- ✅ **Automatic flushing**: Extension handles buffering and sending
+- ✅ **Minimal code changes**: Just configuration, no code rewrite needed
+- ✅ **Lower cold start**: ~300ms vs ~500ms with manual integration
+- ✅ **AWS recommended**: Official AWS OpenTelemetry layer
+
+**Configuration:**
+```yaml
+# serverless.yml
+functions:
+  fuente-estatica:
+    layers:
+      # Official AWS OTel Lambda Extension
+      - arn:aws:lambda:us-east-1:901920570463:layer:aws-otel-java-wrapper-amd64-ver-1-32-0:1
+    environment:
+      # Enable auto-instrumentation
+      AWS_LAMBDA_EXEC_WRAPPER: /opt/otel-handler
+
+      # OpenTelemetry configuration
+      OTEL_SERVICE_NAME: fuente-estatica
+      OTEL_EXPORTER_OTLP_ENDPOINT: https://tempo-xxx.grafana.net:443
+      OTEL_EXPORTER_OTLP_HEADERS: "Authorization=Bearer ${env:GRAFANA_API_KEY}"
+      OTEL_TRACES_SAMPLER: always_on
+      OTEL_PROPAGATORS: tracecontext,baggage
+```
+
+**Code (optional custom spans):**
+```java
+// Your existing code works as-is with auto-instrumentation
+// Add custom spans only where needed:
+Span span = GlobalOpenTelemetry.getTracer("fuente-estatica")
+    .spanBuilder("custom-operation")
+    .startSpan();
+try (Scope scope = span.makeCurrent()) {
+    // Your logic
+} finally {
+    span.end(); // No flush needed - extension handles it
+}
+```
+
+### Alternative Approaches (Not Chosen)
+
+#### Manual OpenTelemetry Integration
+❌ **Not chosen** - Requires more code, blocks handler on flush, higher cold start overhead.
+
+#### AWS X-Ray + OpenTelemetry Collector
+❌ **Not chosen** - Requires extra infrastructure (OpenTelemetry Collector), more complexity, vendor lock-in to AWS.
+
+### Implementation Roadmap
+
+**Phase 1: Setup Grafana Cloud (5 minutes)**
+1. Create free account at grafana.com
+2. Obtain credentials:
+   - Tempo endpoint: `tempo-xxx.grafana.net:443`
+   - API Key: `glc_xxx...`
+3. Add to GitHub Secrets:
+   - `OTEL_EXPORTER_OTLP_ENDPOINT`
+   - `GRAFANA_API_KEY`
+
+**Phase 2: Instrument Normalizador (TypeScript - easiest)**
+```bash
+cd apps/normalizador
+npm install @opentelemetry/sdk-node \
+            @opentelemetry/auto-instrumentations-node \
+            @opentelemetry/exporter-trace-otlp-http
+```
+
+```typescript
+// src/tracing.ts
+import { NodeSDK } from '@opentelemetry/sdk-node';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
+
+const sdk = new NodeSDK({
+  serviceName: 'metamapa-normalizador',
+  traceExporter: new OTLPTraceExporter({
+    url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT + '/v1/traces',
+    headers: {
+      'Authorization': `Bearer ${process.env.GRAFANA_API_KEY}`
+    }
+  }),
+  instrumentations: [getNodeAutoInstrumentations()]
+});
+
+sdk.start();
+```
+
+**Phase 3: Instrument Lambda Functions**
+
+Update `serverless.yml`:
+```yaml
+provider:
+  # ... existing config
+  environment:
+    OTEL_EXPORTER_OTLP_ENDPOINT: ${env:OTEL_EXPORTER_OTLP_ENDPOINT}
+    GRAFANA_API_KEY: ${env:GRAFANA_API_KEY}
+
+functions:
+  fuente-estatica:
+    layers:
+      - arn:aws:lambda:us-east-1:901920570463:layer:aws-otel-java-wrapper-amd64-ver-1-32-0:1
+    environment:
+      AWS_LAMBDA_EXEC_WRAPPER: /opt/otel-handler
+      OTEL_SERVICE_NAME: fuente-estatica
+
+  fuente-dinamica:
+    layers:
+      - arn:aws:lambda:us-east-1:901920570463:layer:aws-otel-java-wrapper-amd64-ver-1-32-0:1
+    environment:
+      AWS_LAMBDA_EXEC_WRAPPER: /opt/otel-handler
+      OTEL_SERVICE_NAME: fuente-dinamica
+
+  # ... repeat for other functions
+```
+
+**Phase 4: Instrument Frontend (Vercel)**
+```bash
+cd apps/ui-admin
+npm install @vercel/otel
+```
+
+```typescript
+// instrumentation.ts (Next.js 15)
+import { registerOTel } from '@vercel/otel'
+
+export function register() {
+  registerOTel({
+    serviceName: 'metamapa-frontend',
+    traceExporter: {
+      url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
+      headers: {
+        'Authorization': `Bearer ${process.env.GRAFANA_CLOUD_API_KEY}`
+      }
+    }
+  })
+}
+```
+
+Add to Vercel environment variables:
+- `OTEL_EXPORTER_OTLP_ENDPOINT`
+- `GRAFANA_CLOUD_API_KEY`
+
+**Phase 5: View Traces in Grafana**
+1. Navigate to Grafana → Explore
+2. Select Tempo datasource
+3. Query traces by service, operation, or trace ID
+4. View service map showing all services
+5. Drill down into specific traces to see:
+   - Request flow across services
+   - Latency breakdown
+   - Error details
+   - Correlated logs (if using Loki)
+
+### Expected Results
+
+**End-to-End Trace Example:**
+```
+Trace ID: abc123xyz                          Total: 1250ms
+├─ Vercel (Next.js)                          150ms
+│  └─ API fetch("/api/hechos")
+│
+├─ API Gateway                               50ms
+│  └─ Route to Lambda
+│
+├─ Lambda: fuente-dinamica                   800ms
+│  ├─ Handler execution                      100ms
+│  ├─ CouchDB query (Railway)                500ms
+│  └─ Normalizador call                      200ms
+│
+└─ Lambda: normalizador (Railway)            250ms
+   ├─ Category normalization                 100ms
+   ├─ Date normalization                     50ms
+   └─ Coordinate validation                  100ms
+```
+
+**Insights gained:**
+- Identify bottlenecks (e.g., CouchDB query is slow)
+- Measure cross-platform latency
+- Debug distributed errors
+- Optimize based on real data
+
+### Cost Considerations
+
+**Grafana Cloud Free Tier:**
+- 50 GB logs/month (Loki)
+- 50 GB traces/month (Tempo)
+- 10k active series (Prometheus)
+- 14 days retention
+- **Sufficient for development and small production loads**
+
+**If exceeding free tier:**
+- Loki: $0.50/GB
+- Tempo: $0.30/GB
+- Typically costs $10-30/month for moderate traffic
+
+**Alternative:** Self-host Loki + Tempo (free, but requires infrastructure)
+
+### Status
+
+⏳ **Not yet implemented** - Strategy documented for future implementation.
+
+**Priority:** Medium - Current CloudWatch + docker-compose logs are functional but lack cross-platform correlation.
+
+**Effort:** ~4-6 hours total implementation time.
+
 ## Development Notes
 
 - All Java microservices use **Javalin** framework
