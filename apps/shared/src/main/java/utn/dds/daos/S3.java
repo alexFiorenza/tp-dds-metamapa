@@ -12,6 +12,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
@@ -192,6 +193,7 @@ public class S3<T> implements IDAO<T> {
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .bucket(bucket)
                     .key(key)
+                    .acl(ObjectCannedACL.PUBLIC_READ) // Hacer el archivo públicamente accesible
                     .build();
 
             RequestBody requestBody = RequestBody.fromInputStream(inputStream, contentLength);
