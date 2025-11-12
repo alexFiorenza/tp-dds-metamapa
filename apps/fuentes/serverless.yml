@@ -15,6 +15,7 @@ provider:
 
   logs:
     httpApi: true
+    frameworkLambda: true
 
   iam:
     role:
@@ -30,7 +31,7 @@ package:
   individually: true
 
 functions:
-  fuente-estatica:
+  estatica:
     handler: utn.dds.fuentes.estatica.LambdaHandler
     description: 'Fuente de datos estáticas (CSV desde S3)'
     package:
@@ -50,7 +51,7 @@ functions:
     memorySize: 1536
     timeout: 28
 
-  fuente-dinamica:
+  dinamica:
     handler: utn.dds.fuentes.dinamica.LambdaHandler
     description: 'Fuente de datos dinámicas (CouchDB)'
     package:
@@ -76,7 +77,7 @@ functions:
     memorySize: 1536
     timeout: 28
 
-  proxy-metamapa:
+  metamapa:
     handler: utn.dds.fuentes.proxy.metamapa.LambdaHandler
     description: 'Proxy para servicio principal de MetaMapa'
     package:
@@ -90,7 +91,7 @@ functions:
     memorySize: 1024
     timeout: 28
 
-  proxy-demo:
+  demo:
     handler: utn.dds.fuentes.proxy.demo.LambdaHandler
     description: 'Proxy demo para pruebas y desarrollo'
     package:
@@ -110,29 +111,3 @@ functions:
       COUCHDB_DB: ${env:COUCHDB_DB_PROXY_DEMO, 'proxy_demo_db'}
     memorySize: 1024
     timeout: 28
-
-resources:
-  Resources:
-    FuenteEstaticaLogGroup:
-      Type: AWS::Logs::LogGroup
-      Properties:
-        LogGroupName: /aws/lambda/${self:service}-${self:provider.stage}-fuente-estatica
-        RetentionInDays: 7
-
-    FuenteDinamicaLogGroup:
-      Type: AWS::Logs::LogGroup
-      Properties:
-        LogGroupName: /aws/lambda/${self:service}-${self:provider.stage}-fuente-dinamica
-        RetentionInDays: 7
-
-    ProxyMetamapaLogGroup:
-      Type: AWS::Logs::LogGroup
-      Properties:
-        LogGroupName: /aws/lambda/${self:service}-${self:provider.stage}-proxy-metamapa
-        RetentionInDays: 7
-
-    ProxyDemoLogGroup:
-      Type: AWS::Logs::LogGroup
-      Properties:
-        LogGroupName: /aws/lambda/${self:service}-${self:provider.stage}-proxy-demo
-        RetentionInDays: 7
