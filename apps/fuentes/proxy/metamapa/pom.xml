@@ -96,8 +96,9 @@
             <artifactId>aws-lambda-java-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.amazonaws.serverless</groupId>
-            <artifactId>aws-serverless-java-container-core</artifactId>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-lambda-java-events</artifactId>
+            <version>3.11.0</version>
         </dependency>
     </dependencies>
 
