@@ -46,31 +46,8 @@ functions:
       - httpApi:
           path: /normalizar
           method: post
-      - httpApi:
-          path: /
-          method: post
     memorySize: 1024
-    timeout: 60
-
-  categorias:
-    handler: dist/lambda.categoriasHandler
-    description: 'Retorna las categorías válidas configuradas'
-    events:
-      - httpApi:
-          path: /categorias
-          method: get
-    memorySize: 256
-    timeout: 10
-
-  health:
-    handler: dist/lambda.healthHandler
-    description: 'Health check del servicio'
-    events:
-      - httpApi:
-          path: /health
-          method: get
-    memorySize: 128
-    timeout: 5
+    timeout: 30
 
 plugins:
   - serverless-offline
@@ -93,8 +70,12 @@ resources:
   Outputs:
     HttpApiUrl:
       Description: 'URL del API Gateway HTTP'
-      Value: !Sub 'https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com'
+      Value:
+        Fn::Sub: 'https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com'
 
     NormalizarFunctionArn:
       Description: 'ARN de la función normalizar'
-      Value: !GetAtt NormalizarLambdaFunction.Arn
+      Value:
+        Fn::GetAtt:
+          - NormalizarLambdaFunction
+          - Arn
