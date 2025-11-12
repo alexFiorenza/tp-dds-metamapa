@@ -71,17 +71,47 @@ public class HechoDTO {
             this.titulo,
             this.descripcion,
             this.categoria,
-            this.fechaAcontecimiento != null ? LocalDate.parse(this.fechaAcontecimiento, DateTimeFormatter.ISO_LOCAL_DATE) : null,
+            this.fechaAcontecimiento != null ? parseFechaAcontecimiento(this.fechaAcontecimiento) : null,
             this.origen,
             null, // contribuyente - en el mock es null
             this.tipo,
             this.longitud,
             this.latitud,
-            this.fechaCarga != null ? LocalDateTime.parse(this.fechaCarga, DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null,
+            this.fechaCarga != null ? parseFechaCarga(this.fechaCarga) : null,
             this.estado,
             this.etiquetas,
             this.multimedia
         );
+    }
+
+    /**
+     * Parsea fechaAcontecimiento soportando múltiples formatos:
+     * - ISO_LOCAL_DATE: "2025-11-19"
+     * - ISO_DATE_TIME: "2025-11-19T04:00:00.000Z"
+     */
+    private LocalDate parseFechaAcontecimiento(String fecha) {
+        if (fecha.contains("T")) {
+            // Formato ISO-8601 completo, extraer solo la parte de la fecha
+            return LocalDate.parse(fecha.substring(0, 10), DateTimeFormatter.ISO_LOCAL_DATE);
+        } else {
+            // Formato solo fecha
+            return LocalDate.parse(fecha, DateTimeFormatter.ISO_LOCAL_DATE);
+        }
+    }
+
+    /**
+     * Parsea fechaCarga soportando múltiples formatos:
+     * - ISO_LOCAL_DATE_TIME: "2025-11-19T04:00:00"
+     * - ISO_DATE_TIME con timezone: "2025-11-19T04:00:00.000Z"
+     */
+    private LocalDateTime parseFechaCarga(String fecha) {
+        if (fecha.endsWith("Z") || fecha.contains("+")) {
+            // Formato ISO-8601 con timezone, parsear y convertir a LocalDateTime
+            return java.time.OffsetDateTime.parse(fecha, DateTimeFormatter.ISO_DATE_TIME).toLocalDateTime();
+        } else {
+            // Formato sin timezone
+            return LocalDateTime.parse(fecha, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        }
     }
 
     public String getTitulo() {

@@ -10,14 +10,17 @@ interface HechoCardProps {
 }
 
 export function HechoCard({ hecho, onClick }: HechoCardProps) {
-  const imagenes = hecho.multimedia?.filter((m) => m.tipo === "IMAGEN") || []
+  // Filtrar solo imágenes por extensión (multimedia son URLs)
+  const imagenes = hecho.multimedia?.filter((url) =>
+    /\.(jpg|jpeg|png|gif|webp)$/i.test(url)
+  ) || []
   const primeraImagen = imagenes[0]
 
   return (
     <Card className="overflow-hidden" onClick={onClick}>
       {primeraImagen && (
         <div className="relative w-full h-40 bg-default-100">
-          <Image src={primeraImagen.url || "/placeholder.svg"} alt={hecho.titulo} fill className="object-cover" />
+          <Image src={primeraImagen || "/placeholder.svg"} alt={hecho.titulo} fill className="object-cover" />
           {imagenes.length > 1 && (
             <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1">
               <i className="ri-image-line h-3 w-3" />

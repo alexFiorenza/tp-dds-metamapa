@@ -1,0 +1,113 @@
+name: Deploy Normalizador to AWS Lambda
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+    paths:
+      - 'apps/normalizador/**'
+      - '.github/workflows/deploy-normalizador-lambda.yml'
+  workflow_dispatch: # Permite ejecución manual desde GitHub UI
+
+env:
+  NODE_VERSION: '20'
+  AWS_REGION: 'us-east-1'
+
+jobs:
+  deploy:
+    name: Deploy to AWS Lambda
+    runs-on: ubuntu-latest
+
+    # Define el stage según la rama
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+
+    defaults:
+      run:
+        working-directory: apps/normalizador
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: apps/normalizador/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Run tests (if available)
+        run: npm test --if-present
+        continue-on-error: true
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy to AWS Lambda (Development)
+        if: github.ref == 'refs/heads/develop'
+        run: |
+          npx serverless deploy --stage dev --verbose
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Deploy to AWS Lambda (Production)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          npx serverless deploy --stage prod --verbose
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Get deployed endpoints
+        id: endpoints
+        run: |
+          STAGE=${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+          echo "stage=$STAGE" >> $GITHUB_OUTPUT
+          npx serverless info --stage $STAGE
+
+      - name: Comment PR with endpoints (if PR)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const stage = '${{ steps.endpoints.outputs.stage }}';
+            const comment = `
+            ## 🚀 Normalizador desplegado a AWS Lambda
+
+            **Stage:** \`${stage}\`
+            **Region:** \`${{ env.AWS_REGION }}\`
+
+            ### Endpoints disponibles:
+            - \`GET /health\` - Health check
+            - \`GET /categorias\` - Obtener categorías
+            - \`POST /normalizar\` - Normalizar hechos
+
+            Para ver la URL completa, revisa los logs del workflow.
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Deployment summary
+        run: |
+          echo "✅ Deployment completed successfully!"
+          echo "🌍 Region: ${{ env.AWS_REGION }}"
+          echo "🏷️  Stage: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}"
+          echo "📦 Service: metamapa-normalizador"

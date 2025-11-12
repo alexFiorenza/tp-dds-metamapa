@@ -6,7 +6,7 @@ Sistema de microservicios para la gestión y agregación de datos de diversas fu
 
 ### Microservicios
 
-El sistema está compuesto por 6 microservicios independientes:
+El sistema está compuesto por 7 microservicios independientes:
 
 1. **Fuentes Estáticas** (Puerto 7001)
    - Gestión de datos estáticos desde archivos CSV
@@ -30,16 +30,24 @@ El sistema está compuesto por 6 microservicios independientes:
 
 5. **Agregador** (Puerto 7005)
    - Agregación de datos de múltiples fuentes
+   - Integración con el Normalizador para procesamiento de datos
    - Persistencia con Hibernate/PostgreSQL
    - Procesamiento y consolidación de datos
 
-6. **MetaMapa Administrativo** (Puerto 7006)
+6. **Normalizador** (Puerto 3005)
+   - Servicio de normalización de hechos (TypeScript/Node.js)
+   - Pipeline de 5 normalizadores secuenciales
+   - Validación y transformación de datos
+   - Categorización con fuzzy matching (Levenshtein)
+   - Arquitectura serverless-ready (Railway Function)
+
+7. **MetaMapa Administrativo** (Puerto 7006)
    - API administrativa para gestión de colecciones
    - API pública para consultas
    - Persistencia con Hibernate/PostgreSQL
    - Gestión de solicitudes de eliminación
 
-7. **UI Admin** (Puerto 3000)
+8. **UI Admin** (Puerto 3000)
    - Interfaz web de administración con Next.js 15
    - Visualización de hechos en mapa interactivo (Mapbox)
    - Sistema de filtrado avanzado con sincronización de URL
@@ -82,6 +90,24 @@ MetaMapa/
 │   │       └── demo/                # Proxy Demo
 │   ├── agregador/                   # Microservicio agregador
 │   ├── metamapa/                    # Microservicio principal MetaMapa
+│   ├── normalizador/                # Servicio de normalización (TypeScript/Node.js)
+│   │   ├── src/
+│   │   │   ├── index.ts             # HTTP server (native Node.js)
+│   │   │   ├── pipeline.ts          # Orquestador del pipeline
+│   │   │   ├── types.ts             # Definiciones TypeScript
+│   │   │   ├── normalizadores/      # 5 normalizadores secuenciales
+│   │   │   │   ├── texto.ts         # Normalización de texto
+│   │   │   │   ├── categoria.ts     # Mapeo de categorías (exacto, regex, fuzzy)
+│   │   │   │   ├── fecha.ts         # Normalización de fechas
+│   │   │   │   ├── coordenadas.ts   # Validación de coordenadas
+│   │   │   │   └── etiquetas.ts     # Normalización de etiquetas
+│   │   │   ├── mapeos/
+│   │   │   │   └── categorias.json  # Configuración de categorías
+│   │   │   └── utils/
+│   │   │       └── similitud.ts     # Algoritmo Levenshtein
+│   │   ├── Dockerfile               # Multi-stage build optimizado
+│   │   ├── package.json             # Dependencias npm
+│   │   └── tsconfig.json            # Configuración TypeScript
 │   ├── ui-admin/                    # Interfaz de administración (Next.js)
 │   │   ├── app/                     # Pages (Next.js App Router)
 │   │   ├── components/              # Componentes React
@@ -89,7 +115,6 @@ MetaMapa/
 │   │   ├── types/                   # Definiciones TypeScript
 │   │   └── hooks/                   # Custom React hooks
 │   ├── scheduler/                   # Servicio de programación de tareas
-│   ├── normalizador/                # Servicio de normalización
 │   └── estadisticas/                # Stack de monitoreo
 │       ├── metric-collector/        # Configuración de Prometheus
 │       ├── gestor-alertas/          # Configuración de Alertmanager
@@ -160,6 +185,9 @@ METAMAPA_DAO_TYPE=hibernate
 FUENTE_ESTATICA_DAO_TYPE=s3
 FUENTE_DINAMICA_DAO_TYPE=filesystem
 FUENTE_PROXY_DEMO_DAO_TYPE=filesystem
+
+# Normalizador
+NORMALIZADOR_ENABLED=true
 ```
 
 ## Instalación y Ejecución
@@ -169,6 +197,8 @@ FUENTE_PROXY_DEMO_DAO_TYPE=filesystem
 - Docker y Docker Compose
 - Java 17
 - Maven 3.8+
+- Node.js 20+ (para el normalizador)
+- npm o yarn
 
 ### Opción 1: Con Docker Compose (Recomendado)
 
@@ -237,6 +267,9 @@ FUENTE_PROXY_DEMO_DAO_TYPE=filesystem
 - **Proxy MetaMapa**: http://localhost:7003
 - **Proxy Demo**: http://localhost:7004
 - **Agregador**: http://localhost:7005
+- **Normalizador**: http://localhost:3005
+  - Health check: http://localhost:3005/health
+  - Endpoint de normalización: http://localhost:3005/normalizar
 - **MetaMapa**: http://localhost:7006
 
 ### Interfaz Web
@@ -341,6 +374,13 @@ mvn test
 - **Jackson** (JSON)
 - **SLF4J** (logging)
 - **OpenCSV** (CSV processing)
+
+### Normalizador (Microservicio TypeScript)
+- **Node.js 20+**
+- **TypeScript**
+- **Native HTTP** (no frameworks, ultra-lightweight)
+- **ES Modules** (ESM)
+- **Levenshtein distance** (fuzzy matching)
 
 ### Frontend (UI Admin)
 - **Next.js 15** (React 19)

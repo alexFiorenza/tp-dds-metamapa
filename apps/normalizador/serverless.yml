@@ -1,0 +1,102 @@
+service: metamapa-normalizador
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  memorySize: 512
+  timeout: 30
+
+  environment:
+    NODE_ENV: production
+    PORT: 3005
+
+  httpApi:
+    cors: true
+
+  logs:
+    httpApi: true
+
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource: '*'
+
+package:
+  individually: true
+  patterns:
+    - '!node_modules/**'
+    - '!src/**'
+    - 'dist/**'
+    - 'package.json'
+
+functions:
+  normalizar:
+    handler: dist/lambda.normalizarHandler
+    description: 'Normaliza hechos según las reglas configuradas'
+    events:
+      - httpApi:
+          path: /normalizar
+          method: post
+      - httpApi:
+          path: /
+          method: post
+    memorySize: 1024
+    timeout: 60
+
+  categorias:
+    handler: dist/lambda.categoriasHandler
+    description: 'Retorna las categorías válidas configuradas'
+    events:
+      - httpApi:
+          path: /categorias
+          method: get
+    memorySize: 256
+    timeout: 10
+
+  health:
+    handler: dist/lambda.healthHandler
+    description: 'Health check del servicio'
+    events:
+      - httpApi:
+          path: /health
+          method: get
+    memorySize: 128
+    timeout: 5
+
+plugins:
+  - serverless-offline
+
+custom:
+  serverless-offline:
+    httpPort: 3005
+    lambdaPort: 3006
+    websocketPort: 3007
+    noPrependStageInUrl: true
+
+resources:
+  Resources:
+    NormalizarLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: /aws/lambda/${self:service}-${self:provider.stage}-normalizar
+        RetentionInDays: 7
+
+  Outputs:
+    HttpApiUrl:
+      Description: 'URL del API Gateway HTTP'
+      Value:
+        Fn::Sub: 'https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com'
+
+    NormalizarFunctionArn:
+      Description: 'ARN de la función normalizar'
+      Value:
+        Fn::GetAtt: [NormalizarLambdaFunction, Arn]

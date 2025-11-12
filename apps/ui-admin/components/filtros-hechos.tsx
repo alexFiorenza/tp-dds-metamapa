@@ -11,7 +11,8 @@ interface FiltrosHechosProps {
   filtrosIniciales?: FiltrosHechos
 }
 
-const categorias = ["INCENDIO", "CONTAMINACION", "MANIFESTACION", "INUNDACION", "FAUNA"]
+// Obtener categorías desde variable de entorno
+const categorias = (process.env.NEXT_PUBLIC_CATEGORIAS || "INCENDIO,CONTAMINACION,MANIFESTACION,INUNDACION,FAUNA,ALUD,OTRO").split(",")
 const estados: EstadoHecho[] = ["ACTIVO", "OCULTO"]
 
 export function FiltrosHechos({ onFiltrar, onLimpiar, filtrosIniciales = {} }: FiltrosHechosProps) {

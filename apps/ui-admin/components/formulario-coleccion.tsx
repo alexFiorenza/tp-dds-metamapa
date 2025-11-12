@@ -40,7 +40,8 @@ const TIPOS_CRITERIO = [
   { value: "COORDENADAS", label: "Coordenadas" },
 ]
 
-const CATEGORIAS = ["INCENDIO", "CONTAMINACION", "MANIFESTACION", "INUNDACION", "FAUNA"]
+// Obtener categorías desde variable de entorno
+const CATEGORIAS = (process.env.NEXT_PUBLIC_CATEGORIAS || "INCENDIO,CONTAMINACION,MANIFESTACION,INUNDACION,FAUNA,ALUD,OTRO").split(",")
 
 export function FormularioColeccion({
   isOpen,
