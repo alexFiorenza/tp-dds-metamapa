@@ -47,7 +47,7 @@ functions:
           path: /normalizar
           method: post
     memorySize: 1024
-    timeout: 30
+    timeout: 28
 
 plugins:
   - serverless-offline
@@ -66,16 +66,3 @@ resources:
       Properties:
         LogGroupName: /aws/lambda/${self:service}-${self:provider.stage}-normalizar
         RetentionInDays: 7
-
-  Outputs:
-    HttpApiUrl:
-      Description: 'URL del API Gateway HTTP'
-      Value:
-        Fn::Sub: 'https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com'
-
-    NormalizarFunctionArn:
-      Description: 'ARN de la función normalizar'
-      Value:
-        Fn::GetAtt:
-          - NormalizarLambdaFunction
-          - Arn
