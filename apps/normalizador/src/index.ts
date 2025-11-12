@@ -1,7 +1,6 @@
 // src/index.ts
 import { createServer, IncomingMessage, ServerResponse } from 'http'
-import { NormalizadorPipeline } from './pipeline.js'
-import type { NormalizarRequest, NormalizarResponse, HechoRechazado } from './types.js'
+import type { NormalizarRequest } from './types.js'
 
 const PORT = process.env.PORT || 3000
 
@@ -60,88 +59,31 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
     return
   }
 
+  // Endpoint de categorías disponibles
+  if (req.method === 'GET' && req.url === '/categorias') {
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    const { obtenerCategorias } = await import('./core/normalizar.js')
+    res.end(JSON.stringify(obtenerCategorias()))
+    return
+  }
+
   // Endpoint de normalización
   if (req.method === 'POST' && (req.url === '/' || req.url === '/normalizar')) {
-    const startTime = Date.now()
-
     try {
       // Parsear body
       const body = await parseBody(req) as NormalizarRequest
-      const { hechos, config } = body
 
-      // Validaciones
-      if (!Array.isArray(hechos)) {
-        res.writeHead(400, { 'Content-Type': 'application/json' })
-        res.end(JSON.stringify({ error: 'Se esperaba un array de hechos' }))
-        return
-      }
-
-      if (hechos.length === 0) {
-        res.writeHead(400, { 'Content-Type': 'application/json' })
-        res.end(JSON.stringify({ error: 'El array de hechos está vacío' }))
-        return
-      }
-
-      if (hechos.length > 1000) {
-        res.writeHead(400, { 'Content-Type': 'application/json' })
-        res.end(JSON.stringify({
-          error: 'Máximo 1000 hechos por request. Procesar en lotes.'
-        }))
-        return
-      }
-
-      // Log
-      console.log(`[${new Date().toISOString()}] Procesando ${hechos.length} hechos`)
-
-      // Crear pipeline y normalizar
-      const pipeline = new NormalizadorPipeline(config)
-      const hechosNormalizados = []
-      const hechosRechazados: HechoRechazado[] = []
-      const cambiosPorTipo: Record<string, number> = {}
-
-      for (const hecho of hechos) {
-        const resultado = pipeline.normalizar(hecho)
-
-        if (resultado.rechazado) {
-          hechosRechazados.push({
-            hechoOriginal: hecho,
-            motivo: resultado.motivoRechazo || 'Error desconocido',
-            errores: resultado.advertencias.map(a => a.mensaje)
-          })
-        } else {
-          hechosNormalizados.push(resultado.hechoNormalizado)
-
-          // Contar cambios por tipo
-          resultado.cambios.forEach(cambio => {
-            cambiosPorTipo[cambio.campo] = (cambiosPorTipo[cambio.campo] || 0) + 1
-          })
-        }
-      }
-
-      const tiempoEjecucion = Date.now() - startTime
-
-      // Log resultado
-      console.log(`[${new Date().toISOString()}] Completado en ${tiempoEjecucion}ms - ${hechosNormalizados.length} normalizados, ${hechosRechazados.length} rechazados`)
-
-      // Respuesta
-      const response: NormalizarResponse = {
-        hechosNormalizados,
-        hechosRechazados,
-        estadisticas: {
-          totalProcesados: hechos.length,
-          totalNormalizados: hechosNormalizados.length,
-          totalRechazados: hechosRechazados.length,
-          cambiosPorTipo,
-          tiempoEjecucion
-        }
-      }
+      // Importar y ejecutar lógica de negocio
+      const { normalizarHechos } = await import('./core/normalizar.js')
+      const response = normalizarHechos(body)
 
       res.writeHead(200, { 'Content-Type': 'application/json' })
       res.end(JSON.stringify(response))
 
     } catch (error) {
       console.error('[Error]', error)
-      res.writeHead(500, { 'Content-Type': 'application/json' })
+      const statusCode = error instanceof Error && error.message.includes('array') ? 400 : 500
+      res.writeHead(statusCode, { 'Content-Type': 'application/json' })
       res.end(JSON.stringify({
         error: error instanceof Error ? error.message : 'Error interno',
         timestamp: new Date().toISOString()
@@ -160,6 +102,7 @@ server.listen(PORT, () => {
   console.log(`🚂 Normalizador Railway escuchando en puerto ${PORT}`)
   console.log(`📊 Endpoints disponibles:`)
   console.log(`   GET  /health     - Health check`)
+  console.log(`   GET  /categorias - Obtener categorías disponibles`)
   console.log(`   POST /normalizar - Normalizar hechos`)
 })
 

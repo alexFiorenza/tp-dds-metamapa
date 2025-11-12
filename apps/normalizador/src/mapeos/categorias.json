@@ -5,7 +5,8 @@
     "MANIFESTACION",
     "INUNDACION",
     "FAUNA",
-    "ALUD"
+    "ALUD",
+    "OTRO"
   ],
   "exactos": {
     "incendio": "INCENDIO",

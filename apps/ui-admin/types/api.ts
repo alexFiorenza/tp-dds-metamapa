@@ -90,3 +90,7 @@ export interface ColeccionUpdateDTO {
   fuentesIds: string[]
   criteriosDePertenencia: CriterioCreateDTO[]
 }
+
+export interface CategoriasResponse {
+  categorias: string[]
+}

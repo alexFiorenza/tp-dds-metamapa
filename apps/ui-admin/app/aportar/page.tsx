@@ -8,14 +8,8 @@ import type { DateValue } from '@internationalized/date';
 import { LocationPickerMap } from '@/components/location-picker-map';
 import { useUser } from '@clerk/nextjs';
 
-const CATEGORIAS = [
-  'INCENDIO',
-  'CONTAMINACION',
-  'MANIFESTACION',
-  'INUNDACION',
-  'FAUNA',
-  'ALUD',
-] as const;
+// Obtener categorías desde variable de entorno
+const CATEGORIAS = (process.env.NEXT_PUBLIC_CATEGORIAS || "INCENDIO,CONTAMINACION,MANIFESTACION,INUNDACION,FAUNA,ALUD,OTRO").split(",");
 
 const TIPOS_ARCHIVO_PERMITIDOS = [
   'image/jpeg',
@@ -219,7 +213,7 @@ export default function AportarHechoPage() {
                 isRequired
               >
                 {CATEGORIAS.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
+                  <SelectItem key={cat}>
                     {cat}
                   </SelectItem>
                 ))}
