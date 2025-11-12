@@ -8,10 +8,12 @@ import io.javalin.Javalin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
 
 /**
  * Handler genérico para AWS Lambda que envuelve una aplicación Javalin.
@@ -127,10 +129,19 @@ public class JavalinLambdaHandler implements RequestHandler<APIGatewayV2HTTPEven
             // Leer respuesta
             int statusCode = connection.getResponseCode();
             String contentType = connection.getContentType();
+            
+            // Verificar si la respuesta está comprimida con gzip
+            String contentEncoding = connection.getHeaderField("Content-Encoding");
 
-            java.io.InputStream inputStream = statusCode < 400 ?
+            InputStream inputStream = statusCode < 400 ?
                 connection.getInputStream() :
                 connection.getErrorStream();
+
+            // Si la respuesta está comprimida con gzip, descomprimirla
+            if ("gzip".equalsIgnoreCase(contentEncoding)) {
+                logger.debug("Descomprimiendo respuesta gzip");
+                inputStream = new GZIPInputStream(inputStream);
+            }
 
             String body = new String(inputStream.readAllBytes());
 
