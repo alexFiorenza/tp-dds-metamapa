@@ -1,0 +1,216 @@
+name: Deploy to AWS Lambda
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/fuentes/**'
+      - 'apps/shared/**'
+      - 'apps/normalizador/**'
+      - '.github/workflows/deploy-aws-lambda.yml'
+  workflow_dispatch:
+
+env:
+  AWS_REGION: 'us-east-1'
+  JAVA_VERSION: '17'
+  NODE_VERSION: '20'
+
+jobs:
+  # Job para detectar qué servicios cambiaron
+  detect-changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      fuentes: ${{ steps.filter.outputs.fuentes }}
+      normalizador: ${{ steps.filter.outputs.normalizador }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for changes
+        uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            fuentes:
+              - 'apps/fuentes/**'
+              - 'apps/shared/**'
+            normalizador:
+              - 'apps/normalizador/**'
+
+  # Job para desplegar Fuentes (si hubo cambios)
+  deploy-fuentes:
+    name: Deploy Fuentes Lambda
+    needs: detect-changes
+    if: needs.detect-changes.outputs.fuentes == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build JARs with Maven
+        run: |
+          mvn clean package -DskipTests
+        working-directory: .
+
+      - name: Verify JARs were created
+        run: |
+          echo "Checking for JAR files..."
+          ls -lh apps/fuentes/estatica/target/*.jar
+          ls -lh apps/fuentes/dinamica/target/*.jar
+          ls -lh apps/fuentes/proxy/metamapa/target/*.jar
+          ls -lh apps/fuentes/proxy/demo/target/*.jar
+
+      - name: Setup Node.js (for Serverless Framework)
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Serverless Framework
+        run: npm install -g serverless
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy Fuentes to AWS Lambda
+        run: |
+          serverless deploy --stage prod --verbose
+        working-directory: apps/fuentes
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # Fuente Estática
+          FUENTE_ESTATICA_DAO_TYPE: ${{ secrets.FUENTE_ESTATICA_DAO_TYPE }}
+          S3_ENDPOINT: ${{ secrets.S3_ENDPOINT }}
+          S3_PUBLIC_ENDPOINT: ${{ secrets.S3_PUBLIC_ENDPOINT }}
+          S3_BUCKET_ESTATICA: ${{ secrets.S3_BUCKET_ESTATICA }}
+          # Fuente Dinámica
+          FUENTE_DINAMICA_DAO_TYPE: ${{ secrets.FUENTE_DINAMICA_DAO_TYPE }}
+          COUCHDB_URL: ${{ secrets.COUCHDB_URL }}
+          COUCHDB_USER: ${{ secrets.COUCHDB_USER }}
+          COUCHDB_PASSWORD: ${{ secrets.COUCHDB_PASSWORD }}
+          COUCHDB_DB_DINAMICA: ${{ secrets.COUCHDB_DB_DINAMICA }}
+          S3_BUCKET_DINAMICA: ${{ secrets.S3_BUCKET_DINAMICA }}
+          # Proxy MetaMapa
+          METAMAPA_PROXY_URL: ${{ secrets.METAMAPA_PROXY_URL }}
+          # Proxy Demo
+          FUENTE_PROXY_DEMO_DAO_TYPE: ${{ secrets.FUENTE_PROXY_DEMO_DAO_TYPE }}
+          COUCHDB_DB_PROXY_DEMO: ${{ secrets.COUCHDB_DB_PROXY_DEMO }}
+
+      - name: Get deployed endpoints
+        run: |
+          serverless info --stage prod
+        working-directory: apps/fuentes
+
+      - name: Deployment summary
+        run: |
+          echo "✅ Fuentes deployment completed successfully!"
+          echo "🌍 Region: ${{ env.AWS_REGION }}"
+          echo "🏷️  Stage: prod"
+          echo "📦 Service: metamapa-fuentes"
+          echo ""
+          echo "Deployed functions:"
+          echo "  - fuente-estatica: GET /estatica/hechos"
+          echo "  - fuente-dinamica: GET/POST /dinamica/hechos"
+          echo "  - proxy-metamapa: GET /metamapa/hechos"
+          echo "  - proxy-demo: GET/PUT /demo/hechos"
+
+  # Job para desplegar Normalizador (si hubo cambios)
+  deploy-normalizador:
+    name: Deploy Normalizador Lambda
+    needs: detect-changes
+    if: needs.detect-changes.outputs.normalizador == 'true'
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: apps/normalizador
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: apps/normalizador/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Verify build artifacts
+        run: |
+          echo "Checking for build artifacts..."
+          ls -lh dist/
+
+      - name: Install Serverless Framework
+        run: npm install -g serverless
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy Normalizador to AWS Lambda
+        run: |
+          serverless deploy --stage prod --verbose
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Get deployed endpoints
+        run: |
+          serverless info --stage prod
+
+      - name: Deployment summary
+        run: |
+          echo "✅ Normalizador deployment completed successfully!"
+          echo "🌍 Region: ${{ env.AWS_REGION }}"
+          echo "🏷️  Stage: prod"
+          echo "📦 Service: metamapa-normalizador"
+          echo ""
+          echo "Deployed functions:"
+          echo "  - normalizar: POST /normalizar"
+
+  # Job de resumen final
+  summary:
+    name: Deployment summary
+    needs: [detect-changes, deploy-fuentes, deploy-normalizador]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Summary
+        run: |
+          echo "🚀 AWS Lambda Deployment Summary"
+          echo "================================"
+          echo ""
+          if [ "${{ needs.detect-changes.outputs.fuentes }}" == "true" ]; then
+            echo "✅ Fuentes: ${{ needs.deploy-fuentes.result }}"
+          else
+            echo "⏭️  Fuentes: Skipped (no changes)"
+          fi
+          if [ "${{ needs.detect-changes.outputs.normalizador }}" == "true" ]; then
+            echo "✅ Normalizador: ${{ needs.deploy-normalizador.result }}"
+          else
+            echo "⏭️  Normalizador: Skipped (no changes)"
+          fi
