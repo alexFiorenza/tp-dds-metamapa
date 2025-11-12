@@ -19,35 +19,9 @@ env:
   NODE_VERSION: '20'
 
 jobs:
-  # Job para detectar qué servicios cambiaron
-  detect-changes:
-    name: Detect changes
-    runs-on: ubuntu-latest
-    outputs:
-      fuentes: ${{ steps.filter.outputs.fuentes }}
-      normalizador: ${{ steps.filter.outputs.normalizador }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Check for changes
-        uses: dorny/paths-filter@v2
-        id: filter
-        with:
-          filters: |
-            fuentes:
-              - 'apps/fuentes/**'
-              - 'apps/shared/**'
-              - 'apps/fuentes/serverless.yml'
-            normalizador:
-              - 'apps/normalizador/**'
-              - 'apps/normalizador/serverless.yml'
-
-  # Job para desplegar Fuentes (si hubo cambios)
+  # Job para desplegar Fuentes
   deploy-fuentes:
     name: Deploy Fuentes Lambda
-    needs: detect-changes
-    if: needs.detect-changes.outputs.fuentes == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -132,11 +106,9 @@ jobs:
           echo "  - proxy-metamapa: GET /metamapa/hechos"
           echo "  - proxy-demo: GET/PUT /demo/hechos"
 
-  # Job para desplegar Normalizador (si hubo cambios)
+  # Job para desplegar Normalizador
   deploy-normalizador:
     name: Deploy Normalizador Lambda
-    needs: detect-changes
-    if: needs.detect-changes.outputs.normalizador == 'true'
     runs-on: ubuntu-latest
 
     defaults:
@@ -199,7 +171,7 @@ jobs:
   # Job de resumen final
   summary:
     name: Deployment summary
-    needs: [detect-changes, deploy-fuentes, deploy-normalizador]
+    needs: [deploy-fuentes, deploy-normalizador]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -208,13 +180,5 @@ jobs:
           echo "🚀 AWS Lambda Deployment Summary"
           echo "================================"
           echo ""
-          if [ "${{ needs.detect-changes.outputs.fuentes }}" == "true" ]; then
-            echo "✅ Fuentes: ${{ needs.deploy-fuentes.result }}"
-          else
-            echo "⏭️  Fuentes: Skipped (no changes)"
-          fi
-          if [ "${{ needs.detect-changes.outputs.normalizador }}" == "true" ]; then
-            echo "✅ Normalizador: ${{ needs.deploy-normalizador.result }}"
-          else
-            echo "⏭️  Normalizador: Skipped (no changes)"
-          fi
+          echo "✅ Fuentes: ${{ needs.deploy-fuentes.result }}"
+          echo "✅ Normalizador: ${{ needs.deploy-normalizador.result }}"
