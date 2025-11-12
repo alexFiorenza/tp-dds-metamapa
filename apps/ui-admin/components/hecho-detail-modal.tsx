@@ -48,7 +48,13 @@ export function HechoDetailModal({ hecho, isOpen, onClose }: HechoDetailModalPro
   if (!hecho) return null
 
   const { iconClass, color } = getCategoriaStyle(hecho.categoria)
-  const imagenes = hecho.multimedia?.filter((m) => m.tipo === "IMAGEN") || []
+
+  // Detectar tipo de archivo por extensión
+  const isImageUrl = (url: string) => /\.(jpg|jpeg|png|gif|webp)$/i.test(url)
+  const isVideoUrl = (url: string) => /\.(mp4|mpeg|mov|webm)$/i.test(url)
+
+  const imagenes = hecho.multimedia?.filter(isImageUrl) || []
+  const videos = hecho.multimedia?.filter(isVideoUrl) || []
 
   const handleClose = () => {
     setMostrarFormularioEliminacion(false)
@@ -112,14 +118,39 @@ export function HechoDetailModal({ hecho, isOpen, onClose }: HechoDetailModalPro
                       Imágenes ({imagenes.length})
                     </h3>
                     <div className="grid grid-cols-2 gap-3">
-                      {imagenes.map((imagen, idx) => (
+                      {imagenes.map((imagenUrl, idx) => (
                         <div key={idx} className="relative w-full h-40 bg-default-100 rounded-lg overflow-hidden">
                           <Image
-                            src={imagen.url || "/placeholder.svg"}
+                            src={imagenUrl}
                             alt={`${hecho.titulo} - imagen ${idx + 1}`}
                             fill
                             className="object-cover"
+                            unoptimized
                           />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Galería de videos */}
+                {videos.length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <i className="ri-video-line w-4 h-4" />
+                      Videos ({videos.length})
+                    </h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      {videos.map((videoUrl, idx) => (
+                        <div key={idx} className="relative w-full h-40 bg-default-100 rounded-lg overflow-hidden">
+                          <video
+                            src={videoUrl}
+                            controls
+                            className="w-full h-full object-cover"
+                            preload="metadata"
+                          >
+                            Tu navegador no soporta el elemento de video.
+                          </video>
                         </div>
                       ))}
                     </div>

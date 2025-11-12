@@ -21,11 +21,12 @@ public class DAOFactory {
                 String secretKey = (String) config.get("secretKey");
                 String bucket = (String) config.get("bucket");
                 String endpoint = (String) config.get("endpoint");
+                String publicEndpoint = (String) config.get("publicEndpoint");
                 String region = (String) config.get("region");
                 if (s3Url != null) {
-                    return new S3<>(s3Url, accessKey, secretKey, bucket, endpoint, region);
+                    return new S3<>(s3Url, accessKey, secretKey, bucket, endpoint, publicEndpoint, region);
                 } else {
-                    return new S3<>(accessKey, secretKey, bucket, endpoint, region);
+                    return new S3<>(accessKey, secretKey, bucket, endpoint, publicEndpoint, region);
                 }
             case "hibernate":
                 return new Hibernate<>(clazz, config);

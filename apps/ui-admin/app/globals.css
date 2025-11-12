@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin '../hero.ts';
-@source '../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
+@source '../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -10,12 +10,6 @@
   --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
   --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
 }
-
-/* Estilos personalizados para focus - usando variables de Hero UI */
-*:focus {
-  outline: none !important;
-}
-
 
 /* Estilos para popup de Mapbox */
 .mapbox-popup-custom .mapboxgl-popup-content {

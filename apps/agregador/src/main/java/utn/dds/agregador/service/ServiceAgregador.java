@@ -22,13 +22,14 @@ import java.util.List;
 import java.util.Map;
 
 public class ServiceAgregador {
-    
+
     private HechoRepository hechoRepository;
     private ServiceRegistry serviceRegistry;
     private HttpClient httpClient;
     private ObjectMapper objectMapper;
     private EstrategiaDeteccionDuplicados estrategiaDeteccionDuplicados;
-    
+    private NormalizadorClient normalizadorClient;
+
     public ServiceAgregador(HechoRepository hechoRepository, ServiceRegistry serviceRegistry) {
         this.hechoRepository = hechoRepository;
         this.serviceRegistry = serviceRegistry;
@@ -39,6 +40,13 @@ public class ServiceAgregador {
         this.objectMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
         this.objectMapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         this.estrategiaDeteccionDuplicados = new EstrategiaTituloUbicacionFecha();
+
+        // Inicializar cliente del normalizador desde variables de entorno
+        String normalizadorUrl = System.getenv().getOrDefault("NORMALIZADOR_URL", "http://localhost:3005");
+        boolean normalizadorHabilitado = Boolean.parseBoolean(
+                System.getenv().getOrDefault("NORMALIZADOR_ENABLED", "true")
+        );
+        this.normalizadorClient = new NormalizadorClient(normalizadorUrl, normalizadorHabilitado);
     }
     
     private List<Hecho> filtrarDuplicados(List<Hecho> nuevosHechos) {
@@ -69,7 +77,7 @@ public class ServiceAgregador {
         List<Hecho> hechosAgregados = new ArrayList<>();
         List<String> fuentesConError = new ArrayList<>();
         int hechosObtenidos = 0;
-        
+
         for (FuenteDTO fuente : fuentes) {
             try {
                 String urlCompleta = construirUrlCompleta(fuente);
@@ -82,15 +90,18 @@ public class ServiceAgregador {
                 System.err.println("Error al obtener datos de la fuente: " + errorMsg);
             }
         }
-        
-        // Filtrar duplicados antes de guardar
-        List<Hecho> hechosSinDuplicados = filtrarDuplicados(hechosAgregados);
-        
+
+        // Normalizar hechos antes de filtrar duplicados
+        List<Hecho> hechosNormalizados = normalizadorClient.normalizar(hechosAgregados);
+
+        // Filtrar duplicados después de normalizar
+        List<Hecho> hechosSinDuplicados = filtrarDuplicados(hechosNormalizados);
+
         // Guardar únicamente hechos sin duplicados
         if (!hechosSinDuplicados.isEmpty()) {
             hechoRepository.saveAll(hechosSinDuplicados);
         }
-        
+
         return new ResultadoAgregacionDTO(
             fuentes.size(),
             hechosObtenidos,

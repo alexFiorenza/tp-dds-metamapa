@@ -23,21 +23,25 @@ public class DAOConfigBuilder {
         String secretKey = System.getenv("S3_SECRET_KEY");
         String bucket = System.getenv("S3_BUCKET");
         String endpoint = System.getenv("S3_ENDPOINT");
-        
+
         if (accessKey == null || secretKey == null || bucket == null || endpoint == null) {
             throw new IllegalArgumentException(
                 "Para S3 se requieren las variables: S3_ACCESS_KEY, S3_SECRET_KEY, S3_BUCKET, S3_ENDPOINT"
             );
         }
-        
+
+        // URL pública para acceso externo (opcional, por defecto usa endpoint)
+        String publicEndpoint = getEnvOrDefault("S3_PUBLIC_ENDPOINT", endpoint);
+
         Map<String, Object> config = new HashMap<>();
         config.put("url", dataUrl);
         config.put("accessKey", accessKey);
         config.put("secretKey", secretKey);
         config.put("bucket", bucket);
         config.put("endpoint", endpoint);
+        config.put("publicEndpoint", publicEndpoint);
         config.put("region", getEnvOrDefault("S3_REGION", "us-east-1"));
-        
+
         return config;
     }
     
@@ -47,21 +51,25 @@ public class DAOConfigBuilder {
         String secretKey = System.getenv("S3_SECRET_KEY");
         String bucket = System.getenv("S3_BUCKET");
         String endpoint = System.getenv("S3_ENDPOINT");
-        
+
         if (accessKey == null || secretKey == null || bucket == null || endpoint == null) {
             throw new IllegalArgumentException(
                 "Para S3 se requieren las variables: S3_ACCESS_KEY, S3_SECRET_KEY, S3_BUCKET, S3_ENDPOINT"
             );
         }
-        
+
+        // URL pública para acceso externo (opcional, por defecto usa endpoint)
+        String publicEndpoint = getEnvOrDefault("S3_PUBLIC_ENDPOINT", endpoint);
+
         Map<String, Object> config = new HashMap<>();
         // No se incluye URL para S3 cuando se usa con path dinámico
         config.put("accessKey", accessKey);
         config.put("secretKey", secretKey);
         config.put("bucket", bucket);
         config.put("endpoint", endpoint);
+        config.put("publicEndpoint", publicEndpoint);
         config.put("region", getEnvOrDefault("S3_REGION", "us-east-1"));
-        
+
         return config;
     }
 

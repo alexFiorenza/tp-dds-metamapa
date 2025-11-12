@@ -41,11 +41,12 @@ public class CSVStrategy implements ProcesadorStrategy {
             LocalDate fechaDelHecho = LocalDate.parse(campos[5].trim(), dateFormatter);
             
             List<String> etiquetas = new ArrayList<>();
+            List<String> multimedia = new ArrayList<>();
             return new Hecho(
                 titulo, descripcion, categoria, fechaDelHecho,
                 null, null, TipoHecho.TEXTO,
                 longitud, latitud, LocalDateTime.now(),
-                EstadoHecho.ACTIVO, etiquetas
+                EstadoHecho.ACTIVO, etiquetas, multimedia
             );
         } catch (Exception e) {
             logger.error("Error al procesar línea CSV: {} - Error: {}", linea, e.getMessage());

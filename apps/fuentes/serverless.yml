@@ -1,0 +1,138 @@
+service: metamapa-fuentes
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: java17
+  region: us-east-1
+  stage: prod
+  memorySize: 1024
+  timeout: 30
+
+  httpApi:
+    cors: true
+
+  logs:
+    httpApi: true
+
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource: '*'
+
+package:
+  individually: true
+
+functions:
+  fuente-estatica:
+    handler: utn.dds.fuentes.estatica.LambdaHandler
+    description: 'Fuente de datos estáticas (CSV desde S3)'
+    package:
+      artifact: estatica/target/fuente-estatica-1.0-SNAPSHOT.jar
+    events:
+      - httpApi:
+          path: /estatica/hechos
+          method: get
+    environment:
+      DAO_TYPE: ${env:FUENTE_ESTATICA_DAO_TYPE, 's3'}
+      PROCESSOR_TYPE: csv
+      S3_ENDPOINT: ${env:S3_ENDPOINT}
+      S3_PUBLIC_ENDPOINT: ${env:S3_PUBLIC_ENDPOINT}
+      S3_ACCESS_KEY: ${env:AWS_ACCESS_KEY_ID}
+      S3_SECRET_KEY: ${env:AWS_SECRET_ACCESS_KEY}
+      S3_BUCKET: ${env:S3_BUCKET_ESTATICA}
+    memorySize: 1536
+    timeout: 28
+
+  fuente-dinamica:
+    handler: utn.dds.fuentes.dinamica.LambdaHandler
+    description: 'Fuente de datos dinámicas (CouchDB)'
+    package:
+      artifact: dinamica/target/fuente-dinamica-1.0-SNAPSHOT.jar
+    events:
+      - httpApi:
+          path: /dinamica/hechos
+          method: get
+      - httpApi:
+          path: /dinamica/hechos
+          method: post
+    environment:
+      DAO_TYPE: ${env:FUENTE_DINAMICA_DAO_TYPE, 'couchdb'}
+      COUCHDB_URL: ${env:COUCHDB_URL}
+      COUCHDB_USER: ${env:COUCHDB_USER}
+      COUCHDB_PASSWORD: ${env:COUCHDB_PASSWORD}
+      COUCHDB_DB: ${env:COUCHDB_DB_DINAMICA, 'dinamica_db'}
+      S3_ENDPOINT: ${env:S3_ENDPOINT}
+      S3_PUBLIC_ENDPOINT: ${env:S3_PUBLIC_ENDPOINT}
+      S3_ACCESS_KEY: ${env:AWS_ACCESS_KEY_ID}
+      S3_SECRET_KEY: ${env:AWS_SECRET_ACCESS_KEY}
+      S3_BUCKET: ${env:S3_BUCKET_DINAMICA}
+    memorySize: 1536
+    timeout: 28
+
+  proxy-metamapa:
+    handler: utn.dds.fuentes.proxy.metamapa.LambdaHandler
+    description: 'Proxy para servicio principal de MetaMapa'
+    package:
+      artifact: proxy/metamapa/target/fuente-proxy-metamapa-1.0-SNAPSHOT.jar
+    events:
+      - httpApi:
+          path: /metamapa/hechos
+          method: get
+    environment:
+      URL: ${env:METAMAPA_PROXY_URL, 'https://56d05c91-ca57-4d58-acd5-6d61368e622a.mock.pstmn.io'}
+    memorySize: 1024
+    timeout: 28
+
+  proxy-demo:
+    handler: utn.dds.fuentes.proxy.demo.LambdaHandler
+    description: 'Proxy demo para pruebas y desarrollo'
+    package:
+      artifact: proxy/demo/target/fuente-proxy-demo-1.0-SNAPSHOT.jar
+    events:
+      - httpApi:
+          path: /demo/hechos
+          method: get
+      - httpApi:
+          path: /demo/hechos
+          method: put
+    environment:
+      DAO_TYPE: ${env:FUENTE_PROXY_DEMO_DAO_TYPE, 'couchdb'}
+      COUCHDB_URL: ${env:COUCHDB_URL}
+      COUCHDB_USER: ${env:COUCHDB_USER}
+      COUCHDB_PASSWORD: ${env:COUCHDB_PASSWORD}
+      COUCHDB_DB: ${env:COUCHDB_DB_PROXY_DEMO, 'proxy_demo_db'}
+    memorySize: 1024
+    timeout: 28
+
+resources:
+  Resources:
+    FuenteEstaticaLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: /aws/lambda/${self:service}-${self:provider.stage}-fuente-estatica
+        RetentionInDays: 7
+
+    FuenteDinamicaLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: /aws/lambda/${self:service}-${self:provider.stage}-fuente-dinamica
+        RetentionInDays: 7
+
+    ProxyMetamapaLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: /aws/lambda/${self:service}-${self:provider.stage}-proxy-metamapa
+        RetentionInDays: 7
+
+    ProxyDemoLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: /aws/lambda/${self:service}-${self:provider.stage}-proxy-demo
+        RetentionInDays: 7

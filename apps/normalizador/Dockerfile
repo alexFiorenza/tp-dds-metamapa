@@ -1,13 +1,42 @@
-FROM openjdk:17-jdk-slim
+# Build stage
+FROM node:20-alpine AS builder
 
-# Establecer directorio de trabajo
 WORKDIR /app
 
-# Copiar el JAR del microservicio
-COPY target/normalizador1-*.jar app.jar
+# Copiar package files
+COPY package*.json ./
+COPY tsconfig.json ./
 
-# Exponer el puerto del servicio
-EXPOSE 7099
+# Instalar dependencias
+RUN npm ci
 
-# Comando para ejecutar la aplicación
-CMD ["java", "-jar", "app.jar"]
+# Copiar código fuente
+COPY src/ ./src/
+
+# Compilar TypeScript
+RUN npm run build
+
+# Production stage
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copiar solo archivos necesarios para producción
+COPY package*.json ./
+COPY --from=builder /app/dist ./dist
+
+# Instalar solo dependencias de producción (aunque no hay runtime deps)
+RUN npm ci --omit=dev
+
+# Variables de entorno
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# Exponer puerto
+EXPOSE 3000
+
+# Usuario no-root para seguridad
+USER node
+
+# Comando de inicio
+CMD ["node", "dist/index.js"]

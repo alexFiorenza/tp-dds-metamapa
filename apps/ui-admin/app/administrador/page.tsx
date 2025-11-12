@@ -21,8 +21,8 @@ export default function AdminPage() {
         {/* Menu */}
         <div className="flex-1 overflow-y-auto p-4">
           <div className="space-y-3">
-            <Link href="/administrador/colecciones">
-              <Card isPressable isHoverable>
+            <Link href="/administrador/colecciones" className="block w-full">
+              <Card isPressable isHoverable className="w-full">
                 <CardBody className="p-4">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 flex items-center justify-center bg-primary/10 rounded-xl">
@@ -37,8 +37,8 @@ export default function AdminPage() {
               </Card>
             </Link>
 
-            <Link href="/administrador/solicitudes">
-              <Card isPressable isHoverable>
+            <Link href="/administrador/solicitudes" className="block w-full">
+              <Card isPressable isHoverable className="w-full">
                 <CardBody className="p-4">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 flex items-center justify-center bg-warning/10 rounded-xl">

@@ -79,6 +79,7 @@ services:
       - DAO_TYPE=${FUENTE_ESTATICA_DAO_TYPE:-s3}
       - PROCESSOR_TYPE=csv
       - S3_ENDPOINT=${S3_ENDPOINT}
+      - S3_PUBLIC_ENDPOINT=${S3_PUBLIC_ENDPOINT}
       - S3_ACCESS_KEY=${MINIO_ACCESS_KEY}
       - S3_SECRET_KEY=${MINIO_SECRET_KEY}
       - S3_BUCKET=${S3_BUCKET}
@@ -103,6 +104,11 @@ services:
       - COUCHDB_USER=${COUCHDB_USER:-admin}
       - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-admin123}
       - COUCHDB_DB=${COUCHDB_DB_DINAMICA:-dinamica_db}
+      - S3_ENDPOINT=${S3_ENDPOINT}
+      - S3_PUBLIC_ENDPOINT=${S3_PUBLIC_ENDPOINT}
+      - S3_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - S3_SECRET_KEY=${MINIO_SECRET_KEY}
+      - S3_BUCKET=${S3_BUCKET_DINAMICA}
     depends_on:
       - couchdb
     networks:
@@ -119,7 +125,7 @@ services:
     container_name: metamapa-fuente-proxy-metamapa
     restart: unless-stopped
     environment:
-      - URL = https://56d05c91-ca57-4d58-acd5-6d61368e622a.mock.pstmn.io
+      - URL=https://56d05c91-ca57-4d58-acd5-6d61368e622a.mock.pstmn.io
     networks:
       - metamapa-network
 
@@ -159,21 +165,33 @@ services:
       - DB_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-metamapa_db}
       - DB_USER=${POSTGRES_USER:-metamapa}
       - DB_PASSWORD=${POSTGRES_PASSWORD:-metamapa123}
+      - NORMALIZADOR_URL=http://normalizador:3000
+      - NORMALIZADOR_ENABLED=${NORMALIZADOR_ENABLED:-true}
     depends_on:
       - postgres
+      - normalizador
     networks:
       - metamapa-network
 
-  # Normalizador
+  # Normalizador (TypeScript/Node.js)
   normalizador:
     build:
       context: ./apps/normalizador
       dockerfile: Dockerfile
     platform: linux/amd64
     ports:
-      - "7099:7099"
+      - "3005:3000"
     container_name: metamapa-normalizador
     restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - metamapa-network
 
@@ -240,12 +258,37 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      # Permitir embedding en iframes
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+      # Acceso anónimo con rol Viewer
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
     depends_on:
       - postgres
       - metric-collector
     restart: unless-stopped
     networks:
       - metamapa-network
+
+  # Scheduler de Estadísticas usando Ofelia
+  scheduler:
+    image: mcuadros/ofelia:latest
+    container_name: metamapa-scheduler
+    command: daemon --docker
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - metamapa-network
+    labels:
+      ofelia.job-exec.actualizar-estadisticas.schedule: "@every 10m"
+      ofelia.job-exec.actualizar-estadisticas.container: "metamapa-postgres"
+      ofelia.job-exec.actualizar-estadisticas.user: "postgres"
+      ofelia.job-exec.actualizar-estadisticas.command: >
+        sh -c 'PGPASSWORD=$$POSTGRES_PASSWORD psql -U $$POSTGRES_USER -d $$POSTGRES_DB -c "SELECT analiticas.actualizar_estadisticas();"'
+
 volumes:
   minio_data:
   postgres_data:

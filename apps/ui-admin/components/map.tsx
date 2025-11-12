@@ -319,12 +319,12 @@ export function MapComponent({
                 </svg>
 
                 {/* Badge de contador si tiene imágenes */}
-                {hecho.multimedia && hecho.multimedia.filter(m => m.tipo === 'IMAGEN').length > 0 && (
+                {hecho.multimedia && hecho.multimedia.filter(url => /\.(jpg|jpeg|png|gif|webp)$/i.test(url)).length > 0 && (
                   <div
                     className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-white text-black text-xs flex items-center justify-center font-bold"
                     style={{ fontSize: '10px', zIndex: 11 }}
                   >
-                    {hecho.multimedia.filter(m => m.tipo === 'IMAGEN').length}
+                    {hecho.multimedia.filter(url => /\.(jpg|jpeg|png|gif|webp)$/i.test(url)).length}
                   </div>
                 )}
               </div>

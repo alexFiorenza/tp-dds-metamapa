@@ -40,13 +40,14 @@ export function HechoListItem({ hecho, onClick, onDetailsClick, isSelected, onHo
       whileTap={{ scale: 0.98 }}
       onMouseEnter={() => onHover?.(true)}
       onMouseLeave={() => onHover?.(false)}
+      className="w-full"
     >
       <Card
         isPressable
         isHoverable
         onPress={onClick}
         className={cn(
-          "transition-all duration-200",
+          "transition-all duration-200 w-full",
           isSelected && "ring-2 ring-primary shadow-lg"
         )}
       >

@@ -50,21 +50,38 @@ export function HechosMapView({ initialData, fetchPage }: HechosMapViewProps) {
 
   // Efecto para redimensionar el mapa cuando cambie el estado del sidebar
   useEffect(() => {
-    const timer = setTimeout(() => {
-      // Disparar un evento de resize para que el mapa se redimensione
-      window.dispatchEvent(new Event('resize'))
-    }, 300) // Esperar a que termine la animación del sidebar
+    // Disparar resize múltiples veces para asegurar que el mapa se ajuste durante la animación
+    const timeouts = [0, 50, 150, 300, 400].map(delay =>
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'))
+      }, delay)
+    )
 
-    return () => clearTimeout(timer)
+    return () => {
+      timeouts.forEach(clearTimeout)
+    }
   }, [isCollapsed])
 
+  // Efecto para resize inicial al montar el componente
+  useEffect(() => {
+    const timeouts = [100, 200, 500].map(delay =>
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'))
+      }, delay)
+    )
+
+    return () => {
+      timeouts.forEach(clearTimeout)
+    }
+  }, [])
+
   return (
-    <div className="flex h-full w-full">
+    <div className="flex h-full w-full overflow-hidden">
       {/* Sidebar con lista de hechos - se oculta completamente cuando el sidebar principal está colapsado */}
       <AnimatePresence>
         {!isCollapsed && (
-          <motion.div 
-            className="flex flex-col bg-content1 border-r border-divider"
+          <motion.div
+            className="flex flex-col bg-content1 border-r border-divider z-10"
             initial={{ width: 0, opacity: 0 }}
             animate={{ width: 384, opacity: 1 }} // 384px = w-96
             exit={{ width: 0, opacity: 0 }}
@@ -157,7 +174,7 @@ export function HechosMapView({ initialData, fetchPage }: HechosMapViewProps) {
       </AnimatePresence>
 
       {/* Mapa */}
-      <div className="flex-1 relative min-w-0">
+      <div className="flex-1 relative h-full min-w-0 overflow-hidden">
         <MapWrapper
           hechos={data.datos}
           selectedHechoId={selectedHechoId}
