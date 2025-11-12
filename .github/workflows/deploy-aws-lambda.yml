@@ -8,6 +8,8 @@ on:
       - 'apps/fuentes/**'
       - 'apps/shared/**'
       - 'apps/normalizador/**'
+      - 'apps/fuentes/serverless.yml'
+      - 'apps/normalizador/serverless.yml'
       - '.github/workflows/deploy-aws-lambda.yml'
   workflow_dispatch:
 
@@ -36,8 +38,10 @@ jobs:
             fuentes:
               - 'apps/fuentes/**'
               - 'apps/shared/**'
+              - 'apps/fuentes/serverless.yml'
             normalizador:
               - 'apps/normalizador/**'
+              - 'apps/normalizador/serverless.yml'
 
   # Job para desplegar Fuentes (si hubo cambios)
   deploy-fuentes:
