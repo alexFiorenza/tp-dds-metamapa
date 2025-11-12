@@ -92,6 +92,26 @@ jobs:
         run: |
           serverless info --stage prod
         working-directory: apps/fuentes
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # Fuente Estática
+          FUENTE_ESTATICA_DAO_TYPE: ${{ vars.FUENTE_ESTATICA_DAO_TYPE }}
+          S3_ENDPOINT: ${{ vars.S3_ENDPOINT }}
+          S3_PUBLIC_ENDPOINT: ${{ vars.S3_PUBLIC_ENDPOINT }}
+          S3_BUCKET_ESTATICA: ${{ vars.S3_BUCKET_ESTATICA }}
+          # Fuente Dinámica
+          FUENTE_DINAMICA_DAO_TYPE: ${{ vars.FUENTE_DINAMICA_DAO_TYPE }}
+          COUCHDB_URL: ${{ secrets.COUCHDB_URL }}
+          COUCHDB_USER: ${{ secrets.COUCHDB_USER }}
+          COUCHDB_PASSWORD: ${{ secrets.COUCHDB_PASSWORD }}
+          COUCHDB_DB_DINAMICA: ${{ vars.COUCHDB_DB_DINAMICA }}
+          S3_BUCKET_DINAMICA: ${{ vars.S3_BUCKET_DINAMICA }}
+          # Proxy MetaMapa
+          METAMAPA_PROXY_URL: ${{ vars.METAMAPA_PROXY_URL }}
+          # Proxy Demo
+          FUENTE_PROXY_DEMO_DAO_TYPE: ${{ vars.FUENTE_PROXY_DEMO_DAO_TYPE }}
+          COUCHDB_DB_PROXY_DEMO: ${{ vars.COUCHDB_DB_PROXY_DEMO }}
 
       - name: Deployment summary
         run: |
