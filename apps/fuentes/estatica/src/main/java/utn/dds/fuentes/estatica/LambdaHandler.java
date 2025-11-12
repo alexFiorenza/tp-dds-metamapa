@@ -14,6 +14,7 @@ import java.util.Map;
 public class LambdaHandler implements RequestHandler<AwsProxyRequest, AwsProxyResponse> {
     private static final Logger logger = LoggerFactory.getLogger(LambdaHandler.class);
     private static Javalin app;
+    private static int serverPort;
 
     static {
         try {
@@ -22,7 +23,21 @@ public class LambdaHandler implements RequestHandler<AwsProxyRequest, AwsProxyRe
 
             // Iniciar servidor en puerto local solo para Lambda
             app.start(0); // Puerto 0 = puerto aleatorio disponible
-            logger.info("Javalin inicializado en puerto: {}", app.port());
+            
+            // Obtener y almacenar el puerto asignado
+            Integer port = app.port();
+            if (port == null || port == 0) {
+                // Si el puerto no está disponible inmediatamente, esperar un poco
+                Thread.sleep(100);
+                port = app.port();
+            }
+            
+            if (port == null || port == 0) {
+                throw new RuntimeException("No se pudo obtener el puerto del servidor Javalin");
+            }
+            
+            serverPort = port;
+            logger.info("Javalin inicializado en puerto: {}", serverPort);
         } catch (Exception e) {
             logger.error("Error al inicializar Javalin", e);
             throw new RuntimeException("Error al inicializar Javalin", e);
@@ -34,8 +49,14 @@ public class LambdaHandler implements RequestHandler<AwsProxyRequest, AwsProxyRe
         logger.info("Lambda Request - Method: {}, Path: {}", request.getHttpMethod(), request.getPath());
 
         try {
+            // Validar path
+            String path = request.getPath();
+            if (path == null) {
+                path = "/";
+            }
+            
             // Hacer request HTTP interno a Javalin
-            String url = "http://localhost:" + app.port() + request.getPath();
+            String url = "http://localhost:" + serverPort + path;
             if (request.getQueryStringParameters() != null && !request.getQueryStringParameters().isEmpty()) {
                 url += "?" + buildQueryString(request.getQueryStringParameters());
             }
