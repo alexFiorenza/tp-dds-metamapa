@@ -9,6 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -114,16 +116,58 @@ public class JavalinLambdaHandler implements RequestHandler<APIGatewayV2HTTPEven
 
             java.net.HttpURLConnection connection = (java.net.HttpURLConnection) new java.net.URL(url).openConnection();
             connection.setRequestMethod(method != null ? method : "GET");
-            connection.setDoOutput(event.getBody() != null && !event.getBody().isEmpty());
+            
+            boolean hasBody = event.getBody() != null && !event.getBody().isEmpty();
+            connection.setDoOutput(hasBody);
 
-            // Copiar headers
+            // Obtener Content-Type del request para logging y validación
+            String requestContentType = event.getHeaders() != null ? 
+                event.getHeaders().get("content-type") : null;
+            boolean isMultipart = requestContentType != null && 
+                requestContentType.toLowerCase().startsWith("multipart/");
+            
+            if (isMultipart) {
+                logger.info("Request con multipart/form-data detectado. Body size: {}, isBase64Encoded: {}", 
+                    event.getBody() != null ? event.getBody().length() : 0,
+                    event.getIsBase64Encoded());
+            }
+
+            // Copiar headers (importante para multipart/form-data y otros content types)
             if (event.getHeaders() != null) {
-                event.getHeaders().forEach(connection::setRequestProperty);
+                event.getHeaders().forEach((key, value) -> {
+                    // No copiar algunos headers que HttpURLConnection maneja automáticamente
+                    if (!key.equalsIgnoreCase("Content-Length") && 
+                        !key.equalsIgnoreCase("Host") &&
+                        !key.equalsIgnoreCase("Connection")) {
+                        connection.setRequestProperty(key, value);
+                    }
+                });
             }
 
             // Enviar body si existe
-            if (event.getBody() != null && !event.getBody().isEmpty()) {
-                connection.getOutputStream().write(event.getBody().getBytes());
+            if (hasBody) {
+                byte[] bodyBytes;
+                
+                // API Gateway HTTP API v2 codifica bodies binarios en base64
+                if (Boolean.TRUE.equals(event.getIsBase64Encoded())) {
+                    logger.debug("Decodificando body desde base64 (tamaño original: {} chars)", 
+                        event.getBody().length());
+                    bodyBytes = Base64.getDecoder().decode(event.getBody());
+                    logger.debug("Body decodificado: {} bytes", bodyBytes.length);
+                } else {
+                    // Si no está en base64, convertir el string a bytes usando UTF-8
+                    // Esto funciona para JSON y texto, pero para binarios debería venir en base64
+                    // Para multipart/form-data, el body viene como string con el formato multipart
+                    bodyBytes = event.getBody().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                }
+                
+                // Establecer Content-Length explícitamente (después de decodificar si es necesario)
+                connection.setRequestProperty("Content-Length", String.valueOf(bodyBytes.length));
+                
+                try (OutputStream outputStream = connection.getOutputStream()) {
+                    outputStream.write(bodyBytes);
+                    outputStream.flush();
+                }
             }
 
             // Leer respuesta
