@@ -1,5 +1,7 @@
 package utn.dds.agregador.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import utn.dds.agregador.persistencia.HechoRepository;
 import utn.dds.dominio.Hecho;
 import utn.dds.dominio.criterios.EstrategiaDeteccionDuplicados;
@@ -17,11 +19,15 @@ import java.net.http.HttpResponse;
 import java.net.URI;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class ServiceAgregador {
+
+    private static final Logger logger = LoggerFactory.getLogger(ServiceAgregador.class);
 
     private HechoRepository hechoRepository;
     private ServiceRegistry serviceRegistry;
@@ -71,6 +77,8 @@ public class ServiceAgregador {
         return hechosSinDuplicados;
     }
     
+    private static final int NORMALIZADOR_BATCH_SIZE = 1000;
+
     public ResultadoAgregacionDTO agregacion() {
         LocalDateTime fechaEjecucion = LocalDateTime.now();
         List<FuenteDTO> fuentes = serviceRegistry.obtenerTodasLasFuentes();
@@ -80,22 +88,62 @@ public class ServiceAgregador {
 
         for (FuenteDTO fuente : fuentes) {
             try {
+                // Verificar si es fuente estática ya procesada
+                if ("estatica".equals(fuente.getTipo())) {
+                    Map<String, Object> metadata = fuente.getMetadata();
+                    if (metadata != null && Boolean.TRUE.equals(metadata.get("procesado"))) {
+                        logger.info("Saltando fuente estática ya procesada: {}", fuente.getHost());
+                        continue;
+                    }
+                }
+
                 String urlCompleta = construirUrlCompleta(fuente);
                 List<Hecho> hechosDeEstaFuente = obtenerHechosDesdeFuente(urlCompleta, fuente);
                 hechosObtenidos += hechosDeEstaFuente.size();
                 hechosAgregados.addAll(hechosDeEstaFuente);
+
+                // Actualizar metadata con timestamp y estado
+                Map<String, Object> metadata = fuente.getMetadata();
+                if (metadata == null) {
+                    metadata = new HashMap<>();
+                }
+
+                // Actualizar timestamp de última consulta
+                metadata.put("ultimaConsulta", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+
+                // Marcar como procesado si es fuente estática
+                if ("estatica".equals(fuente.getTipo())) {
+                    metadata.put("procesado", true);
+                    logger.info("Fuente estática marcada como procesada: {}", fuente.getHost());
+                }
+
+                fuente.setMetadata(metadata);
+                serviceRegistry.actualizar(fuente);
+                logger.info("Fuente consultada: {} - Hechos obtenidos: {}", fuente.getHost(), hechosDeEstaFuente.size());
             } catch (Exception e) {
                 String errorMsg = fuente.getHost() + " - " + e.getMessage();
                 fuentesConError.add(errorMsg);
-                System.err.println("Error al obtener datos de la fuente: " + errorMsg);
+                logger.error("Error al obtener datos de la fuente: {}", errorMsg, e);
             }
         }
 
+        if (hechosAgregados.isEmpty()) {
+            return new ResultadoAgregacionDTO(
+                fuentes.size(),
+                hechosObtenidos,
+                0,
+                fechaEjecucion,
+                fuentesConError
+            );
+        }
+
         // Normalizar hechos antes de filtrar duplicados
-        List<Hecho> hechosNormalizados = normalizadorClient.normalizar(hechosAgregados);
+        List<Hecho> hechosNormalizados = normalizarPorLotes(hechosAgregados);
 
         // Filtrar duplicados después de normalizar
-        List<Hecho> hechosSinDuplicados = filtrarDuplicados(hechosNormalizados);
+        List<Hecho> hechosSinDuplicados = hechosNormalizados.isEmpty()
+            ? List.of()
+            : filtrarDuplicados(hechosNormalizados);
 
         // Guardar únicamente hechos sin duplicados
         if (!hechosSinDuplicados.isEmpty()) {
@@ -117,7 +165,7 @@ public class ServiceAgregador {
             return obtenerHechosPaginadosDesdeFuente(url, fuente);
         } catch (Exception e) {
             // Si falla la paginación, intentar método simple
-            System.out.println("Paginación no soportada para " + url + ", usando método simple: " + e.getMessage());
+            logger.debug("Paginación no soportada para {}, usando método simple: {}", url, e.getMessage());
             return obtenerHechosSimpleDesdeFuente(url, fuente);
         }
     }
@@ -329,5 +377,25 @@ public class ServiceAgregador {
         }
 
         return new RespuestaPaginadaDTO<>(datosPagina, pagina, tamanioPagina, totalElementos);
+    }
+
+    private List<Hecho> normalizarPorLotes(List<Hecho> hechos) {
+        if (hechos == null || hechos.isEmpty()) {
+            return List.of();
+        }
+
+        List<Hecho> hechosNormalizados = new ArrayList<>(hechos.size());
+
+        for (int i = 0; i < hechos.size(); i += NORMALIZADOR_BATCH_SIZE) {
+            int fin = Math.min(i + NORMALIZADOR_BATCH_SIZE, hechos.size());
+            List<Hecho> lote = new ArrayList<>(hechos.subList(i, fin));
+            List<Hecho> loteNormalizado = normalizadorClient.normalizar(lote);
+
+            if (loteNormalizado != null && !loteNormalizado.isEmpty()) {
+                hechosNormalizados.addAll(loteNormalizado);
+            }
+        }
+
+        return hechosNormalizados;
     }
 }
