@@ -63,6 +63,9 @@ functions:
       - httpApi:
           path: /dinamica/hechos
           method: post
+      - httpApi:
+          path: /dinamica/hechos/{uuid}
+          method: patch
     environment:
       DAO_TYPE: ${env:FUENTE_DINAMICA_DAO_TYPE, 'couchdb'}
       COUCHDB_URL: ${env:COUCHDB_URL}

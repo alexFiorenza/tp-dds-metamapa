@@ -102,6 +102,7 @@ public class Main {
 
         app.get("/hechos", controller::obtenerHechos);
         app.post("/hechos", controller::agregarHecho);
+        app.patch("/hechos/{uuid}", controller::actualizarHecho);
     }
 
     public static void main(String[] args) throws MalformedURLException {

@@ -21,7 +21,10 @@ public class Contribuyente {
     private String apellido;
 
     @Column(name = "edad")
-    private int edad;
+    private Integer edad;
+
+    @Column(name = "user_id", unique = true, length = 255)
+    private String userId;
 
     public Contribuyente() {
         this.aportes = new ArrayList<>();
@@ -32,7 +35,16 @@ public class Contribuyente {
         this();
         this.nombre = nombre;
         this.apellido = apellido;
-        this.edad = edad;
+        this.edad = edad; // Puede ser null
+    }
+
+    // Constructor con User ID
+    public Contribuyente(String nombre, String apellido, Integer edad, String userId) {
+        this();
+        this.nombre = nombre;
+        this.apellido = apellido;
+        this.edad = edad; // Puede ser null
+        this.userId = userId;
     }
 
     // Getters
@@ -48,7 +60,7 @@ public class Contribuyente {
         return apellido;
     }
 
-    public int getEdad() {
+    public Integer getEdad() {
         return edad;
     }
 
@@ -69,11 +81,19 @@ public class Contribuyente {
         this.apellido = apellido;
     }
 
-    public void setEdad(int edad) {
+    public void setEdad(Integer edad) {
         this.edad = edad;
     }
 
     public void setAportes(List<Hecho> aportes) {
         this.aportes = aportes;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 } 

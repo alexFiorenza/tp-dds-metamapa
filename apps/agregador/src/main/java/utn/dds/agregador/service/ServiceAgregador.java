@@ -56,10 +56,26 @@ public class ServiceAgregador {
     }
     
     private List<Hecho> filtrarDuplicados(List<Hecho> nuevosHechos) {
-        List<Hecho> hechosExistentes = hechoRepository.find();
+        List<Hecho> hechosExistentes = hechoRepository.findAll(); // Usar findAll para incluir todos los hechos
         List<Hecho> hechosSinDuplicados = new ArrayList<>();
+        List<Hecho> hechosParaActualizar = new ArrayList<>();
         
         for (Hecho nuevoHecho : nuevosHechos) {
+            // Primero verificar si existe un hecho con el mismo UUID (actualización)
+            Hecho hechoExistenteConMismoUuid = hechosExistentes.stream()
+                .filter(h -> h.getUuid() != null && h.getUuid().equals(nuevoHecho.getUuid()))
+                .findFirst()
+                .orElse(null);
+            
+            if (hechoExistenteConMismoUuid != null) {
+                // Es una actualización: actualizar el hecho existente con los nuevos datos
+                actualizarHechoExistente(hechoExistenteConMismoUuid, nuevoHecho);
+                hechosParaActualizar.add(hechoExistenteConMismoUuid);
+                logger.info("Hecho con UUID {} será actualizado", nuevoHecho.getUuid());
+                continue;
+            }
+            
+            // Si no es actualización, verificar duplicados por contenido
             boolean esDuplicado = hechosExistentes.stream()
                 .anyMatch(hechoExistente -> estrategiaDeteccionDuplicados.esDuplicado(nuevoHecho, hechoExistente));
             
@@ -74,7 +90,35 @@ public class ServiceAgregador {
             }
         }
         
+        // Guardar actualizaciones
+        if (!hechosParaActualizar.isEmpty()) {
+            hechoRepository.saveAll(hechosParaActualizar);
+            logger.info("Actualizados {} hechos existentes", hechosParaActualizar.size());
+        }
+        
         return hechosSinDuplicados;
+    }
+    
+    /**
+     * Actualiza un hecho existente con los datos de un nuevo hecho
+     */
+    private void actualizarHechoExistente(Hecho existente, Hecho nuevo) {
+        existente.setTitulo(nuevo.getTitulo());
+        existente.setDescripcion(nuevo.getDescripcion());
+        existente.setCategoria(nuevo.getCategoria());
+        existente.setFechaAcontecimiento(nuevo.getFechaAcontecimiento());
+        existente.setLongitud(nuevo.getLongitud());
+        existente.setLatitud(nuevo.getLatitud());
+        existente.setTipo(nuevo.getTipo());
+        existente.setEstado(nuevo.getEstado());
+        existente.setEtiquetas(nuevo.getEtiquetas());
+        existente.setMultimedia(nuevo.getMultimedia());
+        existente.setFechaCarga(nuevo.getFechaCarga());
+        
+        // Actualizar contribuyente si el nuevo tiene uno
+        if (nuevo.getContribuyente() != null) {
+            existente.setContribuyente(nuevo.getContribuyente());
+        }
     }
     
     private static final int NORMALIZADOR_BATCH_SIZE = 1000;
@@ -145,7 +189,7 @@ public class ServiceAgregador {
             ? List.of()
             : filtrarDuplicados(hechosNormalizados);
 
-        // Guardar únicamente hechos sin duplicados
+        // Guardar únicamente hechos sin duplicados (las actualizaciones ya se guardaron en filtrarDuplicados)
         if (!hechosSinDuplicados.isEmpty()) {
             hechoRepository.saveAll(hechosSinDuplicados);
         }

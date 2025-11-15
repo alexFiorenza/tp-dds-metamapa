@@ -95,6 +95,97 @@ public class HechoRepository {
         }
     }
 
+    /**
+     * Busca un hecho por su UUID
+     */
+    public HechoDTO buscarHechoPorUuid(String uuid) throws IOException {
+        List<HechoDTO> hechosDTO = dao.find();
+        
+        Optional<HechoDTO> encontrado = hechosDTO.stream()
+                .filter(h -> h.getUuid() != null && h.getUuid().equals(uuid))
+                .findFirst();
+
+        if (encontrado.isPresent()) {
+            return encontrado.get();
+        } else {
+            throw new NoSuchElementException("No se encontró el Hecho con UUID: " + uuid);
+        }
+    }
+
+    /**
+     * Actualiza un hecho existente
+     */
+    public HechoDTO actualizarHecho(HechoDTO hechoActualizado) throws IOException {
+        // Actualizar fecha de carga
+        hechoActualizado.setFechaCarga(java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        dao.save(hechoActualizado);
+        return hechoActualizado;
+    }
+
+    /**
+     * Actualiza un hecho existente con archivos multimedia
+     */
+    public HechoDTO actualizarHechoConArchivos(HechoDTO hechoActualizado, List<UploadedFile> archivos) throws IOException {
+        // Actualizar fecha de carga
+        hechoActualizado.setFechaCarga(java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+
+        if (archivos != null && !archivos.isEmpty()) {
+            List<String> multimediaUrls = new ArrayList<>();
+            int fileIndex = 0;
+
+            for (UploadedFile archivo : archivos) {
+                fileIndex++;
+                String mimeType = archivo.contentType();
+                String extension = archivo.extension();
+                long contentLength = archivo.size();
+
+                loggerRepository.info("Procesando archivo #{} para actualización: {} (tipo: {}, tamaño: {} bytes)",
+                    fileIndex, archivo.filename(), mimeType, contentLength);
+
+                // Validar tipo MIME
+                if (mimeType == null || !ALLOWED_MIME_TYPES.contains(mimeType.toLowerCase())) {
+                    loggerRepository.error("Tipo MIME no permitido: {} para archivo #{}", mimeType, fileIndex);
+                    throw new IllegalArgumentException(
+                        String.format("Tipo MIME no permitido: %s. Tipos permitidos: %s",
+                            mimeType, ALLOWED_MIME_TYPES)
+                    );
+                }
+
+                // Validar tamaño del archivo
+                if (contentLength > MAX_FILE_SIZE) {
+                    loggerRepository.error("Archivo #{} excede el tamaño máximo: {} bytes (máximo: {} bytes)",
+                        fileIndex, contentLength, MAX_FILE_SIZE);
+                    throw new IllegalArgumentException(
+                        String.format("Archivo #%d excede el tamaño máximo de %d MB (tamaño: %.2f MB)",
+                            fileIndex, MAX_FILE_SIZE / (1024 * 1024), contentLength / (1024.0 * 1024.0))
+                    );
+                }
+
+                // Generar nombre de archivo con extensión
+                String ext = extension != null && !extension.isEmpty() ? extension : getExtensionFromMimeType(mimeType);
+                String nombreArchivo = UUID.randomUUID().toString() + ext;
+
+                loggerRepository.info("Subiendo archivo #{} para actualización: {}", fileIndex, nombreArchivo);
+
+                // Subir a S3
+                try {
+                    String url = s3.uploadBinary(nombreArchivo, archivo.content(), contentLength);
+                    multimediaUrls.add(url);
+                    loggerRepository.info("Archivo #{} subido exitosamente: {}", fileIndex, url);
+                } catch (Exception e) {
+                    loggerRepository.error("Error subiendo archivo #{} a S3", fileIndex, e);
+                    throw new RuntimeException("Error subiendo archivo #" + fileIndex + " a S3: " + e.getMessage(), e);
+                }
+            }
+
+            // Reemplazar multimedia existente con los nuevos archivos
+            hechoActualizado.setMultimedia(multimediaUrls);
+        }
+
+        dao.save(hechoActualizado);
+        return hechoActualizado;
+    }
+
     // Funcion provisional para persistir los hechos
     public void saveProvisional(HechoDTO hechoDto) {
         if (hechoDto.getMultimedia() != null && !hechoDto.getMultimedia().isEmpty()) {
@@ -165,7 +256,12 @@ public class HechoRepository {
             }
             hechoDto.setMultimedia(multimediaUrls);
         }
+        loggerRepository.info("saveProvisional - Contribuyente antes de dao.save: {}", 
+            hechoDto.getContribuyente() != null ? 
+                "nombre=" + hechoDto.getContribuyente().getNombre() + ", userId=" + hechoDto.getContribuyente().getUserId() : 
+                "null");
         dao.save(hechoDto);
+        loggerRepository.info("saveProvisional - Hecho guardado en CouchDB");
     }
 
     /**
@@ -190,9 +286,14 @@ public class HechoRepository {
     }
 
     public HechoDTO aportarHecho(HechoDTO hecho) throws IOException {
+        loggerRepository.info("aportarHecho - Contribuyente antes de guardar: {}", 
+            hecho.getContribuyente() != null ? 
+                "nombre=" + hecho.getContribuyente().getNombre() + ", userId=" + hecho.getContribuyente().getUserId() : 
+                "null");
         // Asignar fecha de carga actual automáticamente en formato ISO-8601
         hecho.setFechaCarga(java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         this.saveProvisional(hecho);   // Funcion provisional para guardar los hechos en couchdb con multimedia en minio s3
+        loggerRepository.info("aportarHecho - Hecho guardado con UUID: {}", hecho.getUuid());
         return hecho;
     }
 

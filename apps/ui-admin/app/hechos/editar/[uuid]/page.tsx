@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardBody, Input, Textarea, Select, SelectItem, Button, DatePicker } from '@heroui/react';
-import { useRouter } from 'next/navigation';
-import { parseDateTime, getLocalTimeZone } from '@internationalized/date';
+import { useRouter, useParams } from 'next/navigation';
+import { parseDateTime, getLocalTimeZone, CalendarDate } from '@internationalized/date';
 import type { DateValue } from '@internationalized/date';
 import { LocationPickerMap } from '@/components/location-picker-map';
 import { useUser, useAuth } from '@clerk/nextjs';
-import { Switch } from '@heroui/react';
+import type { HechoDTO } from '@/types/api';
 
 // Obtener categorías desde variable de entorno
 const CATEGORIAS = (process.env.NEXT_PUBLIC_CATEGORIAS || "INCENDIO,CONTAMINACION,MANIFESTACION,INUNDACION,FAUNA,ALUD,OTRO").split(",");
@@ -25,14 +25,16 @@ const TIPOS_ARCHIVO_PERMITIDOS = [
 
 const TAMANO_MAXIMO = 10 * 1024 * 1024; // 10MB
 
-export default function AportarHechoPage() {
+export default function EditarHechoPage() {
   const router = useRouter();
+  const params = useParams();
+  const uuid = params.uuid as string;
   const { user, isLoaded } = useUser();
   const { getToken } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [loadingHecho, setLoadingHecho] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [identificarseComoContribuyente, setIdentificarseComoContribuyente] = useState(false);
 
   // Form fields
   const [titulo, setTitulo] = useState('');
@@ -41,22 +43,73 @@ export default function AportarHechoPage() {
   const [longitud, setLongitud] = useState<number | null>(null);
   const [latitud, setLatitud] = useState<number | null>(null);
   const [fechaAcontecimiento, setFechaAcontecimiento] = useState<DateValue | null>(null);
+  const [etiquetas, setEtiquetas] = useState('');
+  const [archivos, setArchivos] = useState<File[]>([]);
+  const [hechoOriginal, setHechoOriginal] = useState<HechoDTO | null>(null);
 
   const handleLocationSelect = (lat: number, lng: number) => {
     setLatitud(lat);
     setLongitud(lng);
   };
-  const [contribuyenteNombre, setContribuyenteNombre] = useState('');
-  const [etiquetas, setEtiquetas] = useState('');
-  const [archivos, setArchivos] = useState<File[]>([]);
 
-  // Setear nombre del contribuyente desde el usuario logueado
+  // Cargar el hecho existente
   useEffect(() => {
-    if (isLoaded && user) {
-      const nombre = user.fullName || user.firstName || user.username || user.emailAddresses[0]?.emailAddress || '';
-      setContribuyenteNombre(nombre);
+    const cargarHecho = async () => {
+      try {
+        setLoadingHecho(true);
+        const apiUrl = process.env.NEXT_PUBLIC_FUENTE_DINAMICA_URL || 'http://localhost:7002';
+        const response = await fetch(`${apiUrl}/hechos?pagina=0&tamanio=1000`);
+        
+        if (!response.ok) {
+          throw new Error('Error al cargar los hechos');
+        }
+
+        const data = await response.json();
+        const hecho = data.datos.find((h: HechoDTO) => h.uuid === uuid);
+        
+        if (!hecho) {
+          throw new Error('Hecho no encontrado');
+        }
+
+        // Verificar que el usuario puede editar
+        if (!user || !hecho.contribuyente || user.id !== hecho.contribuyente.userId) {
+          throw new Error('No tienes permiso para editar este hecho');
+        }
+
+        // Verificar tiempo (menos de una semana)
+        if (hecho.fechaCarga) {
+          const fechaCarga = new Date(hecho.fechaCarga);
+          const ahora = new Date();
+          const diasTranscurridos = Math.floor((ahora.getTime() - fechaCarga.getTime()) / (1000 * 60 * 60 * 24));
+          
+          if (diasTranscurridos >= 7) {
+            throw new Error('El hecho no puede ser editado: ha pasado más de una semana desde su creación');
+          }
+        }
+
+        setHechoOriginal(hecho);
+        setTitulo(hecho.titulo);
+        setDescripcion(hecho.descripcion);
+        setCategoria(hecho.categoria);
+        setLongitud(hecho.longitud);
+        setLatitud(hecho.latitud);
+        setEtiquetas(hecho.etiquetas?.join(', ') || '');
+        
+        if (hecho.fechaAcontecimiento) {
+          const fecha = new Date(hecho.fechaAcontecimiento);
+          setFechaAcontecimiento(new CalendarDate(fecha.getFullYear(), fecha.getMonth() + 1, fecha.getDate()));
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Error al cargar el hecho');
+      } finally {
+        setLoadingHecho(false);
+      }
+    };
+
+    if (uuid && isLoaded) {
+      cargarHecho();
     }
-  }, [isLoaded, user]);
+  }, [uuid, isLoaded, user]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -102,67 +155,40 @@ export default function AportarHechoPage() {
         const isoString = fechaAcontecimiento.toDate(getLocalTimeZone()).toISOString();
         formData.append('fechaAcontecimiento', isoString);
       }
-      if (contribuyenteNombre) {
-        formData.append('contribuyenteNombre', contribuyenteNombre);
-      }
       if (etiquetas) {
         formData.append('etiquetas', etiquetas);
       }
 
-      // Agregar archivos multimedia
+      // Agregar archivos multimedia (opcional, reemplazan los existentes)
       archivos.forEach(archivo => {
         formData.append('multimedia', archivo);
       });
 
       const apiUrl = process.env.NEXT_PUBLIC_FUENTE_DINAMICA_URL || 'http://localhost:7002';
       
-      // Preparar headers
-      const headers: HeadersInit = {};
-      
-      // Si el usuario quiere identificarse, enviar el token de sesión
-      if (identificarseComoContribuyente && user) {
-        const token = await getToken();
-        console.log('Token obtenido:', token ? 'presente' : 'ausente');
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-          console.log('Header Authorization agregado al request');
-        } else {
-          console.warn('No se pudo obtener el token de Clerk');
-        }
-      } else {
-        console.log('Usuario no quiere identificarse como contribuyente o no está logueado');
+      // Obtener token de sesión
+      const token = await getToken();
+      if (!token) {
+        throw new Error('No se pudo obtener el token de autenticación');
       }
       
-      console.log('Enviando request a:', `${apiUrl}/hechos`);
-      console.log('Headers:', Object.keys(headers));
-      
-      const response = await fetch(`${apiUrl}/hechos`, {
-        method: 'POST',
-        headers,
+      const response = await fetch(`${apiUrl}/hechos/${uuid}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
         body: formData,
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(errorText || 'Error al aportar el hecho');
+        throw new Error(errorText || 'Error al actualizar el hecho');
       }
 
       const resultado = await response.json();
-      console.log('Hecho aportado:', resultado);
+      console.log('Hecho actualizado:', resultado);
 
       setSuccess(true);
-
-      // Limpiar formulario
-      setTitulo('');
-      setDescripcion('');
-      setCategoria('');
-      setLongitud(null);
-      setLatitud(null);
-      setFechaAcontecimiento(null);
-      setContribuyenteNombre('');
-      setEtiquetas('');
-      setArchivos([]);
-      setIdentificarseComoContribuyente(false);
 
       // Redirigir después de 2 segundos
       setTimeout(() => {
@@ -176,12 +202,44 @@ export default function AportarHechoPage() {
     }
   };
 
+  if (loadingHecho) {
+    return (
+      <div className="p-6 space-y-6 max-w-4xl mx-auto">
+        <div className="text-center py-12">
+          <p className="text-default-600">Cargando hecho...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && !hechoOriginal) {
+    return (
+      <div className="p-6 space-y-6 max-w-4xl mx-auto">
+        <Card className="bg-danger-50 border border-danger-200">
+          <CardBody>
+            <div className="flex items-center gap-2 text-danger">
+              <i className="ri-error-warning-line text-xl" />
+              <span className="font-medium">{error}</span>
+            </div>
+            <Button
+              className="mt-4"
+              variant="flat"
+              onPress={() => router.push('/hechos')}
+            >
+              Volver a Hechos
+            </Button>
+          </CardBody>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6 max-w-4xl mx-auto overflow-y-auto h-full">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Aportar Hecho</h1>
+        <h1 className="text-3xl font-bold text-foreground">Editar Hecho</h1>
         <p className="text-default-600 mt-2">
-          Comparte información sobre eventos relevantes en tu comunidad
+          Modifica la información del hecho. Solo puedes editar hechos que hayas creado y dentro de una semana.
         </p>
       </div>
 
@@ -201,7 +259,7 @@ export default function AportarHechoPage() {
           <CardBody>
             <div className="flex items-center gap-2 text-success">
               <i className="ri-checkbox-circle-line text-xl" />
-              <span className="font-medium">¡Hecho aportado exitosamente! Redirigiendo...</span>
+              <span className="font-medium">¡Hecho actualizado exitosamente! Redirigiendo...</span>
             </div>
           </CardBody>
         </Card>
@@ -280,35 +338,6 @@ export default function AportarHechoPage() {
                 hideTimeZone
               />
 
-              {user && (
-                <div className="space-y-2">
-                  <Switch
-                    isSelected={identificarseComoContribuyente}
-                    onValueChange={setIdentificarseComoContribuyente}
-                    classNames={{
-                      base: "w-full",
-                      wrapper: "p-0 h-4 overflow-visible",
-                      thumb: "w-6 h-6 border-2 shadow-lg",
-                    }}
-                  >
-                    <div className="flex flex-col gap-1">
-                      <p className="text-medium">Identificarme como contribuyente</p>
-                      <p className="text-tiny text-default-500">
-                        Esto te permitirá editar este hecho más adelante (hasta una semana después de crearlo)
-                      </p>
-                    </div>
-                  </Switch>
-                </div>
-              )}
-
-              <Input
-                label="Tu nombre"
-                placeholder="Nombre del contribuyente"
-                value={contribuyenteNombre}
-                onChange={(e) => setContribuyenteNombre(e.target.value)}
-                isDisabled={!!user}
-              />
-
               <Input
                 label="Etiquetas"
                 placeholder="urgente, peligro, atención (separadas por comas)"
@@ -322,6 +351,9 @@ export default function AportarHechoPage() {
             {/* Multimedia */}
             <div className="space-y-4">
               <h2 className="text-xl font-semibold text-foreground">Multimedia (Opcional)</h2>
+              <p className="text-sm text-default-500">
+                Si subes nuevos archivos, reemplazarán los existentes.
+              </p>
 
               <div className="space-y-2">
                 <input
@@ -366,7 +398,7 @@ export default function AportarHechoPage() {
                 isLoading={loading}
                 className="flex-1"
               >
-                {loading ? 'Enviando...' : 'Aportar Hecho'}
+                {loading ? 'Actualizando...' : 'Actualizar Hecho'}
               </Button>
 
               <Button
@@ -385,3 +417,4 @@ export default function AportarHechoPage() {
     </div>
   );
 }
+

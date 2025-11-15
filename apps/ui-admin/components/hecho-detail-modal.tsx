@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import type { HechoDTO } from "@/types/api"
 import {
   Modal,
@@ -16,6 +16,9 @@ import {
   CardBody,
 } from "@heroui/react"
 import Image from "next/image"
+import { useUser } from "@clerk/nextjs"
+import { useRouter } from "next/navigation"
+import { getCategoriaStyle } from "@/lib/categoria-styles"
 
 interface HechoDetailModalProps {
   hecho: HechoDTO | null
@@ -23,31 +26,73 @@ interface HechoDetailModalProps {
   onClose: () => void
 }
 
-// Mapa de categorías a iconos y colores
-const getCategoriaStyle = (categoria: string) => {
-  switch (categoria) {
-    case "INCENDIO":
-      return { iconClass: "ri-fire-line", color: "danger" as const }
-    case "CONTAMINACION":
-      return { iconClass: "ri-drop-line", color: "warning" as const }
-    case "MANIFESTACION":
-      return { iconClass: "ri-group-line", color: "primary" as const }
-    case "INUNDACION":
-      return { iconClass: "ri-water-flash-line", color: "secondary" as const }
-    case "FAUNA":
-      return { iconClass: "ri-plant-line", color: "success" as const }
-    default:
-      return { iconClass: "ri-map-pin-line", color: "default" as const }
-  }
-}
-
 export function HechoDetailModal({ hecho, isOpen, onClose }: HechoDetailModalProps) {
   const [mostrarFormularioEliminacion, setMostrarFormularioEliminacion] = useState(false)
   const [motivo, setMotivo] = useState("")
+  const { user, isLoaded } = useUser()
+  const router = useRouter()
+
+  const puedeEditar = useMemo(() => {
+    // Esperar a que el usuario esté cargado
+    if (!isLoaded) return false
+    
+    const contribuyenteId = hecho?.contribuyente?.userId
+    
+    if (!hecho || !user || !contribuyenteId) {
+      // Debug: ver qué valores tenemos
+      if (hecho) {
+        console.log('Debug puedeEditar - condiciones no cumplidas:', {
+          tieneHecho: !!hecho,
+          tieneUser: !!user,
+          tieneContribuyente: !!hecho.contribuyente,
+          contribuyenteId: contribuyenteId,
+          userId: user?.id,
+          match: user?.id === contribuyenteId
+        })
+      }
+      return false
+    }
+    
+    // Verificar que el usuario es el contribuyente
+    const esContribuyente = user.id === contribuyenteId
+    
+    // Verificar que ha pasado menos de una semana
+    let dentroDelPlazo = true
+    if (hecho.fechaCarga) {
+      const fechaCarga = new Date(hecho.fechaCarga)
+      const ahora = new Date()
+      const diasTranscurridos = Math.floor((ahora.getTime() - fechaCarga.getTime()) / (1000 * 60 * 60 * 24))
+      dentroDelPlazo = diasTranscurridos < 7
+      
+      console.log('Debug puedeEditar:', {
+        userId: user.id,
+        contribuyenteId: contribuyenteId,
+        esContribuyente,
+        fechaCarga: hecho.fechaCarga,
+        diasTranscurridos,
+        dentroDelPlazo,
+        puedeEditar: esContribuyente && dentroDelPlazo
+      })
+    } else {
+      console.log('Debug puedeEditar (sin fechaCarga):', {
+        userId: user.id,
+        contribuyenteId: contribuyenteId,
+        esContribuyente,
+        puedeEditar: esContribuyente
+      })
+    }
+    
+    return esContribuyente && dentroDelPlazo
+  }, [user, hecho, isLoaded])
 
   if (!hecho) return null
 
   const { iconClass, color } = getCategoriaStyle(hecho.categoria)
+
+  const handleEditar = () => {
+    onClose()
+    router.push(`/hechos/editar/${hecho.uuid}`)
+  }
 
   // Detectar tipo de archivo por extensión
   const isImageUrl = (url: string) => /\.(jpg|jpeg|png|gif|webp)$/i.test(url)
@@ -219,6 +264,19 @@ export function HechoDetailModal({ hecho, isOpen, onClose }: HechoDetailModalPro
 
                 <Divider />
 
+                {/* Contribuyente */}
+                {hecho.contribuyente?.nombre && (
+                  <div className="space-y-2">
+                    <p className="text-xs text-default-500 flex items-center gap-1.5">
+                      <i className="ri-user-line w-4 h-4" />
+                      Contribuyente
+                    </p>
+                    <p className="text-sm font-medium text-foreground">
+                      {hecho.contribuyente.nombre}
+                    </p>
+                  </div>
+                )}
+
                 {/* Origen */}
                 <div className="space-y-2">
                   <p className="text-xs text-default-500 flex items-center gap-1.5">
@@ -311,14 +369,26 @@ export function HechoDetailModal({ hecho, isOpen, onClose }: HechoDetailModalPro
                 Cerrar
               </Button>
               {!mostrarFormularioEliminacion && (
-                <Button
-                  color="danger"
-                  variant="flat"
-                  startContent={<i className="ri-delete-bin-line" />}
-                  onPress={() => setMostrarFormularioEliminacion(true)}
-                >
-                  Solicitar eliminación
-                </Button>
+                <>
+                  {puedeEditar && (
+                    <Button
+                      color="primary"
+                      variant="flat"
+                      startContent={<i className="ri-edit-line" />}
+                      onPress={handleEditar}
+                    >
+                      Editar
+                    </Button>
+                  )}
+                  <Button
+                    color="danger"
+                    variant="flat"
+                    startContent={<i className="ri-delete-bin-line" />}
+                    onPress={() => setMostrarFormularioEliminacion(true)}
+                  >
+                    Solicitar eliminación
+                  </Button>
+                </>
               )}
             </ModalFooter>
           </>

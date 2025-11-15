@@ -15,7 +15,7 @@ public class HechoDTO {
     private String categoria;
     private String fechaAcontecimiento; // ISO-8601: "2025-10-29"
     private String origen;
-    private String contribuyenteNombre;
+    private ContribuyenteDTO contribuyente;
     private TipoHecho tipo;
     private double longitud;
     private double latitud;
@@ -28,7 +28,7 @@ public class HechoDTO {
     public HechoDTO() {}
 
     public HechoDTO(String titulo, String descripcion, String categoria, String fechaAcontecimiento,
-                    String origen, String contribuyenteNombre, TipoHecho tipo,
+                    String origen, ContribuyenteDTO contribuyente, TipoHecho tipo,
                     double longitud, double latitud, String fechaCarga,
                     EstadoHecho estado, List<String> etiquetas, String uuid,List<String> multimedia) {
         this.titulo = titulo;
@@ -36,7 +36,7 @@ public class HechoDTO {
         this.categoria = categoria;
         this.fechaAcontecimiento = fechaAcontecimiento;
         this.origen = origen;
-        this.contribuyenteNombre = contribuyenteNombre;
+        this.contribuyente = contribuyente;
         this.tipo = tipo;
         this.longitud = longitud;
         this.latitud = latitud;
@@ -48,13 +48,22 @@ public class HechoDTO {
     }
 
     public static HechoDTO fromHecho(Hecho hecho) {
+        ContribuyenteDTO contribuyenteDTO = null;
+        if (hecho.getContribuyente() != null) {
+            String nombreCompleto = hecho.getContribuyente().getNombre();
+            if (hecho.getContribuyente().getApellido() != null && !hecho.getContribuyente().getApellido().isEmpty()) {
+                nombreCompleto = nombreCompleto + " " + hecho.getContribuyente().getApellido();
+            }
+            contribuyenteDTO = new ContribuyenteDTO(nombreCompleto, hecho.getContribuyente().getUserId());
+        }
+        
         return new HechoDTO(
             hecho.getTitulo(),
             hecho.getDescripcion(),
             hecho.getCategoria(),
             hecho.getFechaAcontecimiento() != null ? hecho.getFechaAcontecimiento().format(DateTimeFormatter.ISO_LOCAL_DATE) : null,
             hecho.getOrigen(),
-            hecho.getContribuyente() != null ? hecho.getContribuyente().getNombre() : null,
+            contribuyenteDTO,
             hecho.getTipo(),
             hecho.getLongitud(),
             hecho.getLatitud(),
@@ -67,13 +76,40 @@ public class HechoDTO {
     }
 
     public Hecho toHecho() {
+        utn.dds.dominio.Contribuyente contribuyente = null;
+        
+        // Si hay contribuyente, crear el objeto Contribuyente del dominio
+        if (this.contribuyente != null && this.contribuyente.getUserId() != null && !this.contribuyente.getUserId().trim().isEmpty()) {
+            // Dividir el nombre completo en nombre y apellido
+            String nombreCompleto = this.contribuyente.getNombre() != null ? this.contribuyente.getNombre().trim() : "";
+            String nombre = "";
+            String apellido = "";
+            
+            if (!nombreCompleto.isEmpty()) {
+                String[] partes = nombreCompleto.split("\\s+", 2);
+                if (partes.length > 1) {
+                    nombre = partes[0];
+                    apellido = partes[1];
+                } else {
+                    // Si solo hay una palabra, usarla como nombre y dejar apellido vacío
+                    nombre = partes[0];
+                    apellido = "";
+                }
+            } else {
+                // Si no hay nombre, usar el userId como nombre
+                nombre = this.contribuyente.getUserId();
+            }
+            
+            contribuyente = new utn.dds.dominio.Contribuyente(nombre, apellido, null, this.contribuyente.getUserId());
+        }
+        
         return new Hecho(
             this.titulo,
             this.descripcion,
             this.categoria,
             this.fechaAcontecimiento != null ? parseFechaAcontecimiento(this.fechaAcontecimiento) : null,
             this.origen,
-            null, // contribuyente - en el mock es null
+            contribuyente,
             this.tipo,
             this.longitud,
             this.latitud,
@@ -154,12 +190,12 @@ public class HechoDTO {
         this.origen = origen;
     }
 
-    public String getContribuyenteNombre() {
-        return contribuyenteNombre;
+    public ContribuyenteDTO getContribuyente() {
+        return contribuyente;
     }
 
-    public void setContribuyenteNombre(String contribuyenteNombre) {
-        this.contribuyenteNombre = contribuyenteNombre;
+    public void setContribuyente(ContribuyenteDTO contribuyente) {
+        this.contribuyente = contribuyente;
     }
 
     public TipoHecho getTipo() {

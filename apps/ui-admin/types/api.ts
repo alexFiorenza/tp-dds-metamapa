@@ -1,6 +1,11 @@
 export type EstadoHecho = "ACTIVO" | "OCULTO"
 export type EstadoSolicitud = "PENDIENTE" | "ACEPTADA" | "RECHAZADA"
 
+export interface ContribuyenteDTO {
+  nombre: string
+  userId: string
+}
+
 export interface HechoDTO {
   uuid: string
   titulo: string
@@ -14,6 +19,7 @@ export interface HechoDTO {
   estado: EstadoHecho
   etiquetas: string[]
   multimedia?: string[] // URLs de archivos multimedia (imágenes y videos)
+  contribuyente?: ContribuyenteDTO // Información del contribuyente
 }
 
 export interface ColeccionDTO {
