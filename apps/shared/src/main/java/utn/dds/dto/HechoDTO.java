@@ -103,7 +103,7 @@ public class HechoDTO {
             contribuyente = new utn.dds.dominio.Contribuyente(nombre, apellido, null, this.contribuyente.getUserId());
         }
         
-        return new Hecho(
+        Hecho hecho = new Hecho(
             this.titulo,
             this.descripcion,
             this.categoria,
@@ -118,6 +118,13 @@ public class HechoDTO {
             this.etiquetas,
             this.multimedia
         );
+
+        // Preservar el UUID del DTO si existe
+        if (this.uuid != null && !this.uuid.trim().isEmpty()) {
+            hecho.setUuid(this.uuid);
+        }
+
+        return hecho;
     }
 
     /**

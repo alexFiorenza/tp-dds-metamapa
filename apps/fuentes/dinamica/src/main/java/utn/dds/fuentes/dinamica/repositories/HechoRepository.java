@@ -286,10 +286,17 @@ public class HechoRepository {
     }
 
     public HechoDTO aportarHecho(HechoDTO hecho) throws IOException {
-        loggerRepository.info("aportarHecho - Contribuyente antes de guardar: {}", 
-            hecho.getContribuyente() != null ? 
-                "nombre=" + hecho.getContribuyente().getNombre() + ", userId=" + hecho.getContribuyente().getUserId() : 
+        loggerRepository.info("aportarHecho - Contribuyente antes de guardar: {}",
+            hecho.getContribuyente() != null ?
+                "nombre=" + hecho.getContribuyente().getNombre() + ", userId=" + hecho.getContribuyente().getUserId() :
                 "null");
+
+        // Generar UUID si no tiene uno
+        if (hecho.getUuid() == null || hecho.getUuid().trim().isEmpty()) {
+            hecho.setUuid(UUID.randomUUID().toString());
+            loggerRepository.info("UUID generado para el hecho: {}", hecho.getUuid());
+        }
+
         // Asignar fecha de carga actual automáticamente en formato ISO-8601
         hecho.setFechaCarga(java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         this.saveProvisional(hecho);   // Funcion provisional para guardar los hechos en couchdb con multimedia en minio s3
@@ -302,6 +309,12 @@ public class HechoRepository {
      * Los archivos se procesan y suben a S3, reemplazando el contenido por URLs.
      */
     public HechoDTO aportarHechoConArchivos(HechoDTO hecho, List<UploadedFile> archivos) throws IOException {
+        // Generar UUID si no tiene uno
+        if (hecho.getUuid() == null || hecho.getUuid().trim().isEmpty()) {
+            hecho.setUuid(UUID.randomUUID().toString());
+            loggerRepository.info("UUID generado para el hecho: {}", hecho.getUuid());
+        }
+
         // Asignar fecha de carga actual automáticamente en formato ISO-8601
         hecho.setFechaCarga(java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
 

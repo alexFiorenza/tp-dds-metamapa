@@ -1,8 +1,6 @@
 package utn.dds.dominio;
 
 import jakarta.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "contribuyentes")
@@ -10,9 +8,6 @@ public class Contribuyente {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @OneToMany(mappedBy = "contribuyente", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Hecho> aportes;
 
     @Column(name = "nombre", nullable = false)
     private String nombre;
@@ -27,7 +22,6 @@ public class Contribuyente {
     private String userId;
 
     public Contribuyente() {
-        this.aportes = new ArrayList<>();
     }
 
     // Constructor
@@ -64,10 +58,6 @@ public class Contribuyente {
         return edad;
     }
 
-    public List<Hecho> getAportes() {
-        return aportes;
-    }
-
     // Setters
     public void setId(Long id) {
         this.id = id;
@@ -83,10 +73,6 @@ public class Contribuyente {
 
     public void setEdad(Integer edad) {
         this.edad = edad;
-    }
-
-    public void setAportes(List<Hecho> aportes) {
-        this.aportes = aportes;
     }
 
     public String getUserId() {

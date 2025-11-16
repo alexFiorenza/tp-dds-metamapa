@@ -202,6 +202,7 @@ export class ApiClient {
   static async obtenerHechosDeColeccion(
     identificador: string,
     filtros: FiltrosHechos = {},
+    modo?: string, // "irrestricto" o "curado"
   ): Promise<RespuestaPaginadaDTO<HechoDTO>> {
     if (USE_MOCK) {
       const coleccion = mockColecciones.find((c) => c.handle === identificador)
@@ -228,9 +229,16 @@ export class ApiClient {
       params.append('size', String(filtros.tamanioPagina))
     }
 
+    // Agregar modo de navegación si se especifica
+    if (modo) {
+      params.append('modo', modo)
+    } else if (filtros.modo) {
+      params.append('modo', filtros.modo)
+    }
+
     // Agregar el resto de filtros
     Object.entries(filtros).forEach(([key, value]) => {
-      if (value !== undefined && key !== 'pagina' && key !== 'tamanioPagina') {
+      if (value !== undefined && key !== 'pagina' && key !== 'tamanioPagina' && key !== 'modo') {
         params.append(key, String(value))
       }
     })

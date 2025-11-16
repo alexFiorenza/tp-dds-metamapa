@@ -57,9 +57,8 @@ export default function EditarHechoPage() {
     const cargarHecho = async () => {
       try {
         setLoadingHecho(true);
-        const apiUrl = process.env.NEXT_PUBLIC_FUENTE_DINAMICA_URL || 'http://localhost:7002';
-        const response = await fetch(`${apiUrl}/hechos?pagina=0&tamanio=1000`);
-        
+        const response = await fetch(`/api/hechos?pagina=0&tamanioPagina=1000`);
+
         if (!response.ok) {
           throw new Error('Error al cargar los hechos');
         }
@@ -164,15 +163,13 @@ export default function EditarHechoPage() {
         formData.append('multimedia', archivo);
       });
 
-      const apiUrl = process.env.NEXT_PUBLIC_FUENTE_DINAMICA_URL || 'http://localhost:7002';
-      
       // Obtener token de sesión
       const token = await getToken();
       if (!token) {
         throw new Error('No se pudo obtener el token de autenticación');
       }
-      
-      const response = await fetch(`${apiUrl}/hechos/${uuid}`, {
+
+      const response = await fetch(`/api/hechos/${uuid}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -334,8 +331,7 @@ export default function EditarHechoPage() {
                 aria-label="Fecha del acontecimiento"
                 value={fechaAcontecimiento}
                 onChange={setFechaAcontecimiento}
-                granularity="minute"
-                hideTimeZone
+                granularity="day"
               />
 
               <Input

@@ -7,14 +7,18 @@ public class ColeccionCreateDTO {
     private String descripcion;
     private List<String> fuentesIds;
     private List<CriterioCreateDTO> criteriosDePertenencia;
+    private String algoritmoConsenso; // String: "menciones", "simple", "absoluta", "default"
 
     public ColeccionCreateDTO() {}
 
-    public ColeccionCreateDTO(String titulo, String descripcion, List<String> fuentesIds, List<CriterioCreateDTO> criteriosDePertenencia) {
+    public ColeccionCreateDTO(String titulo, String descripcion, List<String> fuentesIds, 
+                              List<CriterioCreateDTO> criteriosDePertenencia, 
+                              String algoritmoConsenso) {
         this.titulo = titulo;
         this.descripcion = descripcion;
         this.fuentesIds = fuentesIds;
         this.criteriosDePertenencia = criteriosDePertenencia;
+        this.algoritmoConsenso = algoritmoConsenso;
     }
 
     public String getTitulo() {
@@ -47,5 +51,13 @@ public class ColeccionCreateDTO {
 
     public void setCriteriosDePertenencia(List<CriterioCreateDTO> criteriosDePertenencia) {
         this.criteriosDePertenencia = criteriosDePertenencia;
+    }
+
+    public String getAlgoritmoConsenso() {
+        return algoritmoConsenso;
+    }
+
+    public void setAlgoritmoConsenso(String algoritmoConsenso) {
+        this.algoritmoConsenso = algoritmoConsenso;
     }
 }

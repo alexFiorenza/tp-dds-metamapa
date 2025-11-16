@@ -59,14 +59,42 @@ public class ServiceAgregador {
         List<Hecho> hechosExistentes = hechoRepository.findAll(); // Usar findAll para incluir todos los hechos
         List<Hecho> hechosSinDuplicados = new ArrayList<>();
         List<Hecho> hechosParaActualizar = new ArrayList<>();
-        
+
+        // Mapa para cachear contribuyentes existentes por userId
+        Map<String, utn.dds.dominio.Contribuyente> contribuyentesCache = new HashMap<>();
+
         for (Hecho nuevoHecho : nuevosHechos) {
+            // Resolver contribuyente existente antes de procesar el hecho
+            if (nuevoHecho.getContribuyente() != null && nuevoHecho.getContribuyente().getUserId() != null) {
+                String userId = nuevoHecho.getContribuyente().getUserId();
+
+                // Buscar en cache o en base de datos
+                utn.dds.dominio.Contribuyente contribuyenteExistente = contribuyentesCache.get(userId);
+                if (contribuyenteExistente == null) {
+                    // Buscar directamente en la base de datos usando el nuevo método
+                    contribuyenteExistente = hechoRepository.findContribuyenteByUserId(userId);
+
+                    if (contribuyenteExistente != null) {
+                        contribuyentesCache.put(userId, contribuyenteExistente);
+                        logger.info("Contribuyente existente encontrado para userId: {}", userId);
+                    }
+                }
+
+                // Si encontramos un contribuyente existente, reutilizarlo
+                if (contribuyenteExistente != null) {
+                    nuevoHecho.setContribuyente(contribuyenteExistente);
+                } else {
+                    // Es un contribuyente nuevo, agregarlo al cache
+                    contribuyentesCache.put(userId, nuevoHecho.getContribuyente());
+                }
+            }
+
             // Primero verificar si existe un hecho con el mismo UUID (actualización)
             Hecho hechoExistenteConMismoUuid = hechosExistentes.stream()
                 .filter(h -> h.getUuid() != null && h.getUuid().equals(nuevoHecho.getUuid()))
                 .findFirst()
                 .orElse(null);
-            
+
             if (hechoExistenteConMismoUuid != null) {
                 // Es una actualización: actualizar el hecho existente con los nuevos datos
                 actualizarHechoExistente(hechoExistenteConMismoUuid, nuevoHecho);
@@ -74,28 +102,28 @@ public class ServiceAgregador {
                 logger.info("Hecho con UUID {} será actualizado", nuevoHecho.getUuid());
                 continue;
             }
-            
+
             // Si no es actualización, verificar duplicados por contenido
             boolean esDuplicado = hechosExistentes.stream()
                 .anyMatch(hechoExistente -> estrategiaDeteccionDuplicados.esDuplicado(nuevoHecho, hechoExistente));
-            
+
             if (!esDuplicado) {
                 // También verificar contra otros hechos ya agregados en esta sesión
                 boolean esDuplicadoEnSesion = hechosSinDuplicados.stream()
                     .anyMatch(hechoEnSesion -> estrategiaDeteccionDuplicados.esDuplicado(nuevoHecho, hechoEnSesion));
-                
+
                 if (!esDuplicadoEnSesion) {
                     hechosSinDuplicados.add(nuevoHecho);
                 }
             }
         }
-        
+
         // Guardar actualizaciones
         if (!hechosParaActualizar.isEmpty()) {
             hechoRepository.saveAll(hechosParaActualizar);
             logger.info("Actualizados {} hechos existentes", hechosParaActualizar.size());
         }
-        
+
         return hechosSinDuplicados;
     }
     

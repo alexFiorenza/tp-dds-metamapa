@@ -61,6 +61,14 @@ public class HechoRepository {
         return null;
     }
 
+    public utn.dds.dominio.Contribuyente findContribuyenteByUserId(String userId) {
+        if (dao instanceof Hibernate) {
+            Hibernate<Hecho> hibernateDAO = (Hibernate<Hecho>) dao;
+            return hibernateDAO.findContribuyenteByUserId(userId);
+        }
+        return null;
+    }
+
     public void close() {
         if (dao instanceof Hibernate) {
             Hibernate<Hecho> hibernateDAO = (Hibernate<Hecho>) dao;

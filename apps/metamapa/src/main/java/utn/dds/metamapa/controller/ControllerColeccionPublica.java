@@ -87,6 +87,7 @@ public class ControllerColeccionPublica {
         queryParams = {
             @OpenApiParam(name = "page", description = "Número de página (default: 0)"),
             @OpenApiParam(name = "size", description = "Tamaño de página (default: 10, max: 100)"),
+            @OpenApiParam(name = "modo", description = "Modo de navegación: 'irrestricto' o 'curado' (default: 'curado')"),
             @OpenApiParam(name = "categoria", description = "Filtrar por categoría"),
             @OpenApiParam(name = "titulo", description = "Filtrar por título"),
             @OpenApiParam(name = "descripcion", description = "Filtrar por descripción"),
@@ -109,6 +110,7 @@ public class ControllerColeccionPublica {
             String identificador = ctx.pathParam("identificador");
             int page = ctx.queryParamAsClass("page", Integer.class).getOrDefault(0);
             int size = ctx.queryParamAsClass("size", Integer.class).getOrDefault(10);
+            String modo = ctx.queryParam("modo"); // "irrestricto" o "curado"
 
             // Validar tamaño de página
             if (size > 100) {
@@ -119,7 +121,7 @@ public class ControllerColeccionPublica {
             List<HechoStrategy> filtros = FiltroFactory.crearFiltros(ctx);
 
             RespuestaPaginadaDTO<HechoDTO> respuesta = this.serviceColeccion.obtenerHechosDeColeccion(
-                identificador, filtros, page, size);
+                identificador, filtros, page, size, modo);
             ctx.json(respuesta);
 
         } catch (IllegalArgumentException e) {

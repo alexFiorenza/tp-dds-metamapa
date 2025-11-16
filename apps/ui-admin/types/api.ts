@@ -28,6 +28,7 @@ export interface ColeccionDTO {
   descripcion: string
   fuentes: FuenteDTO[]
   criteriosDePertenencia: CriterioCreateDTO[]
+  algoritmoConsenso?: string // "menciones", "simple", "absoluta", "default"
 }
 
 export interface FuenteDTO {
@@ -81,6 +82,7 @@ export interface FiltrosHechos {
   etiquetas?: string
   pagina?: number
   tamanioPagina?: number
+  modo?: string // "irrestricto" o "curado"
 }
 
 export interface ColeccionCreateDTO {
@@ -88,6 +90,7 @@ export interface ColeccionCreateDTO {
   descripcion: string
   fuentesIds: string[]
   criteriosDePertenencia: CriterioCreateDTO[]
+  algoritmoConsenso?: string // "menciones", "simple", "absoluta", "default"
 }
 
 export interface ColeccionUpdateDTO {
@@ -95,6 +98,7 @@ export interface ColeccionUpdateDTO {
   descripcion: string
   fuentesIds: string[]
   criteriosDePertenencia: CriterioCreateDTO[]
+  algoritmoConsenso?: string // "menciones", "simple", "absoluta", "default"
 }
 
 export interface CategoriasResponse {
