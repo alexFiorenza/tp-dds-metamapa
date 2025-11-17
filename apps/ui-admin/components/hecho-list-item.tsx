@@ -33,6 +33,7 @@ const getCategoriaIcon = (categoria: string) => {
 
 export function HechoListItem({ hecho, onClick, onDetailsClick, isSelected, onHover }: HechoListItemProps) {
   const { iconClass, color, bgColor } = getCategoriaIcon(hecho.categoria)
+  const isOculto = hecho.estado === "OCULTO"
 
   return (
     <motion.div
@@ -48,10 +49,17 @@ export function HechoListItem({ hecho, onClick, onDetailsClick, isSelected, onHo
         onPress={onClick}
         className={cn(
           "transition-all duration-200 w-full",
-          isSelected && "ring-2 ring-primary shadow-lg"
+          isSelected && "ring-2 ring-primary shadow-lg",
+          isOculto && "opacity-50 border-l-4 border-default-400"
         )}
       >
         <CardBody className="p-3">
+          {isOculto && (
+            <div className="flex items-center gap-1 text-xs text-default-500 mb-2 px-1">
+              <i className="ri-eye-off-line w-3.5 h-3.5" />
+              <span className="font-medium">Oculto</span>
+            </div>
+          )}
           <div className="flex gap-3">
             {/* Icono de categoría */}
             <div className={cn("w-10 h-10 rounded-full flex items-center justify-center shrink-0", bgColor)}>

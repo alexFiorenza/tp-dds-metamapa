@@ -25,6 +25,9 @@ export function HechosMapView({ initialData, fetchPage }: HechosMapViewProps) {
 
   const selectedHecho = data.datos.find(h => h.uuid === selectedHechoId)
 
+  // Filtrar hechos ocultos para el mapa
+  const hechosVisibles = data.datos.filter(h => h.estado !== "OCULTO")
+
   // Fetch data cuando cambia la página
   useEffect(() => {
     // Solo fetch si no es la página inicial
@@ -176,7 +179,7 @@ export function HechosMapView({ initialData, fetchPage }: HechosMapViewProps) {
       {/* Mapa */}
       <div className="flex-1 relative h-full min-w-0 overflow-hidden">
         <MapWrapper
-          hechos={data.datos}
+          hechos={hechosVisibles}
           selectedHechoId={selectedHechoId}
           hoveredHechoId={hoveredHechoId}
           onHechoSelect={(hecho) => setSelectedHechoId(hecho?.uuid)}

@@ -1,5 +1,6 @@
 export type EstadoHecho = "ACTIVO" | "OCULTO"
-export type EstadoSolicitud = "PENDIENTE" | "ACEPTADA" | "RECHAZADA"
+// Backend usa ACTIVO para solicitudes pendientes y OCULTO para rechazadas/procesadas
+export type EstadoSolicitud = "ACTIVO" | "OCULTO"
 
 export interface ContribuyenteDTO {
   nombre: string
@@ -54,7 +55,8 @@ export interface CriterioCreateDTO {
 export interface SolicitudEliminacionDTO {
   uuid: string
   texto: string
-  hecho: string
+  hecho: string // UUID del hecho (mantener para compatibilidad)
+  hechoDTO?: HechoDTO // Hecho completo populado desde el backend
   fechaSolicitud: string
   estado: EstadoSolicitud
 }

@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.stream.Collectors;
-
+import utn.dds.dominio.Contribuyente;
 public class HechoRepository {
 
     private IDAO<Hecho> dao;
@@ -61,7 +61,7 @@ public class HechoRepository {
         return null;
     }
 
-    public utn.dds.dominio.Contribuyente findContribuyenteByUserId(String userId) {
+    public Contribuyente findContribuyenteByUserId(String userId) {
         if (dao instanceof Hibernate) {
             Hibernate<Hecho> hibernateDAO = (Hibernate<Hecho>) dao;
             return hibernateDAO.findContribuyenteByUserId(userId);
