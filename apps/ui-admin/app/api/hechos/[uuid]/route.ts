@@ -4,10 +4,10 @@ const FUENTE_DINAMICA_URL = process.env.NEXT_PUBLIC_FUENTE_DINAMICA_URL || "http
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { uuid: string } }
+  { params }: { params: Promise<{ uuid: string }> }
 ) {
   try {
-    const { uuid } = params
+    const { uuid } = await params
 
     // Obtener el token de autorización de los headers
     const authHeader = request.headers.get('Authorization')

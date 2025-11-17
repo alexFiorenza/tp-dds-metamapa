@@ -4,10 +4,10 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7006"
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { uuid: string } }
+  { params }: { params: Promise<{ uuid: string }> }
 ) {
   try {
-    const { uuid } = params
+    const { uuid } = await params
 
     // Obtener el token de autorización del header
     const authorization = request.headers.get('authorization')
