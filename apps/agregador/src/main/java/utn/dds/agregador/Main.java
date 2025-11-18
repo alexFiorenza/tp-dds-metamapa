@@ -54,7 +54,7 @@ public class Main {
 
         FuentesRepository fuentesRepository = new FuentesRepository(appConfig.getDaoConfig());
         HechoRepository hechoRepository = new HechoRepository(appConfig.getDaoConfig());
-        ServiceRegistry serviceRegistry = new ServiceRegistry(fuentesRepository);
+        ServiceRegistry serviceRegistry = new ServiceRegistry(fuentesRepository, hechoRepository);
         ServiceAgregador serviceAgregador = new ServiceAgregador(hechoRepository, serviceRegistry);
         RegistryController registryController = new RegistryController(serviceRegistry);
         ControllerAgregador controllerAgregador = new ControllerAgregador(serviceAgregador);
@@ -94,6 +94,7 @@ public class Main {
         app.post("/fuentes", registryController::registrar);
         app.get("/fuentes", registryController::obtenerFuentes);
         app.get("/fuentes/{host}", registryController::obtenerFuentePorHost);
+        app.put("/fuentes/{uuid}", registryController::actualizarFuente);
         app.delete("/fuentes/{uuid}", registryController::eliminarFuente);
 
         app.post("/agregacion", controllerAgregador::agregacion);
@@ -103,6 +104,8 @@ public class Main {
         logger.info("Service Registry endpoints disponibles:");
         logger.info("POST /fuentes - Registrar nueva fuente");
         logger.info("GET /fuentes - Obtener todas las fuentes");
+        logger.info("PUT /fuentes/{uuid} - Actualizar fuente existente");
+        logger.info("DELETE /fuentes/{uuid} - Eliminar fuente");
         logger.info("Agregador endpoints disponibles:");
         logger.info("POST /agregacion - Ejecutar proceso de agregación");
         logger.info("GET /hechos - Obtener hechos agregados");

@@ -15,9 +15,13 @@ export function HechoCard({ hecho, onClick }: HechoCardProps) {
     /\.(jpg|jpeg|png|gif|webp)$/i.test(url)
   ) || []
   const primeraImagen = imagenes[0]
+  const isOculto = hecho.estado === "OCULTO"
 
   return (
-    <Card className="overflow-hidden" onClick={onClick}>
+    <Card
+      className={`overflow-hidden ${isOculto ? 'opacity-50 border-2 border-dashed border-default-300' : ''}`}
+      onClick={onClick}
+    >
       {primeraImagen && (
         <div className="relative w-full h-40 bg-default-100">
           <Image src={primeraImagen || "/placeholder.svg"} alt={hecho.titulo} fill className="object-cover" />
@@ -27,10 +31,22 @@ export function HechoCard({ hecho, onClick }: HechoCardProps) {
               {imagenes.length}
             </div>
           )}
+          {isOculto && (
+            <div className="absolute top-2 left-2 bg-default-900/80 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1">
+              <i className="ri-eye-off-line h-3 w-3" />
+              <span>Oculto</span>
+            </div>
+          )}
         </div>
       )}
 
       <CardBody className="space-y-2 p-4">
+        {isOculto && !primeraImagen && (
+          <div className="flex items-center gap-1.5 text-xs text-default-500 mb-1">
+            <i className="ri-eye-off-line h-3.5 w-3.5" />
+            <span className="font-medium">Hecho Oculto</span>
+          </div>
+        )}
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-semibold text-sm leading-tight">{hecho.titulo}</h3>
           <Chip size="sm" color="secondary" className="shrink-0">

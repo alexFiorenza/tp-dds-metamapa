@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { MapWrapper } from './map-wrapper'
 import { HechoListItem } from './hecho-list-item'
 import { HechoDetailModal } from './hecho-detail-modal'
-import { Button, Pagination, Card, CardBody, Chip, Spinner } from '@heroui/react'
+import { Button, Pagination, Card, CardBody, Chip, Spinner, Tabs, Tab } from '@heroui/react'
 import { motion, AnimatePresence } from 'motion/react'
 import Link from 'next/link'
 import { useUserRole } from '@/hooks/use-user-role'
@@ -15,7 +15,7 @@ import type { ColeccionDTO } from '@/types/api'
 interface ColeccionDetailViewProps {
   coleccion: ColeccionDTO
   initialData: RespuestaPaginadaDTO<HechoDTO>
-  fetchPage: (page: number) => Promise<RespuestaPaginadaDTO<HechoDTO>>
+  fetchPage: (page: number, modo?: string) => Promise<RespuestaPaginadaDTO<HechoDTO>>
   backUrl?: string
   backLabel?: string
 }
@@ -29,16 +29,17 @@ export function ColeccionDetailView({ coleccion, initialData, fetchPage, backUrl
   const [currentPage, setCurrentPage] = useState(0) // Backend usa 0-indexed
   const [data, setData] = useState<RespuestaPaginadaDTO<HechoDTO>>(initialData)
   const [isLoading, setIsLoading] = useState(false)
+  const [modoNavegacion, setModoNavegacion] = useState<'irrestricto' | 'curado'>('curado')
 
   const selectedHecho = data.datos.find(h => h.uuid === selectedHechoId)
 
-  // Resetear página cuando cambian los datos iniciales (por filtros)
+  // Resetear página cuando cambian los datos iniciales (por filtros o modo)
   useEffect(() => {
     setCurrentPage(0)
     setData(initialData)
   }, [initialData])
 
-  // Fetch data cuando cambia la página
+  // Fetch data cuando cambia la página o el modo
   useEffect(() => {
     // Solo fetch si no es la página inicial
     if (currentPage === 0) {
@@ -48,7 +49,7 @@ export function ColeccionDetailView({ coleccion, initialData, fetchPage, backUrl
     const loadPage = async () => {
       setIsLoading(true)
       try {
-        const newData = await fetchPage(currentPage)
+        const newData = await fetchPage(currentPage, modoNavegacion)
         setData(newData)
       } catch (error) {
         console.error('Error loading page:', error)
@@ -58,7 +59,25 @@ export function ColeccionDetailView({ coleccion, initialData, fetchPage, backUrl
     }
 
     loadPage()
-  }, [currentPage, fetchPage])
+  }, [currentPage, modoNavegacion, fetchPage])
+
+  // Recargar datos cuando cambia el modo de navegación
+  useEffect(() => {
+    const reloadData = async () => {
+      setIsLoading(true)
+      try {
+        const newData = await fetchPage(0, modoNavegacion)
+        setData(newData)
+        setCurrentPage(0)
+      } catch (error) {
+        console.error('Error loading data:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    reloadData()
+  }, [modoNavegacion, fetchPage])
 
   // Efecto para redimensionar el mapa cuando cambie el estado del sidebar
   useEffect(() => {
@@ -127,11 +146,27 @@ export function ColeccionDetailView({ coleccion, initialData, fetchPage, backUrl
           )}
         </div>
 
-        {/* Lista de hechos */}
+        {/* Selector de modo de navegación */}
         <div className="p-4 border-b border-divider">
-          <h2 className="text-sm font-semibold text-foreground">
-            Hechos en esta colección ({data.totalElementos})
-          </h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-foreground">
+              Hechos en esta colección ({data.totalElementos})
+            </h2>
+          </div>
+          <Tabs
+            selectedKey={modoNavegacion}
+            onSelectionChange={(key) => setModoNavegacion(key as 'irrestricto' | 'curado')}
+            size="sm"
+            variant="bordered"
+          >
+            <Tab key="curado" title="Curado" />
+            <Tab key="irrestricto" title="Irrestricto" />
+          </Tabs>
+          {coleccion.algoritmoConsenso && coleccion.algoritmoConsenso !== 'default' && modoNavegacion === 'curado' && (
+            <p className="text-xs text-default-500 mt-2">
+              Algoritmo: {coleccion.algoritmoConsenso}
+            </p>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 relative">

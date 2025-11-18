@@ -1,5 +1,11 @@
 export type EstadoHecho = "ACTIVO" | "OCULTO"
-export type EstadoSolicitud = "PENDIENTE" | "ACEPTADA" | "RECHAZADA"
+// Backend usa ACTIVO para solicitudes pendientes y OCULTO para rechazadas/procesadas
+export type EstadoSolicitud = "ACTIVO" | "OCULTO"
+
+export interface ContribuyenteDTO {
+  nombre: string
+  userId: string
+}
 
 export interface HechoDTO {
   uuid: string
@@ -14,6 +20,7 @@ export interface HechoDTO {
   estado: EstadoHecho
   etiquetas: string[]
   multimedia?: string[] // URLs de archivos multimedia (imágenes y videos)
+  contribuyente?: ContribuyenteDTO // Información del contribuyente
 }
 
 export interface ColeccionDTO {
@@ -22,6 +29,7 @@ export interface ColeccionDTO {
   descripcion: string
   fuentes: FuenteDTO[]
   criteriosDePertenencia: CriterioCreateDTO[]
+  algoritmoConsenso?: string // "menciones", "simple", "absoluta", "default"
 }
 
 export interface FuenteDTO {
@@ -47,7 +55,8 @@ export interface CriterioCreateDTO {
 export interface SolicitudEliminacionDTO {
   uuid: string
   texto: string
-  hecho: string
+  hecho: string // UUID del hecho (mantener para compatibilidad)
+  hechoDTO?: HechoDTO // Hecho completo populado desde el backend
   fechaSolicitud: string
   estado: EstadoSolicitud
 }
@@ -75,6 +84,7 @@ export interface FiltrosHechos {
   etiquetas?: string
   pagina?: number
   tamanioPagina?: number
+  modo?: string // "irrestricto" o "curado"
 }
 
 export interface ColeccionCreateDTO {
@@ -82,6 +92,7 @@ export interface ColeccionCreateDTO {
   descripcion: string
   fuentesIds: string[]
   criteriosDePertenencia: CriterioCreateDTO[]
+  algoritmoConsenso?: string // "menciones", "simple", "absoluta", "default"
 }
 
 export interface ColeccionUpdateDTO {
@@ -89,6 +100,7 @@ export interface ColeccionUpdateDTO {
   descripcion: string
   fuentesIds: string[]
   criteriosDePertenencia: CriterioCreateDTO[]
+  algoritmoConsenso?: string // "menciones", "simple", "absoluta", "default"
 }
 
 export interface CategoriasResponse {

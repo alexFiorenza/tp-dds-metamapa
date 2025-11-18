@@ -114,14 +114,14 @@ export const mockSolicitudes: SolicitudEliminacionDTO[] = [
     texto: "Este hecho contiene información incorrecta sobre la ubicación del evento.",
     hecho: "hecho-001",
     fechaSolicitud: "2024-02-20T10:30:00",
-    estado: "PENDIENTE",
+    estado: "ACTIVO",
   },
   {
     uuid: "solicitud-002",
     texto: "La información está duplicada con otro reporte.",
     hecho: "hecho-003",
     fechaSolicitud: "2024-02-21T14:15:00",
-    estado: "PENDIENTE",
+    estado: "ACTIVO",
   },
 ]
 

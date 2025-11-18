@@ -86,4 +86,22 @@ public class ServiceHechoDinamica {
         
         return new RespuestaPaginadaDTO<>(datosPagina, pagina, tamanioPagina, totalElementos);
     }
+
+    /**
+     * Busca un hecho por su UUID
+     */
+    public HechoDTO buscarHechoPorUuid(String uuid) throws IOException {
+        return repository.buscarHechoPorUuid(uuid);
+    }
+
+    /**
+     * Actualiza un hecho existente
+     */
+    public HechoDTO actualizarHecho(HechoDTO hechoActualizado, List<UploadedFile> archivos) throws IOException {
+        if (archivos != null && !archivos.isEmpty()) {
+            return repository.actualizarHechoConArchivos(hechoActualizado, archivos);
+        } else {
+            return repository.actualizarHecho(hechoActualizado);
+        }
+    }
 }

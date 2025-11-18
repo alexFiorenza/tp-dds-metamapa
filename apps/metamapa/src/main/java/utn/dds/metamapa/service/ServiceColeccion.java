@@ -76,6 +76,11 @@ public class ServiceColeccion {
         Coleccion coleccion = new Coleccion();
         coleccion.setTitulo(coleccionCreateDTO.getTitulo());
         coleccion.setDescripcion(coleccionCreateDTO.getDescripcion());
+        // Convertir String a instancia de AlgoritmoConsenso usando el Factory
+        String tipoAlgoritmo = coleccionCreateDTO.getAlgoritmoConsenso();
+        coleccion.setAlgoritmoConsenso(
+            utn.dds.dominio.consenso.AlgoritmoConsensoFactory.crear(tipoAlgoritmo)
+        );
 
         // Convertir criterios de DTO a Criterio domain entities
         if (coleccionCreateDTO.getCriteriosDePertenencia() != null) {
@@ -345,7 +350,7 @@ public class ServiceColeccion {
         this.coleccionRepository.eliminar(id);
     }
 
-    public RespuestaPaginadaDTO<HechoDTO> obtenerHechosDeColeccion(String handle, List<HechoStrategy> filtros, int page, int size) {
+    public RespuestaPaginadaDTO<HechoDTO> obtenerHechosDeColeccion(String handle, List<HechoStrategy> filtros, int page, int size, String modo) {
         // Validar parámetros
         if (page < 0) page = 0;
         if (size <= 0 || size > 100) size = 10;
@@ -356,7 +361,44 @@ public class ServiceColeccion {
             throw new RuntimeException("Colección no encontrada");
         }
 
-        // Usar HechoRepository para consulta directa optimizada
-        return this.hechoRepository.buscarHechosEnColeccion(handle, filtros, page, size);
+        // Si el modo es "irrestricto", retornar todos los hechos sin aplicar consenso
+        if (modo != null && modo.equalsIgnoreCase("irrestricto")) {
+            return this.hechoRepository.buscarHechosEnColeccion(handle, filtros, page, size);
+        }
+
+        // Si el modo es "curado" o no se especifica, aplicar algoritmo de consenso
+        // Primero obtener todos los hechos de la colección (sin paginar)
+        List<Hecho> todosLosHechos = this.coleccionRepository.obtenerHechos(handle);
+        
+        // Aplicar algoritmo de consenso si existe
+        List<Hecho> hechosConsensuados;
+        if (entity.getAlgoritmoConsenso() != null && entity.getFuentes() != null) {
+            hechosConsensuados = entity.getAlgoritmoConsenso()
+                .filtrarHechosConsensuados(todosLosHechos, entity.getFuentes());
+        } else {
+            // Si no hay algoritmo, todos los hechos son consensuados
+            hechosConsensuados = todosLosHechos;
+        }
+
+        // Aplicar filtros adicionales si existen
+        if (filtros != null && !filtros.isEmpty()) {
+            hechosConsensuados = hechosConsensuados.stream()
+                .filter(hecho -> filtros.stream().allMatch(filtro -> filtro.cumple(hecho)))
+                .collect(Collectors.toList());
+        }
+
+        // Convertir a DTO
+        List<HechoDTO> hechosDTO = hechosConsensuados.stream()
+            .map(HechoDTO::fromHecho)
+            .collect(Collectors.toList());
+
+        // Aplicar paginación manual
+        int totalElementos = hechosDTO.size();
+        int fromIndex = page * size;
+        int toIndex = Math.min(fromIndex + size, totalElementos);
+        List<HechoDTO> hechosPaginados = fromIndex < totalElementos ? 
+            hechosDTO.subList(fromIndex, toIndex) : new ArrayList<>();
+
+        return new RespuestaPaginadaDTO<>(hechosPaginados, page, size, totalElementos);
     }
 }

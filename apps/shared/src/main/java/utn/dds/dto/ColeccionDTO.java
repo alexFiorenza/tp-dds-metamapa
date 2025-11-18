@@ -1,6 +1,7 @@
 package utn.dds.dto;
 
 import utn.dds.dominio.Coleccion;
+import utn.dds.dominio.consenso.AlgoritmoConsensoFactory;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
@@ -11,17 +12,20 @@ public class ColeccionDTO {
     private String descripcion;
     private List<FuenteDTO> fuentes;
     private List<CriterioCreateDTO> criteriosDePertenencia;
+    private String algoritmoConsenso; // String para la API REST
 
     public ColeccionDTO() {}
 
     public ColeccionDTO(String handle, String titulo, String descripcion,
                        List<FuenteDTO> fuentes,
-                       List<CriterioCreateDTO> criteriosDePertenencia) {
+                       List<CriterioCreateDTO> criteriosDePertenencia,
+                       String algoritmoConsenso) {
         this.handle = handle;
         this.titulo = titulo;
         this.descripcion = descripcion;
         this.fuentes = fuentes;
         this.criteriosDePertenencia = criteriosDePertenencia;
+        this.algoritmoConsenso = algoritmoConsenso;
     }
 
     // Factory method para convertir desde dominio
@@ -61,6 +65,10 @@ public class ColeccionDTO {
         } else {
             dto.setCriteriosDePertenencia(new ArrayList<>());
         }
+
+        // Mapear algoritmo de consenso (convertir de interfaz a String)
+        dto.setAlgoritmoConsenso(coleccion.getAlgoritmoConsenso() != null ? 
+            AlgoritmoConsensoFactory.obtenerTipo(coleccion.getAlgoritmoConsenso()) : "default");
 
         return dto;
     }
@@ -105,5 +113,13 @@ public class ColeccionDTO {
 
     public void setCriteriosDePertenencia(List<CriterioCreateDTO> criteriosDePertenencia) {
         this.criteriosDePertenencia = criteriosDePertenencia;
+    }
+
+    public String getAlgoritmoConsenso() {
+        return algoritmoConsenso;
+    }
+
+    public void setAlgoritmoConsenso(String algoritmoConsenso) {
+        this.algoritmoConsenso = algoritmoConsenso;
     }
 }

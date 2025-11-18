@@ -76,16 +76,19 @@ export function FiltrosHechos({ onFiltrar, onLimpiar, filtrosIniciales = {} }: F
       
       <div className="space-y-3">
         {/* Filtros básicos */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           {/* Búsqueda por título */}
           <div className="flex-1">
-            <div className="relative">
-              <i className="ri-search-line absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <div className="relative flex items-center">
+              <i className="ri-search-line absolute left-3 h-4 w-4 text-default-400 z-10 pointer-events-none" />
               <Input
                 placeholder="Buscar por título..."
                 value={filtros.titulo || ""}
                 onChange={(e) => actualizarFiltro("titulo", e.target.value)}
-                className="pl-8 h-9"
+                classNames={{
+                  input: "pl-9",
+                  inputWrapper: "h-9"
+                }}
                 size="sm"
               />
             </div>
@@ -101,7 +104,10 @@ export function FiltrosHechos({ onFiltrar, onLimpiar, filtrosIniciales = {} }: F
                 actualizarFiltro("categoria", value === "all" ? undefined : value)
               }}
               size="sm"
-              className="h-9"
+              classNames={{
+                trigger: "h-9 min-h-9",
+                value: "text-sm"
+              }}
               items={[{ key: "all", label: "Todas" }, ...categorias.map(cat => ({ key: cat, label: cat }))]}
             >
               {(item) => <SelectItem key={item.key}>{item.label}</SelectItem>}

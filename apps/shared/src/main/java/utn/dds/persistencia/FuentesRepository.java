@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 import jakarta.persistence.EntityGraph;
-import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -190,7 +189,51 @@ public class FuentesRepository {
     private EntityGraph<Fuente> createEntityGraphWithParams(jakarta.persistence.EntityManager em) {
         EntityGraph<Fuente> entityGraph = em.createEntityGraph(Fuente.class);
         entityGraph.addAttributeNodes("params");
+        entityGraph.addAttributeNodes("metadata");
         return entityGraph;
+    }
+
+    public void update(FuenteDTO fuente) {
+        if (fuente.getUuid() == null) {
+            throw new IllegalArgumentException("El UUID no puede ser null para actualizar una fuente");
+        }
+
+        if (dao instanceof Hibernate) {
+            Hibernate<Fuente> hibernateDAO = (Hibernate<Fuente>) dao;
+            hibernateDAO.executeQuery(em -> {
+                var transaction = em.getTransaction();
+                try {
+                    transaction.begin();
+
+                    Fuente existente = em.find(Fuente.class, fuente.getUuid().toString());
+                    if (existente == null) {
+                        throw new IllegalArgumentException("No existe una fuente con UUID: " + fuente.getUuid());
+                    }
+
+                    if (fuente.getHost() != null) {
+                        existente.setHost(fuente.getHost());
+                    }
+                    if (fuente.getParams() != null) {
+                        existente.setParams(fuente.getParams());
+                    }
+                    if (fuente.getTipo() != null) {
+                        existente.setTipo(fuente.getTipo());
+                    }
+                    if (fuente.getMetadata() != null) {
+                        existente.setMetadata(fuente.getMetadata());
+                    }
+
+                    em.merge(existente);
+                    transaction.commit();
+                } catch (RuntimeException e) {
+                    if (transaction.isActive()) {
+                        transaction.rollback();
+                    }
+                    throw e;
+                }
+                return null;
+            });
+        }
     }
 
     public void close() {

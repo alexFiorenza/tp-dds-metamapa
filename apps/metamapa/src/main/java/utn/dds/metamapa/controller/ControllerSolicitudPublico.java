@@ -5,6 +5,8 @@ import io.javalin.openapi.*;
 import utn.dds.metamapa.service.ServiceSolicitudEliminacion;
 import utn.dds.dominio.SolicitudEliminacion;
 import utn.dds.dominio.EstadoSolicitud;
+import utn.dds.dominio.DetectorSpam;
+import utn.dds.dominio.AlgoritmoTFIDF;
 import utn.dds.dto.SolicitudEliminacionDTO;
 import utn.dds.dto.SolicitudEliminacionRequestDTO;
 
@@ -14,9 +16,11 @@ import java.util.UUID;
 
 public class ControllerSolicitudPublico {
     private final ServiceSolicitudEliminacion serviceSolicitudEliminacion;
+    private final DetectorSpam detectorSpam;
 
     public ControllerSolicitudPublico(String daoType, Map<String, Object> daoConfig) {
         this.serviceSolicitudEliminacion = new ServiceSolicitudEliminacion(daoType, daoConfig);
+        this.detectorSpam = new AlgoritmoTFIDF();
     }
 
     @OpenApi(
@@ -46,6 +50,12 @@ public class ControllerSolicitudPublico {
 
             if (request.getHecho() == null || request.getHecho().isEmpty()) {
                 ctx.status(400).result("El UUID del hecho es requerido");
+                return;
+            }
+
+            // Detectar spam
+            if (detectorSpam.esSpam(request.getTexto())) {
+                ctx.status(400).result("La solicitud fue detectada como spam y fue rechazada automáticamente");
                 return;
             }
 

@@ -5,7 +5,9 @@ import utn.dds.daos.DAOFactory;
 import utn.dds.daos.Hibernate;
 import utn.dds.dominio.SolicitudEliminacion;
 import utn.dds.dominio.EstadoSolicitud;
+import utn.dds.dominio.Hecho;
 import utn.dds.dto.SolicitudEliminacionDTO;
+import utn.dds.dto.HechoDTO;
 import utn.dds.dto.RespuestaPaginadaDTO;
 
 import java.util.List;
@@ -64,7 +66,7 @@ public class SolicitudEliminacionRepository {
             SolicitudEliminacion solicitud = hibernateDAO.findById(id);
             if (solicitud != null) {
                 solicitud.setEstado(solicitudActualizada.getEstado());
-                dao.save(solicitud);
+                hibernateDAO.update(solicitud);
             }
         }
     }
@@ -98,9 +100,23 @@ public class SolicitudEliminacionRepository {
                     .setMaxResults(size)
                     .getResultList();
 
-                // Convertir a DTO
+                // Convertir a DTO y popular los hechos
                 List<SolicitudEliminacionDTO> dtos = solicitudes.stream()
-                        .map(SolicitudEliminacionDTO::fromSolicitudEliminacion)
+                        .map(solicitud -> {
+                            SolicitudEliminacionDTO dto = SolicitudEliminacionDTO.fromSolicitudEliminacion(solicitud);
+
+                            // Obtener el hecho asociado
+                            try {
+                                Hecho hecho = em.find(Hecho.class, solicitud.getHecho());
+                                if (hecho != null) {
+                                    dto.setHechoDTO(HechoDTO.fromHecho(hecho));
+                                }
+                            } catch (Exception e) {
+                                // Si no se puede cargar el hecho, continuar sin él
+                            }
+
+                            return dto;
+                        })
                         .collect(Collectors.toList());
 
                 return new RespuestaPaginadaDTO<>(dtos, page, size, totalElements);

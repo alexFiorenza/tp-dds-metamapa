@@ -71,6 +71,19 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+    - name: Configure AWS credentials
+      if: github.event_name == 'push'
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Log in to Amazon ECR
+      if: github.event_name == 'push'
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
     - name: Build and push Fuentes Estáticas
       if: github.event_name == 'push'
       uses: docker/build-push-action@v5
@@ -126,6 +139,17 @@ jobs:
         cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/metamapa-agregador:buildcache
         cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/metamapa-agregador:buildcache,mode=max
 
+    - name: Build and push Agregador to ECR
+      if: github.event_name == 'push'
+      uses: docker/build-push-action@v5
+      with:
+        context: ./apps/agregador
+        push: true
+        platforms: linux/amd64
+        tags: |
+          ${{ steps.login-ecr.outputs.registry }}/metamapa-agregador:${{ env.DOCKER_TAG }}
+          ${{ steps.login-ecr.outputs.registry }}/metamapa-agregador:${{ github.sha }}
+
     - name: Build and push MetaMapa Gestor
       if: github.event_name == 'push'
       uses: docker/build-push-action@v5
@@ -136,6 +160,17 @@ jobs:
         tags: ${{ secrets.DOCKERHUB_USERNAME }}/metamapa-gestor:${{ env.DOCKER_TAG }}
         cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/metamapa-gestor:buildcache
         cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/metamapa-gestor:buildcache,mode=max
+
+    - name: Build and push MetaMapa Gestor to ECR
+      if: github.event_name == 'push'
+      uses: docker/build-push-action@v5
+      with:
+        context: ./apps/metamapa
+        push: true
+        platforms: linux/amd64
+        tags: |
+          ${{ steps.login-ecr.outputs.registry }}/metamapa-gestor:${{ env.DOCKER_TAG }}
+          ${{ steps.login-ecr.outputs.registry }}/metamapa-gestor:${{ github.sha }}
 
     - name: Build and push Normalizador
       if: github.event_name == 'push'
@@ -173,5 +208,11 @@ jobs:
         echo "  - ${{ secrets.DOCKERHUB_USERNAME }}/metamapa-agregador:${{ env.DOCKER_TAG }}"
         echo "  - ${{ secrets.DOCKERHUB_USERNAME }}/metamapa-gestor:${{ env.DOCKER_TAG }}"
         echo "  - ${{ secrets.DOCKERHUB_USERNAME }}/metamapa-normalizador:${{ env.DOCKER_TAG }}"
+        echo ""
+        echo "📦 Imágenes pusheadas a Amazon ECR:"
+        echo "  - metamapa-agregador:${{ env.DOCKER_TAG }}"
+        echo "  - metamapa-agregador:${{ github.sha }}"
+        echo "  - metamapa-gestor:${{ env.DOCKER_TAG }}"
+        echo "  - metamapa-gestor:${{ github.sha }}"
         echo ""
         echo "ℹ️  AWS Lambda: Se desplegará si hubo cambios en apps/fuentes/** (workflow separado)"

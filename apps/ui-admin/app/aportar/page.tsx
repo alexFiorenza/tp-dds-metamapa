@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import { parseDateTime, getLocalTimeZone } from '@internationalized/date';
 import type { DateValue } from '@internationalized/date';
 import { LocationPickerMap } from '@/components/location-picker-map';
-import { useUser } from '@clerk/nextjs';
+import { useUser, useAuth } from '@clerk/nextjs';
+import { Switch } from '@heroui/react';
 
 // Obtener categorías desde variable de entorno
 const CATEGORIAS = (process.env.NEXT_PUBLIC_CATEGORIAS || "INCENDIO,CONTAMINACION,MANIFESTACION,INUNDACION,FAUNA,ALUD,OTRO").split(",");
@@ -27,9 +28,11 @@ const TAMANO_MAXIMO = 10 * 1024 * 1024; // 10MB
 export default function AportarHechoPage() {
   const router = useRouter();
   const { user, isLoaded } = useUser();
+  const { getToken } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [identificarseComoContribuyente, setIdentificarseComoContribuyente] = useState(false);
 
   // Form fields
   const [titulo, setTitulo] = useState('');
@@ -112,8 +115,30 @@ export default function AportarHechoPage() {
       });
 
       const apiUrl = process.env.NEXT_PUBLIC_FUENTE_DINAMICA_URL || 'http://localhost:7002';
+      
+      // Preparar headers
+      const headers: HeadersInit = {};
+      
+      // Si el usuario quiere identificarse, enviar el token de sesión
+      if (identificarseComoContribuyente && user) {
+        const token = await getToken();
+        console.log('Token obtenido:', token ? 'presente' : 'ausente');
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+          console.log('Header Authorization agregado al request');
+        } else {
+          console.warn('No se pudo obtener el token de Clerk');
+        }
+      } else {
+        console.log('Usuario no quiere identificarse como contribuyente o no está logueado');
+      }
+      
+      console.log('Enviando request a:', `${apiUrl}/hechos`);
+      console.log('Headers:', Object.keys(headers));
+      
       const response = await fetch(`${apiUrl}/hechos`, {
         method: 'POST',
+        headers,
         body: formData,
       });
 
@@ -137,6 +162,7 @@ export default function AportarHechoPage() {
       setContribuyenteNombre('');
       setEtiquetas('');
       setArchivos([]);
+      setIdentificarseComoContribuyente(false);
 
       // Redirigir después de 2 segundos
       setTimeout(() => {
@@ -253,6 +279,27 @@ export default function AportarHechoPage() {
                 granularity="minute"
                 hideTimeZone
               />
+
+              {user && (
+                <div className="space-y-2">
+                  <Switch
+                    isSelected={identificarseComoContribuyente}
+                    onValueChange={setIdentificarseComoContribuyente}
+                    classNames={{
+                      base: "w-full",
+                      wrapper: "p-0 h-4 overflow-visible",
+                      thumb: "w-6 h-6 border-2 shadow-lg",
+                    }}
+                  >
+                    <div className="flex flex-col gap-1">
+                      <p className="text-medium">Identificarme como contribuyente</p>
+                      <p className="text-tiny text-default-500">
+                        Esto te permitirá editar este hecho más adelante (hasta una semana después de crearlo)
+                      </p>
+                    </div>
+                  </Switch>
+                </div>
+              )}
 
               <Input
                 label="Tu nombre"

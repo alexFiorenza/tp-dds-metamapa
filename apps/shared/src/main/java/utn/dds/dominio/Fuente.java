@@ -20,6 +20,13 @@ public class Fuente {
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Object> params;
 
+    @Column(name = "tipo")
+    private String tipo; // "estatica", "proxy", "dinamica"
+
+    @Column(name = "metadata", columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
+    private Map<String, Object> metadata; // Props específicas del tipo
+
     public Fuente() {
         this.uuid = UUID.randomUUID().toString();
     }
@@ -48,5 +55,21 @@ public class Fuente {
 
     public void setParams(Map<String, Object> params) {
         this.params = params;
+    }
+
+    public String getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
+    }
+
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
     }
 }

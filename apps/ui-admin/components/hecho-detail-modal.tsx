@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import type { HechoDTO } from "@/types/api"
 import {
   Modal,
@@ -16,6 +16,10 @@ import {
   CardBody,
 } from "@heroui/react"
 import Image from "next/image"
+import { useUser } from "@clerk/nextjs"
+import { useRouter } from "next/navigation"
+import { getCategoriaStyle } from "@/lib/categoria-styles"
+import { ApiClient } from "@/lib/api-client"
 
 interface HechoDetailModalProps {
   hecho: HechoDTO | null
@@ -23,31 +27,84 @@ interface HechoDetailModalProps {
   onClose: () => void
 }
 
-// Mapa de categorías a iconos y colores
-const getCategoriaStyle = (categoria: string) => {
-  switch (categoria) {
-    case "INCENDIO":
-      return { iconClass: "ri-fire-line", color: "danger" as const }
-    case "CONTAMINACION":
-      return { iconClass: "ri-drop-line", color: "warning" as const }
-    case "MANIFESTACION":
-      return { iconClass: "ri-group-line", color: "primary" as const }
-    case "INUNDACION":
-      return { iconClass: "ri-water-flash-line", color: "secondary" as const }
-    case "FAUNA":
-      return { iconClass: "ri-plant-line", color: "success" as const }
-    default:
-      return { iconClass: "ri-map-pin-line", color: "default" as const }
-  }
-}
-
 export function HechoDetailModal({ hecho, isOpen, onClose }: HechoDetailModalProps) {
   const [mostrarFormularioEliminacion, setMostrarFormularioEliminacion] = useState(false)
   const [motivo, setMotivo] = useState("")
+  const [enviandoSolicitud, setEnviandoSolicitud] = useState(false)
+  const [errorSolicitud, setErrorSolicitud] = useState<string | null>(null)
+  const [solicitudEnviada, setSolicitudEnviada] = useState(false)
+  const { user, isLoaded } = useUser()
+  const router = useRouter()
+
+  const puedeEditar = useMemo(() => {
+    // Esperar a que el usuario esté cargado
+    if (!isLoaded) return false
+
+    // Si el hecho está oculto, no se puede editar
+    if (hecho?.estado === "OCULTO") return false
+
+    const contribuyenteId = hecho?.contribuyente?.userId
+
+    if (!hecho || !user || !contribuyenteId) {
+      // Debug: ver qué valores tenemos
+      if (hecho) {
+        console.log('Debug puedeEditar - condiciones no cumplidas:', {
+          tieneHecho: !!hecho,
+          tieneUser: !!user,
+          tieneContribuyente: !!hecho.contribuyente,
+          contribuyenteId: contribuyenteId,
+          userId: user?.id,
+          match: user?.id === contribuyenteId
+        })
+      }
+      return false
+    }
+
+    // Verificar que el usuario es el contribuyente
+    const esContribuyente = user.id === contribuyenteId
+
+    // Verificar que ha pasado menos de una semana
+    let dentroDelPlazo = true
+    if (hecho.fechaCarga) {
+      const fechaCarga = new Date(hecho.fechaCarga)
+      const ahora = new Date()
+      const diasTranscurridos = Math.floor((ahora.getTime() - fechaCarga.getTime()) / (1000 * 60 * 60 * 24))
+      dentroDelPlazo = diasTranscurridos < 7
+
+      console.log('Debug puedeEditar:', {
+        userId: user.id,
+        contribuyenteId: contribuyenteId,
+        esContribuyente,
+        fechaCarga: hecho.fechaCarga,
+        diasTranscurridos,
+        dentroDelPlazo,
+        puedeEditar: esContribuyente && dentroDelPlazo
+      })
+    } else {
+      console.log('Debug puedeEditar (sin fechaCarga):', {
+        userId: user.id,
+        contribuyenteId: contribuyenteId,
+        esContribuyente,
+        puedeEditar: esContribuyente
+      })
+    }
+
+    return esContribuyente && dentroDelPlazo
+  }, [user, hecho, isLoaded])
+
+  const puedeSolicitarEliminacion = useMemo(() => {
+    // Si el hecho está oculto, no se puede solicitar eliminación
+    return hecho?.estado !== "OCULTO"
+  }, [hecho])
 
   if (!hecho) return null
 
   const { iconClass, color } = getCategoriaStyle(hecho.categoria)
+
+  const handleEditar = () => {
+    onClose()
+    router.push(`/hechos/editar/${hecho.uuid}`)
+  }
 
   // Detectar tipo de archivo por extensión
   const isImageUrl = (url: string) => /\.(jpg|jpeg|png|gif|webp)$/i.test(url)
@@ -59,15 +116,35 @@ export function HechoDetailModal({ hecho, isOpen, onClose }: HechoDetailModalPro
   const handleClose = () => {
     setMostrarFormularioEliminacion(false)
     setMotivo("")
+    setErrorSolicitud(null)
+    setSolicitudEnviada(false)
     onClose()
   }
 
-  const handleSubmitSolicitud = () => {
-    // TODO: Implementar lógica de envío de solicitud
-    console.log("Solicitud de eliminación:", { hechoId: hecho.uuid, motivo })
-    alert(`Solicitud enviada para el hecho: ${hecho.titulo}\nMotivo: ${motivo}`)
-    setMostrarFormularioEliminacion(false)
-    setMotivo("")
+  const handleSubmitSolicitud = async () => {
+    if (!hecho || !motivo.trim()) return
+
+    setEnviandoSolicitud(true)
+    setErrorSolicitud(null)
+
+    try {
+      await ApiClient.crearSolicitudEliminacion(hecho.uuid, motivo.trim())
+
+      // Marcar como enviada y mostrar mensaje de éxito
+      setSolicitudEnviada(true)
+      setMotivo("")
+
+      // Ocultar formulario después de 2 segundos
+      setTimeout(() => {
+        setMostrarFormularioEliminacion(false)
+        setSolicitudEnviada(false)
+      }, 2000)
+    } catch (error) {
+      console.error("Error al enviar solicitud de eliminación:", error)
+      setErrorSolicitud(error instanceof Error ? error.message : "Error al enviar la solicitud")
+    } finally {
+      setEnviandoSolicitud(false)
+    }
   }
 
   return (
@@ -110,6 +187,25 @@ export function HechoDetailModal({ hecho, isOpen, onClose }: HechoDetailModalPro
 
             <ModalBody className="px-6 py-6">
               <div className="space-y-6">
+                {/* Advertencia de hecho oculto */}
+                {hecho.estado === "OCULTO" && (
+                  <Card className="bg-warning-50 border border-warning-200">
+                    <CardBody className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 flex items-center justify-center rounded-lg shrink-0 bg-warning/20">
+                          <i className="ri-eye-off-line w-5 h-5 text-warning" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-warning-700 mb-1">Hecho oculto</h4>
+                          <p className="text-sm text-warning-600">
+                            Este hecho ha sido ocultado por un administrador y no se puede editar ni solicitar su eliminación.
+                          </p>
+                        </div>
+                      </div>
+                    </CardBody>
+                  </Card>
+                )}
+
                 {/* Galería de imágenes */}
                 {imagenes.length > 0 && (
                   <div className="space-y-3">
@@ -219,6 +315,19 @@ export function HechoDetailModal({ hecho, isOpen, onClose }: HechoDetailModalPro
 
                 <Divider />
 
+                {/* Contribuyente */}
+                {hecho.contribuyente?.nombre && (
+                  <div className="space-y-2">
+                    <p className="text-xs text-default-500 flex items-center gap-1.5">
+                      <i className="ri-user-line w-4 h-4" />
+                      Contribuyente
+                    </p>
+                    <p className="text-sm font-medium text-foreground">
+                      {hecho.contribuyente.nombre}
+                    </p>
+                  </div>
+                )}
+
                 {/* Origen */}
                 <div className="space-y-2">
                   <p className="text-xs text-default-500 flex items-center gap-1.5">
@@ -249,54 +358,75 @@ export function HechoDetailModal({ hecho, isOpen, onClose }: HechoDetailModalPro
                 {mostrarFormularioEliminacion && (
                   <>
                     <Divider />
-                    <Card className="bg-danger-50 border border-danger-200">
+                    <Card className={solicitudEnviada ? "bg-success-50 border border-success-200" : "bg-danger-50 border border-danger-200"}>
                       <CardBody className="p-4 space-y-4">
                         <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 flex items-center justify-center bg-danger/20 rounded-lg shrink-0">
-                            <i className="ri-error-warning-line w-5 h-5 text-danger" />
+                          <div className={`w-10 h-10 flex items-center justify-center rounded-lg shrink-0 ${solicitudEnviada ? "bg-success/20" : "bg-danger/20"}`}>
+                            <i className={`w-5 h-5 ${solicitudEnviada ? "ri-check-line text-success" : "ri-error-warning-line text-danger"}`} />
                           </div>
                           <div className="flex-1">
-                            <h4 className="font-semibold text-danger-700 mb-1">Solicitar eliminación</h4>
-                            <p className="text-sm text-danger-600 mb-3">
-                              Esta solicitud será revisada por un administrador antes de procesar la eliminación del
-                              hecho.
-                            </p>
+                            {solicitudEnviada ? (
+                              <>
+                                <h4 className="font-semibold text-success-700 mb-1">Solicitud enviada</h4>
+                                <p className="text-sm text-success-600">
+                                  Tu solicitud de eliminación ha sido enviada correctamente y será revisada por un administrador.
+                                </p>
+                              </>
+                            ) : (
+                              <>
+                                <h4 className="font-semibold text-danger-700 mb-1">Solicitar eliminación</h4>
+                                <p className="text-sm text-danger-600 mb-3">
+                                  Esta solicitud será revisada por un administrador antes de procesar la eliminación del
+                                  hecho.
+                                </p>
 
-                            <Textarea
-                              label="Motivo de la solicitud"
-                              placeholder="Explique por qué este hecho debería ser eliminado..."
-                              value={motivo}
-                              onChange={(e) => setMotivo(e.target.value)}
-                              variant="bordered"
-                              minRows={3}
-                              maxRows={6}
-                              classNames={{
-                                input: "bg-white",
-                              }}
-                            />
+                                {errorSolicitud && (
+                                  <div className="mb-3 p-2 bg-danger-100 border border-danger-300 rounded-lg">
+                                    <p className="text-sm text-danger-700">{errorSolicitud}</p>
+                                  </div>
+                                )}
 
-                            <div className="flex gap-2 mt-4">
-                              <Button
-                                color="danger"
-                                variant="flat"
-                                size="sm"
-                                onPress={() => {
-                                  setMostrarFormularioEliminacion(false)
-                                  setMotivo("")
-                                }}
-                              >
-                                Cancelar
-                              </Button>
-                              <Button
-                                color="danger"
-                                size="sm"
-                                onPress={handleSubmitSolicitud}
-                                isDisabled={!motivo.trim()}
-                                startContent={<i className="ri-send-plane-line" />}
-                              >
-                                Enviar solicitud
-                              </Button>
-                            </div>
+                                <Textarea
+                                  label="Motivo de la solicitud"
+                                  placeholder="Explique por qué este hecho debería ser eliminado..."
+                                  value={motivo}
+                                  onChange={(e) => setMotivo(e.target.value)}
+                                  variant="bordered"
+                                  minRows={3}
+                                  maxRows={6}
+                                  isDisabled={enviandoSolicitud}
+                                  classNames={{
+                                    input: "bg-white",
+                                  }}
+                                />
+
+                                <div className="flex gap-2 mt-4">
+                                  <Button
+                                    color="danger"
+                                    variant="flat"
+                                    size="sm"
+                                    onPress={() => {
+                                      setMostrarFormularioEliminacion(false)
+                                      setMotivo("")
+                                      setErrorSolicitud(null)
+                                    }}
+                                    isDisabled={enviandoSolicitud}
+                                  >
+                                    Cancelar
+                                  </Button>
+                                  <Button
+                                    color="danger"
+                                    size="sm"
+                                    onPress={handleSubmitSolicitud}
+                                    isDisabled={!motivo.trim() || enviandoSolicitud}
+                                    isLoading={enviandoSolicitud}
+                                    startContent={!enviandoSolicitud && <i className="ri-send-plane-line" />}
+                                  >
+                                    Enviar solicitud
+                                  </Button>
+                                </div>
+                              </>
+                            )}
                           </div>
                         </div>
                       </CardBody>
@@ -311,14 +441,28 @@ export function HechoDetailModal({ hecho, isOpen, onClose }: HechoDetailModalPro
                 Cerrar
               </Button>
               {!mostrarFormularioEliminacion && (
-                <Button
-                  color="danger"
-                  variant="flat"
-                  startContent={<i className="ri-delete-bin-line" />}
-                  onPress={() => setMostrarFormularioEliminacion(true)}
-                >
-                  Solicitar eliminación
-                </Button>
+                <>
+                  {puedeEditar && (
+                    <Button
+                      color="primary"
+                      variant="flat"
+                      startContent={<i className="ri-edit-line" />}
+                      onPress={handleEditar}
+                    >
+                      Editar
+                    </Button>
+                  )}
+                  {puedeSolicitarEliminacion && (
+                    <Button
+                      color="danger"
+                      variant="flat"
+                      startContent={<i className="ri-delete-bin-line" />}
+                      onPress={() => setMostrarFormularioEliminacion(true)}
+                    >
+                      Solicitar eliminación
+                    </Button>
+                  )}
+                </>
               )}
             </ModalFooter>
           </>
