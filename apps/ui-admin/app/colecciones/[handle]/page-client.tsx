@@ -72,12 +72,13 @@ export function ColeccionPageClient({ handle, coleccion }: ColeccionPageClientPr
   }, [handle, searchParams])
 
   // Función para fetch de páginas
-  const fetchPage = async (page: number) => {
+  const fetchPage = async (page: number, modo?: string) => {
     return await ApiClient.obtenerHechosDeColeccion(handle, {
       ...filtrosAplicados,
       pagina: page,
       tamanioPagina: 10,
-    })
+      modo: modo,
+    }, modo)
   }
 
   // Actualizar la URL con los filtros aplicados

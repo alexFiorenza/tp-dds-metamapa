@@ -8,6 +8,8 @@ public class FuenteDTO {
     private String host;
     private Map<String, Object> params;
     private UUID uuid;
+    private String tipo;
+    private Map<String, Object> metadata;
 
     public FuenteDTO() {}
 
@@ -15,6 +17,14 @@ public class FuenteDTO {
         this.host = host;
         this.params = params;
         this.uuid = uuid;
+    }
+
+    public FuenteDTO(String host, Map<String, Object> params, UUID uuid, String tipo, Map<String, Object> metadata) {
+        this.host = host;
+        this.params = params;
+        this.uuid = uuid;
+        this.tipo = tipo;
+        this.metadata = metadata;
     }
 
     // Factory method para convertir desde dominio
@@ -25,7 +35,9 @@ public class FuenteDTO {
         return new FuenteDTO(
             fuente.getHost(),
             fuente.getParams(),
-            UUID.fromString(fuente.getUuid())
+            UUID.fromString(fuente.getUuid()),
+            fuente.getTipo(),
+            fuente.getMetadata()
         );
     }
 
@@ -37,6 +49,8 @@ public class FuenteDTO {
         }
         fuente.setHost(this.host);
         fuente.setParams(this.params);
+        fuente.setTipo(this.tipo);
+        fuente.setMetadata(this.metadata);
         return fuente;
     }
 
@@ -62,5 +76,21 @@ public class FuenteDTO {
 
     public void setUuid(UUID uuid) {
         this.uuid = uuid;
+    }
+
+    public String getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
+    }
+
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
     }
 }

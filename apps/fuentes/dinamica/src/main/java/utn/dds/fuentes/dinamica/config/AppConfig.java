@@ -11,13 +11,15 @@ public class AppConfig {
     private final Map<String, Object> daoConfig;
     private final String apiEndpoint;
     private final int refreshIntervalSeconds;
+    private final String clerkSecretKey;
 
-    private AppConfig(String daoType, String processorType, String apiEndpoint, int refreshIntervalSeconds, Map<String, Object> daoConfig) {
+    private AppConfig(String daoType, String processorType, String apiEndpoint, int refreshIntervalSeconds, Map<String, Object> daoConfig, String clerkSecretKey) {
         this.daoType = daoType;
         this.processorType = processorType;
         this.daoConfig = daoConfig != null ? daoConfig : new HashMap<>();
         this.apiEndpoint = apiEndpoint;
         this.refreshIntervalSeconds = refreshIntervalSeconds;
+        this.clerkSecretKey = clerkSecretKey;
     }
 
     public static AppConfig fromEnvironment() {
@@ -31,7 +33,10 @@ public class AppConfig {
         // Para dinámicas no necesitamos dataUrl específica, usamos el DAO directamente
         Map<String, Object> daoConfig = DAOConfigBuilder.buildDAOConfig(daoType, null);
         
-        return new AppConfig(daoType, processorType, apiEndpoint, refreshInterval, daoConfig);
+        // Clerk Secret Key (opcional, solo necesario si se quiere validar tokens)
+        String clerkSecretKey = System.getenv("CLERK_SECRET_KEY");
+        
+        return new AppConfig(daoType, processorType, apiEndpoint, refreshInterval, daoConfig, clerkSecretKey);
     }
 
     // Getters básicos
@@ -54,6 +59,10 @@ public class AppConfig {
 
     public int getRefreshIntervalSeconds() {
         return refreshIntervalSeconds;
+    }
+
+    public String getClerkSecretKey() {
+        return clerkSecretKey;
     }
 
     // Utility methods

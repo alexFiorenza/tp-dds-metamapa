@@ -18,16 +18,10 @@ async function SolicitudesList() {
                 <Chip
                   size="sm"
                   variant="flat"
-                  color={
-                    solicitud.estado === "PENDIENTE"
-                      ? "warning"
-                      : solicitud.estado === "ACEPTADA"
-                        ? "success"
-                        : "default"
-                  }
-                  startContent={solicitud.estado === "PENDIENTE" ? <i className="ri-time-line w-3 h-3" /> : null}
+                  color={solicitud.estado === "ACTIVO" ? "warning" : "default"}
+                  startContent={solicitud.estado === "ACTIVO" ? <i className="ri-time-line w-3 h-3" /> : null}
                 >
-                  {solicitud.estado}
+                  {solicitud.estado === "ACTIVO" ? "PENDIENTE" : "PROCESADA"}
                 </Chip>
                 <span className="text-xs text-default-500">
                   {new Date(solicitud.fechaSolicitud).toLocaleDateString("es-AR", {

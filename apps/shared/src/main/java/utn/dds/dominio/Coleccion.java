@@ -2,6 +2,7 @@ package utn.dds.dominio;
 
 import jakarta.persistence.*;
 import utn.dds.dominio.criterios.HechoStrategy;
+import utn.dds.dominio.consenso.AlgoritmoConsenso;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -42,11 +43,16 @@ public class Coleccion {
     @JoinColumn(name = "coleccion_handle")
     private List<Criterio> criteriosDePertenencia;
 
+    @Convert(converter = utn.dds.dominio.consenso.AlgoritmoConsensoConverter.class)
+    @Column(name = "algoritmo_consenso")
+    private AlgoritmoConsenso algoritmoConsenso;
+
     public Coleccion() {
         this.handle = UUID.randomUUID().toString();
         this.hechos = new ArrayList<>();
         this.fuentes = new ArrayList<>();
         this.criteriosDePertenencia = new ArrayList<>();
+        this.algoritmoConsenso = new utn.dds.dominio.consenso.ConsensoDefault(); // Por defecto, todos los hechos son consensuados
     }
 
     // Constructor
@@ -136,5 +142,13 @@ public class Coleccion {
 
     public void setCriteriosDePertenencia(List<Criterio> criteriosDePertenencia) {
         this.criteriosDePertenencia = criteriosDePertenencia;
+    }
+
+    public AlgoritmoConsenso getAlgoritmoConsenso() {
+        return algoritmoConsenso;
+    }
+
+    public void setAlgoritmoConsenso(AlgoritmoConsenso algoritmoConsenso) {
+        this.algoritmoConsenso = algoritmoConsenso != null ? algoritmoConsenso : new utn.dds.dominio.consenso.ConsensoDefault();
     }
 } 

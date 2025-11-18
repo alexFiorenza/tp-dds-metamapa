@@ -68,7 +68,7 @@ public class HechoRepository {
             Hecho hecho = hibernateDAO.findById(uuid);
             if (hecho != null) {
                 hecho.setEstado(nuevoEstado);
-                dao.save(hecho);
+                hibernateDAO.update(hecho);
             }
         }
     }

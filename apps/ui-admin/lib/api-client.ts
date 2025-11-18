@@ -202,6 +202,7 @@ export class ApiClient {
   static async obtenerHechosDeColeccion(
     identificador: string,
     filtros: FiltrosHechos = {},
+    modo?: string, // "irrestricto" o "curado"
   ): Promise<RespuestaPaginadaDTO<HechoDTO>> {
     if (USE_MOCK) {
       const coleccion = mockColecciones.find((c) => c.handle === identificador)
@@ -228,9 +229,16 @@ export class ApiClient {
       params.append('size', String(filtros.tamanioPagina))
     }
 
+    // Agregar modo de navegación si se especifica
+    if (modo) {
+      params.append('modo', modo)
+    } else if (filtros.modo) {
+      params.append('modo', filtros.modo)
+    }
+
     // Agregar el resto de filtros
     Object.entries(filtros).forEach(([key, value]) => {
-      if (value !== undefined && key !== 'pagina' && key !== 'tamanioPagina') {
+      if (value !== undefined && key !== 'pagina' && key !== 'tamanioPagina' && key !== 'modo') {
         params.append(key, String(value))
       }
     })
@@ -257,8 +265,9 @@ export class ApiClient {
       return crearRespuestaPaginada(mockSolicitudes, pagina, tamanioPagina)
     }
 
+    // Usar ruta proxy de Next.js (sin API_BASE_URL para evitar CORS)
     const response = await fetch(
-      `${API_BASE_URL}/administrador/solicitudes?page=${pagina}&size=${tamanioPagina}`,
+      `/api/administrador/solicitudes?page=${pagina}&size=${tamanioPagina}`,
       {
         cache: 'no-store',
         headers: this.createHeaders(token)
@@ -288,16 +297,52 @@ export class ApiClient {
     }
   }
 
+  // Crear solicitud de eliminación (público - no requiere autenticación)
+  static async crearSolicitudEliminacion(hechoUuid: string, texto: string): Promise<SolicitudEliminacionDTO> {
+    if (USE_MOCK) {
+      console.log(`[MOCK] Solicitud de eliminación creada para hecho ${hechoUuid}`)
+      const nuevaSolicitud: SolicitudEliminacionDTO = {
+        uuid: `solicitud-${Date.now()}`,
+        texto,
+        hecho: hechoUuid,
+        fechaSolicitud: new Date().toISOString(),
+        estado: "ACTIVO"
+      }
+      mockSolicitudes.push(nuevaSolicitud)
+      return nuevaSolicitud
+    }
+
+    // Usar ruta proxy de Next.js (sin API_BASE_URL para evitar CORS)
+    const response = await fetch('/api/solicitudes', {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        texto,
+        hecho: hechoUuid
+      })
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`Error al crear solicitud de eliminación: ${errorText || response.statusText}`)
+    }
+
+    return response.json()
+  }
+
   // Aceptar solicitud de eliminación
   static async aceptarSolicitud(uuid: string, token?: string | null): Promise<void> {
     if (USE_MOCK) {
       console.log(`[MOCK] Solicitud ${uuid} aceptada`)
       const solicitud = mockSolicitudes.find((s) => s.uuid === uuid)
-      if (solicitud) solicitud.estado = "ACEPTADA"
+      if (solicitud) solicitud.estado = "OCULTO"
       return
     }
 
-    const response = await fetch(`${API_BASE_URL}/administrador/solicitud/${uuid}/aceptar`, {
+    // Usar ruta proxy de Next.js (sin API_BASE_URL para evitar CORS)
+    const response = await fetch(`/api/administrador/solicitudes/${uuid}/aceptar`, {
       method: "PUT",
       headers: this.createHeaders(token)
     })
@@ -312,11 +357,12 @@ export class ApiClient {
     if (USE_MOCK) {
       console.log(`[MOCK] Solicitud ${uuid} rechazada`)
       const solicitud = mockSolicitudes.find((s) => s.uuid === uuid)
-      if (solicitud) solicitud.estado = "RECHAZADA"
+      if (solicitud) solicitud.estado = "OCULTO"
       return
     }
 
-    const response = await fetch(`${API_BASE_URL}/administrador/solicitud/${uuid}/rechazar`, {
+    // Usar ruta proxy de Next.js (sin API_BASE_URL para evitar CORS)
+    const response = await fetch(`/api/administrador/solicitudes/${uuid}/rechazar`, {
       method: "PUT",
       headers: this.createHeaders(token)
     })

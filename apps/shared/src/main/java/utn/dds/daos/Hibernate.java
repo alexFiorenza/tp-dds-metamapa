@@ -138,8 +138,8 @@ public class Hibernate<T> implements IDAO<T> {
             em.getTransaction().begin();
             
             for (int i = 0; i < objects.size(); i++) {
-                em.persist(objects.get(i));
-                
+                em.merge(objects.get(i));
+
                 // Flush en lotes para mejorar rendimiento
                 if (i % 50 == 0) {
                     em.flush();
@@ -249,6 +249,21 @@ public class Hibernate<T> implements IDAO<T> {
         } catch (Exception e) {
             logger.error("Error al ejecutar consulta personalizada: {}", e.getMessage(), e);
             throw new RuntimeException("Error al ejecutar consulta personalizada", e);
+        } finally {
+            em.close();
+        }
+    }
+
+    public utn.dds.dominio.Contribuyente findContribuyenteByUserId(String userId) {
+        EntityManager em = entityManagerFactory.createEntityManager();
+        try {
+            return em.createQuery(
+                "SELECT c FROM Contribuyente c WHERE c.userId = :userId",
+                utn.dds.dominio.Contribuyente.class)
+                .setParameter("userId", userId)
+                .getResultStream()
+                .findFirst()
+                .orElse(null);
         } finally {
             em.close();
         }

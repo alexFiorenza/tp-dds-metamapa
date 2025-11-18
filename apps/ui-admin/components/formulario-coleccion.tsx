@@ -29,6 +29,13 @@ interface FormularioColeccionProps {
 
 const ESTADOS = ["ACTIVO", "OCULTO"]
 
+const ALGORITMOS_CONSENSO = [
+  { value: "default", label: "Por Defecto" },
+  { value: "menciones", label: "Menciones" },
+  { value: "simple", label: "Simple" },
+  { value: "absoluta", label: "Absoluta" },
+]
+
 const TIPOS_CRITERIO = [
   { value: "TITULO", label: "Título" },
   { value: "CATEGORIA", label: "Categoría" },
@@ -56,6 +63,7 @@ export function FormularioColeccion({
     descripcion: "",
     fuentesIds: [],
     criteriosDePertenencia: [],
+    algoritmoConsenso: "default",
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -72,6 +80,7 @@ export function FormularioColeccion({
         descripcion: "",
         fuentesIds: [],
         criteriosDePertenencia: [],
+        algoritmoConsenso: "default",
       })
     }
   }, [coleccionInicial, isOpen])
@@ -110,6 +119,7 @@ export function FormularioColeccion({
       descripcion: "",
       fuentesIds: [],
       criteriosDePertenencia: [],
+      algoritmoConsenso: "default",
     })
     setError(null)
     onClose()
@@ -213,6 +223,27 @@ export function FormularioColeccion({
                     minRows={3}
                     size="md"
                   />
+                </div>
+                <div className="space-y-3">
+                  <label className="text-sm font-medium text-foreground">Algoritmo de Consenso</label>
+                  <Select
+                    placeholder="Seleccione un algoritmo de consenso"
+                    selectedKeys={formData.algoritmoConsenso ? [formData.algoritmoConsenso] : ["default"]}
+                    onSelectionChange={(keys) => {
+                      const selectedKey = Array.from(keys)[0] as string
+                      setFormData({ ...formData, algoritmoConsenso: selectedKey })
+                    }}
+                    variant="bordered"
+                    size="md"
+                    classNames={{
+                      trigger: "bg-content1 data-[hover=true]:bg-content2 pr-8",
+                      listboxWrapper: "max-h-[400px]",
+                      popoverContent: "bg-content1",
+                    }}
+                    items={ALGORITMOS_CONSENSO.map(alg => ({ key: alg.value, label: alg.label }))}
+                  >
+                    {(item) => <SelectItem key={item.key}>{item.label}</SelectItem>}
+                  </Select>
                 </div>
               </div>
             </div>

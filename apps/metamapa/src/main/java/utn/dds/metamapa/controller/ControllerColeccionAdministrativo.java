@@ -174,11 +174,14 @@ public class ControllerColeccionAdministrativo {
                 size = 100;
             }
 
+            // Obtener modo de navegación
+            String modo = ctx.queryParam("modo"); // "irrestricto" o "curado"
+
             // Crear filtros usando el Factory
             List<HechoStrategy> filtros = FiltroFactory.crearFiltros(ctx);
 
             RespuestaPaginadaDTO<HechoDTO> respuesta = this.serviceColeccion.obtenerHechosDeColeccion(
-                id, filtros, page, size);
+                id, filtros, page, size, modo);
             ctx.json(respuesta);
 
         } catch (IllegalArgumentException e) {

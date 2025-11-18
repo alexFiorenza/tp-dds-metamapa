@@ -8,6 +8,8 @@ import { Button, Card, CardBody, Chip, Modal, ModalContent, ModalHeader, ModalBo
 import { useRouter } from "next/navigation"
 import type { ColeccionDTO, ColeccionCreateDTO, FuenteDTO } from "@/types/api"
 import { useAuth } from "@clerk/nextjs"
+import { motion, AnimatePresence } from 'motion/react'
+import { useSidebarContext } from '@/components/layout-wrapper'
 
 interface AdminColeccionesViewProps {
   coleccionesIniciales: ColeccionDTO[]
@@ -16,6 +18,7 @@ interface AdminColeccionesViewProps {
 
 export function AdminColeccionesView({ coleccionesIniciales, totalElementos }: AdminColeccionesViewProps) {
   const { getToken } = useAuth()
+  const { isCollapsed } = useSidebarContext()
   const router = useRouter()
   const [colecciones, setColecciones] = useState<ColeccionDTO[]>(coleccionesIniciales)
   const [fuentes, setFuentes] = useState<FuenteDTO[]>([])
@@ -29,6 +32,14 @@ export function AdminColeccionesView({ coleccionesIniciales, totalElementos }: A
     cargarFuentes()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Efecto para redimensionar el mapa cuando cambie el estado del sidebar
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      window.dispatchEvent(new Event('resize'))
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [isCollapsed])
 
   const cargarFuentes = async () => {
     try {
@@ -118,8 +129,16 @@ export function AdminColeccionesView({ coleccionesIniciales, totalElementos }: A
   return (
     <>
       <div className="h-full w-full flex">
-        {/* Sidebar */}
-        <div className="w-[420px] flex flex-col bg-content1 border-r border-divider">
+        {/* Sidebar - se oculta completamente cuando el sidebar principal está colapsado */}
+        <AnimatePresence>
+          {!isCollapsed && (
+            <motion.div
+              className="flex flex-col bg-content1 border-r border-divider"
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 420, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+            >
           {/* Header */}
           <div className="p-6 border-b border-divider">
             <Button 
@@ -203,11 +222,13 @@ export function AdminColeccionesView({ coleccionesIniciales, totalElementos }: A
               ))}
             </div>
           </div>
-        </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Map */}
-        <div className="flex-1">
-          <MapWrapper />
+        <div className="flex-1 relative min-w-0">
+          <MapWrapper height="100%" width="100%" />
         </div>
       </div>
 
