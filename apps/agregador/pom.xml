@@ -76,6 +76,18 @@
             <artifactId>micrometer-registry-prometheus</artifactId>
             <version>1.13.0</version>
         </dependency>
+        <!-- GraphQL Java -->
+        <dependency>
+            <groupId>com.graphql-java</groupId>
+            <artifactId>graphql-java</artifactId>
+            <version>21.5</version>
+        </dependency>
+        <!-- GraphQL Java Extended Scalars (para tipos como DateTime, JSON, etc) -->
+        <dependency>
+            <groupId>com.graphql-java</groupId>
+            <artifactId>graphql-java-extended-scalars</artifactId>
+            <version>21.0</version>
+        </dependency>
         <!-- Testing -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

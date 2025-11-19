@@ -17,6 +17,11 @@ public class EjecucionRepository {
             Map<String, Object> config = new java.util.HashMap<>();
             config.put("url", "src/main/resources/mocks/ultimaEjecucion.json");
             this.dao = DAOFactory.createDAO(Object.class, daoType, config);
+        } else if ("mongodb".equals(daoType)) {
+            // Para MongoDB, especificar la colección para ejecuciones
+            Map<String, Object> configEjecuciones = new java.util.HashMap<>(daoConfig);
+            configEjecuciones.put("collection", "ejecuciones");
+            this.dao = DAOFactory.createDAO(Object.class, daoType, configEjecuciones);
         } else {
             this.dao = DAOFactory.createDAO(Object.class, daoType, daoConfig);
         }

@@ -104,6 +104,30 @@ public class DAOConfigBuilder {
         return config;
     }
 
+    public static Map<String, Object> buildMongoDBConfig() {
+        Map<String, Object> config = new HashMap<>();
+
+        // Variables de entorno para MongoDB
+        String mongoHost = getEnvOrDefault("MONGODB_HOST", "localhost");
+        String mongoPort = getEnvOrDefault("MONGODB_PORT", "27017");
+        String mongoUser = getEnvOrDefault("MONGODB_USER", "admin");
+        String mongoPassword = getEnvOrDefault("MONGODB_PASSWORD", "admin123");
+        String mongoAuthDb = getEnvOrDefault("MONGODB_AUTH_DB", "admin");
+        String mongoDatabase = getEnvOrDefault("MONGODB_DB", "metamapa_db");
+
+        // Construir connection string
+        String connectionString = String.format(
+            "mongodb://%s:%s@%s:%s/%s?authSource=%s",
+            mongoUser, mongoPassword, mongoHost, mongoPort, mongoDatabase, mongoAuthDb
+        );
+
+        config.put("connectionString", connectionString);
+        config.put("database", mongoDatabase);
+        config.put("dbPrefix", mongoDatabase); // Para compatibilidad con los repositorios
+
+        return config;
+    }
+
 
     public static Map<String, Object> buildDAOConfig(String daoType, String dataUrl) {
         switch (daoType.toLowerCase()) {
@@ -115,11 +139,13 @@ public class DAOConfigBuilder {
                 return buildHibernateConfig();
             case "couchdb":
                 return buildCouchDBConfig();
+            case "mongodb":
+                return buildMongoDBConfig();
             default:
                 throw new IllegalArgumentException("Tipo de DAO no soportado: " + daoType);
         }
     }
-    
+
     public static Map<String, Object> buildDAOConfig(String daoType) {
         switch (daoType.toLowerCase()) {
             case "filesystem":
@@ -130,6 +156,8 @@ public class DAOConfigBuilder {
                 return buildHibernateConfig();
             case "couchdb":
                 return buildCouchDBConfig();
+            case "mongodb":
+                return buildMongoDBConfig();
             default:
                 throw new IllegalArgumentException("Tipo de DAO no soportado: " + daoType);
         }

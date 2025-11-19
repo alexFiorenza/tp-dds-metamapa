@@ -35,6 +35,11 @@ public class DAOFactory {
                 String username = (String) config.get("username");
                 String password = (String) config.get("password");
                 return new CouchDB<>(urlDb, username, password, clazz);
+            case "mongodb":
+                String connectionString = (String) config.get("connectionString");
+                String database = (String) config.get("database");
+                String collection = (String) config.get("collection");
+                return new MongoDB<>(connectionString, database, collection, clazz);
             default:
                 throw new IllegalArgumentException("Tipo de DAO no soportado: " + type);
         }
