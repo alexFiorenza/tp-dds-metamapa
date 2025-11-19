@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
@@ -54,7 +55,16 @@ public class MongoDB<T> implements IDAO<T> {
             // Crear builder de settings
             MongoClientSettings.Builder settingsBuilder = MongoClientSettings.builder()
                 .applyConnectionString(new ConnectionString(connectionString))
-                .codecRegistry(pojoCodecRegistry);
+                .codecRegistry(pojoCodecRegistry)
+                .applyToSocketSettings(builder ->
+                    builder.connectTimeout(10, TimeUnit.SECONDS)
+                           .readTimeout(10, TimeUnit.SECONDS))
+                .applyToClusterSettings(builder ->
+                    builder.serverSelectionTimeout(10, TimeUnit.SECONDS))
+                .applyToSslSettings(builder ->
+                    builder.enabled(connectionString.contains("mongodb+srv") ||
+                                  connectionString.contains("ssl=true"))
+                           .invalidHostNameAllowed(false));
 
             // Si es MongoDB Atlas (mongodb+srv), agregar Server API V1
             if (connectionString.contains("mongodb+srv")) {
