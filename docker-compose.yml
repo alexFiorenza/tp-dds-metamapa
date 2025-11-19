@@ -32,18 +32,19 @@ services:
     networks:
       - metamapa-network
 
-  # CouchDB Database
-  couchdb:
-    image: couchdb:3.3
-    container_name: metamapa-couchdb
+  # MongoDB Database
+  mongodb:
+    image: mongo:7
+    container_name: metamapa-mongodb
     ports:
-      - "5984:5984"
+      - "27017:27017"
     volumes:
-      - couchdb_data:/opt/couchdb/data
-      - couchdb_config:/opt/couchdb/etc/local.d
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
     environment:
-      - COUCHDB_USER=${COUCHDB_USER:-admin}
-      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-admin123}
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_USER:-admin}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_PASSWORD:-admin123}
+      - MONGO_INITDB_DATABASE=${MONGODB_DB:-metamapa_db}
     restart: unless-stopped
     networks:
       - metamapa-network
@@ -99,11 +100,13 @@ services:
     container_name: metamapa-fuente-dinamica
     restart: unless-stopped
     environment:
-      - DAO_TYPE=${FUENTE_DINAMICA_DAO_TYPE:-couchdb}
-      - COUCHDB_URL=${COUCHDB_URL:-http://couchdb:5984}
-      - COUCHDB_USER=${COUCHDB_USER:-admin}
-      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-admin123}
-      - COUCHDB_DB=${COUCHDB_DB_DINAMICA:-dinamica_db}
+      - DAO_TYPE=${FUENTE_DINAMICA_DAO_TYPE:-mongodb}
+      - MONGODB_HOST=${MONGODB_HOST:-mongodb}
+      - MONGODB_PORT=${MONGODB_PORT:-27017}
+      - MONGODB_USER=${MONGODB_USER:-admin}
+      - MONGODB_PASSWORD=${MONGODB_PASSWORD:-admin123}
+      - MONGODB_DB=${MONGODB_DB_DINAMICA:-dinamica_db}
+      - MONGODB_AUTH_DB=${MONGODB_AUTH_DB:-admin}
       - S3_ENDPOINT=${S3_ENDPOINT}
       - S3_PUBLIC_ENDPOINT=${S3_PUBLIC_ENDPOINT}
       - S3_ACCESS_KEY=${MINIO_ACCESS_KEY}
@@ -111,7 +114,7 @@ services:
       - S3_BUCKET=${S3_BUCKET_DINAMICA}
       - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
     depends_on:
-      - couchdb
+      - mongodb
     networks:
       - metamapa-network
 
@@ -141,13 +144,15 @@ services:
     container_name: metamapa-fuente-proxy-demo
     restart: unless-stopped
     environment:
-      - DAO_TYPE=${FUENTE_PROXY_DEMO_DAO_TYPE:-couchdb}
-      - COUCHDB_URL=${COUCHDB_URL:-http://couchdb:5984}
-      - COUCHDB_USER=${COUCHDB_USER:-admin}
-      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-admin123}
-      - COUCHDB_DB=${COUCHDB_DB_PROXY_DEMO:-proxy_demo_db}
+      - DAO_TYPE=${FUENTE_PROXY_DEMO_DAO_TYPE:-mongodb}
+      - MONGODB_HOST=${MONGODB_HOST:-mongodb}
+      - MONGODB_PORT=${MONGODB_PORT:-27017}
+      - MONGODB_USER=${MONGODB_USER:-admin}
+      - MONGODB_PASSWORD=${MONGODB_PASSWORD:-admin123}
+      - MONGODB_DB=${MONGODB_DB_PROXY_DEMO:-proxy_demo_db}
+      - MONGODB_AUTH_DB=${MONGODB_AUTH_DB:-admin}
     depends_on:
-      - couchdb
+      - mongodb
     networks:
       - metamapa-network
 
@@ -295,8 +300,8 @@ volumes:
   minio_data:
   postgres_data:
   pgadmin_data:
-  couchdb_data:
-  couchdb_config:
+  mongodb_data:
+  mongodb_config:
   grafana_data:
 
 networks:

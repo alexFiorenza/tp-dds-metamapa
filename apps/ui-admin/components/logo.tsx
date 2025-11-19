@@ -2,77 +2,137 @@
 
 import React from 'react';
 import { useTheme } from 'next-themes';
-import { motion } from 'motion/react';
 
 interface LogoProps {
   /**
-   * Width of the logo
-   * @default "100%"
+   * Width/Height of the logo (square)
+   * @default 48
    */
-  width?: string | number;
-  /**
-   * Height of the logo
-   * @default "100%"
-   */
-  height?: string | number;
-  /**
-   * Custom fill color. If not provided, it will use the theme-based color
-   */
-  fill?: string;
+  width?: number;
+  height?: number;
   /**
    * Additional CSS classes
    */
   className?: string;
+  /**
+   * Show text next to the logo
+   * @default false
+   */
+  showText?: boolean;
+  /**
+   * Force a specific variant (overrides theme detection)
+   */
+  variant?: 'light' | 'dark' | 'auto';
 }
 
 export const Logo: React.FC<LogoProps> = ({
-  width = "100%",
-  height = "100%",
-  fill,
-  className
+  width = 48,
+  height = 48,
+  className = '',
+  showText = false,
+  variant = 'auto'
 }) => {
-  const { theme, resolvedTheme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
     setMounted(true);
   }, []);
 
-  const getFillColor = () => {
-    if (fill) return fill;
+  // Determine the color palette based on variant or theme
+  const isDark = variant === 'auto'
+    ? (mounted && resolvedTheme === 'dark')
+    : variant === 'dark';
 
-    if (!mounted) return 'currentColor';
-
-    const currentTheme = resolvedTheme || theme;
-    return currentTheme === 'dark' ? '#ffffff' : '#000000';
+  // Color palettes
+  const colors = {
+    light: {
+      line: "#8B5CF6",    // Primary
+      dots: "#6328C7",    // Secondary (Darker Purple)
+      text: "#3D2B6B",    // Foreground
+      subtext: "#6F5C8F"  // Default 600
+    },
+    dark: {
+      line: "#A78BFA",    // Primary (Dark mode)
+      dots: "#EEEBF4",    // Foreground (Light)
+      text: "#EEEBF4",    // Foreground
+      subtext: "#B7A9CB"  // Default 500
+    }
   };
 
+  const activePalette = isDark ? colors.dark : colors.light;
+
+  // Show a neutral version during SSR
+  if (!mounted) {
+    return (
+      <div className={`flex items-center gap-3 select-none ${className}`} style={{ width: showText ? 'auto' : width }}>
+        <div style={{ width, height }} className="relative flex-shrink-0">
+          <svg
+            viewBox="0 0 100 100"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-full h-full drop-shadow-sm"
+          >
+            <path
+              d="M20 75 V 35 L 50 60 L 80 35 V 75"
+              stroke="currentColor"
+              strokeWidth="10"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <circle cx="20" cy="35" r="8" fill="currentColor" />
+            <circle cx="50" cy="60" r="8" fill="currentColor" />
+            <circle cx="80" cy="35" r="8" fill="currentColor" />
+          </svg>
+        </div>
+        {showText && (
+          <div className="flex flex-col justify-center">
+            <span className="font-bold text-2xl tracking-tighter leading-none">
+              MetaMapa
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <motion.svg
-      width={width}
-      height={height}
-      viewBox="0 0 200 200"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-      whileHover={{ rotate: [0, -5, 5, 0], transition: { duration: 0.5 } }}
-    >
-      <title>MetaMapa Isotype</title>
-      <motion.path
-        d="M25 175C25 75 50 25 100 100C150 25 175 75 175 175H150C150 100 135 75 100 125C65 75 50 100 50 175H25Z"
-        fill={getFillColor()}
-        initial={{ pathLength: 0, opacity: 0 }}
-        animate={{ pathLength: 1, opacity: 1 }}
-        transition={{ duration: 1, ease: "easeInOut" }}
-      />
-    </motion.svg>
+    <div className={`flex items-center gap-3 select-none ${className}`} style={{ width: showText ? 'auto' : width }}>
+      <div style={{ width, height }} className="relative flex-shrink-0">
+        <svg
+          viewBox="0 0 100 100"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-full h-full drop-shadow-sm"
+        >
+          <title>MetaMapa Isotipo</title>
+          {/* LÍNEA CONECTORA (El camino/La M) */}
+          <path
+            d="M20 75 V 35 L 50 60 L 80 35 V 75"
+            stroke={activePalette.line}
+            strokeWidth="10"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="transition-all duration-300"
+          />
+
+          {/* NODOS (Puntos de interés/Datos) */}
+          <circle cx="20" cy="35" r="8" fill={activePalette.dots} className="transition-all duration-300" />
+          <circle cx="50" cy="60" r="8" fill={activePalette.dots} className="transition-all duration-300" />
+          <circle cx="80" cy="35" r="8" fill={activePalette.dots} className="transition-all duration-300" />
+        </svg>
+      </div>
+
+      {showText && (
+        <div className="flex flex-col justify-center">
+          <span
+            className="font-bold text-2xl tracking-tighter leading-none transition-colors duration-300"
+            style={{ color: activePalette.text }}
+          >
+            MetaMapa
+          </span>
+        </div>
+      )}
+    </div>
   );
-};
-
-export const LogoBlack: React.FC<Omit<LogoProps, 'fill'>> = (props) => {
-  return <Logo {...props} fill="#000000" />;
-};
-
-export const LogoWhite: React.FC<Omit<LogoProps, 'fill'>> = (props) => {
-  return <Logo {...props} fill="#ffffff" />;
 };

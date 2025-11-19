@@ -96,22 +96,7 @@ export function Sidebar({ isCollapsed: externalIsCollapsed, setIsCollapsed: exte
               whileTap={{ scale: 0.98 }}
               className="flex items-center gap-3 cursor-pointer"
             >
-              <div className="shrink-0">
-                <Logo width={48} height={48} />
-              </div>
-              <AnimatePresence>
-                {!isCollapsed && (
-                  <motion.div
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: "auto" }}
-                    exit={{ opacity: 0, width: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden"
-                  >
-                    <h1 className="text-lg font-bold text-foreground whitespace-nowrap">MetaMapa</h1>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <Logo width={48} height={48} showText={!isCollapsed} />
             </motion.div>
           </Link>
         </div>

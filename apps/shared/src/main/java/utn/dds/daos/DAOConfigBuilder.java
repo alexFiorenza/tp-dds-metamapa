@@ -104,6 +104,40 @@ public class DAOConfigBuilder {
         return config;
     }
 
+    public static Map<String, Object> buildMongoDBConfig() {
+        Map<String, Object> config = new HashMap<>();
+
+        // Verificar si existe MONGODB_URI (para MongoDB Atlas)
+        String mongoUri = System.getenv("MONGODB_URI");
+
+        if (mongoUri != null && !mongoUri.isEmpty()) {
+            // MongoDB Atlas: usar URI directamente
+            config.put("connectionString", mongoUri);
+            config.put("useServerApi", true);
+        } else {
+            // MongoDB local: construir connection string manualmente
+            String mongoHost = getEnvOrDefault("MONGODB_HOST", "localhost");
+            String mongoPort = getEnvOrDefault("MONGODB_PORT", "27017");
+            String mongoUser = getEnvOrDefault("MONGODB_USER", "admin");
+            String mongoPassword = getEnvOrDefault("MONGODB_PASSWORD", "admin123");
+            String mongoAuthDb = getEnvOrDefault("MONGODB_AUTH_DB", "admin");
+
+            String connectionString = String.format(
+                "mongodb://%s:%s@%s:%s/?authSource=%s",
+                mongoUser, mongoPassword, mongoHost, mongoPort, mongoAuthDb
+            );
+
+            config.put("connectionString", connectionString);
+            config.put("useServerApi", false);
+        }
+
+        String mongoDatabase = getEnvOrDefault("MONGODB_DB", "metamapa_db");
+        config.put("database", mongoDatabase);
+        config.put("dbPrefix", mongoDatabase);
+
+        return config;
+    }
+
 
     public static Map<String, Object> buildDAOConfig(String daoType, String dataUrl) {
         switch (daoType.toLowerCase()) {
@@ -115,11 +149,13 @@ public class DAOConfigBuilder {
                 return buildHibernateConfig();
             case "couchdb":
                 return buildCouchDBConfig();
+            case "mongodb":
+                return buildMongoDBConfig();
             default:
                 throw new IllegalArgumentException("Tipo de DAO no soportado: " + daoType);
         }
     }
-    
+
     public static Map<String, Object> buildDAOConfig(String daoType) {
         switch (daoType.toLowerCase()) {
             case "filesystem":
@@ -130,6 +166,8 @@ public class DAOConfigBuilder {
                 return buildHibernateConfig();
             case "couchdb":
                 return buildCouchDBConfig();
+            case "mongodb":
+                return buildMongoDBConfig();
             default:
                 throw new IllegalArgumentException("Tipo de DAO no soportado: " + daoType);
         }
