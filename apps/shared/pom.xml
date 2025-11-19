@@ -64,7 +64,14 @@
             <artifactId>gson</artifactId>
             <version>2.10.1</version>
         </dependency>
-        
+
+        <!-- MongoDB Java Driver -->
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongodb-driver-sync</artifactId>
+            <version>4.11.1</version>
+        </dependency>
+
         <!-- AWS Lambda para handler genérico -->
         <dependency>
             <groupId>com.amazonaws</groupId>

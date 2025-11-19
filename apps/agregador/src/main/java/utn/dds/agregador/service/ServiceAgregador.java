@@ -6,6 +6,7 @@ import utn.dds.agregador.persistencia.HechoRepository;
 import utn.dds.dominio.Hecho;
 import utn.dds.dominio.criterios.EstrategiaDeteccionDuplicados;
 import utn.dds.dominio.criterios.EstrategiaTituloUbicacionFecha;
+import utn.dds.dominio.criterios.HechoStrategy;
 import utn.dds.dto.FuenteDTO;
 import utn.dds.dto.HechoDTO;
 import utn.dds.dto.ResultadoAgregacionDTO;
@@ -421,7 +422,17 @@ public class ServiceAgregador {
         return urlBuilder.toString();
     }
     
+    /**
+     * Obtiene hechos sin filtros (método de compatibilidad)
+     */
     public RespuestaPaginadaDTO<Hecho> obtenerHechos(int pagina, int tamanioPagina) {
+        return obtenerHechos(new ArrayList<>(), pagina, tamanioPagina);
+    }
+
+    /**
+     * Obtiene hechos con filtros opcionales y paginación
+     */
+    public RespuestaPaginadaDTO<Hecho> obtenerHechos(List<HechoStrategy> filtros, int pagina, int tamanioPagina) {
         // Validaciones
         if (pagina < 0) {
             pagina = 0;
@@ -433,8 +444,28 @@ public class ServiceAgregador {
             tamanioPagina = 100; // Máximo 100 elementos por página
         }
 
+        // Obtener todos los hechos
         List<Hecho> todosLosHechos = hechoRepository.find();
-        long totalElementos = todosLosHechos.size();
+
+        // Aplicar filtros si existen
+        List<Hecho> hechosFiltrados = todosLosHechos;
+        if (filtros != null && !filtros.isEmpty()) {
+            hechosFiltrados = new ArrayList<>();
+            for (Hecho hecho : todosLosHechos) {
+                boolean cumpleTodos = true;
+                for (HechoStrategy filtro : filtros) {
+                    if (!filtro.cumple(hecho)) {
+                        cumpleTodos = false;
+                        break;
+                    }
+                }
+                if (cumpleTodos) {
+                    hechosFiltrados.add(hecho);
+                }
+            }
+        }
+
+        long totalElementos = hechosFiltrados.size();
 
         // Calcular índices para la paginación
         int indiceInicio = pagina * tamanioPagina;
@@ -445,7 +476,7 @@ public class ServiceAgregador {
         if (indiceInicio >= totalElementos) {
             datosPagina = new ArrayList<>();
         } else {
-            datosPagina = todosLosHechos.subList(indiceInicio, indiceFin);
+            datosPagina = hechosFiltrados.subList(indiceInicio, indiceFin);
         }
 
         return new RespuestaPaginadaDTO<>(datosPagina, pagina, tamanioPagina, totalElementos);

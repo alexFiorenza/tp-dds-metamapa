@@ -15,8 +15,26 @@ const lato = Lato({
 })
 
 export const metadata: Metadata = {
-  title: 'MetaMapa Admin',
-  description: 'Sistema de administración MetaMapa',
+  title: {
+    default: 'MetaMapa',
+    template: '%s | MetaMapa'
+  },
+  description: 'Sistema de administración y visualización de hechos georeferenciados - MetaMapa',
+  keywords: ['metamapa', 'mapa', 'hechos', 'georeferenciado', 'consenso', 'admin'],
+  authors: [{ name: 'MetaMapa Team' }],
+  openGraph: {
+    type: 'website',
+    locale: 'es_AR',
+    siteName: 'MetaMapa',
+    title: 'MetaMapa',
+    description: 'Sistema de administración y visualización de hechos georeferenciados',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'MetaMapa',
+    description: 'Sistema de administración y visualización de hechos georeferenciados',
+  },
+  manifest: '/manifest.json',
 }
 
 export default function RootLayout({

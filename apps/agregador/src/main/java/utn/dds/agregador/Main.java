@@ -15,6 +15,7 @@ import utn.dds.agregador.service.ServiceRegistry;
 import utn.dds.agregador.service.ServiceAgregador;
 import utn.dds.persistencia.FuentesRepository;
 import utn.dds.agregador.persistencia.HechoRepository;
+import utn.dds.agregador.graphql.GraphQLHandler;
 
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
@@ -59,6 +60,9 @@ public class Main {
         RegistryController registryController = new RegistryController(serviceRegistry);
         ControllerAgregador controllerAgregador = new ControllerAgregador(serviceAgregador);
 
+        // Inicializar GraphQL Handler
+        GraphQLHandler graphQLHandler = new GraphQLHandler(serviceAgregador, serviceRegistry);
+
         Javalin app = Javalin.create(config -> {
             config.bundledPlugins.enableDevLogging();
             
@@ -87,27 +91,39 @@ public class Main {
             
         }).start(7005);
 
+        // Health & Info
         app.get("/health", Main::healthCheck);
         app.get("/", Main::infoServicio);
         app.get("/metrics", ctx -> ctx.contentType("text/plain; version=0.0.4").result(metricsConfig.scrape()));
 
+        // REST API - Service Registry
         app.post("/fuentes", registryController::registrar);
         app.get("/fuentes", registryController::obtenerFuentes);
         app.get("/fuentes/{host}", registryController::obtenerFuentePorHost);
         app.put("/fuentes/{uuid}", registryController::actualizarFuente);
         app.delete("/fuentes/{uuid}", registryController::eliminarFuente);
 
+        // REST API - Agregador
         app.post("/agregacion", controllerAgregador::agregacion);
         app.get("/hechos", controllerAgregador::obtenerHechos);
 
+        // GraphQL API
+        app.post("/graphql", graphQLHandler::handle);
+        app.get("/graphiql", graphQLHandler::handleGraphiQL);
+
         logger.info("Servicio Agregador iniciado en puerto 7005");
-        logger.info("Service Registry endpoints disponibles:");
-        logger.info("POST /fuentes - Registrar nueva fuente");
-        logger.info("GET /fuentes - Obtener todas las fuentes");
-        logger.info("PUT /fuentes/{uuid} - Actualizar fuente existente");
-        logger.info("DELETE /fuentes/{uuid} - Eliminar fuente");
-        logger.info("Agregador endpoints disponibles:");
-        logger.info("POST /agregacion - Ejecutar proceso de agregación");
-        logger.info("GET /hechos - Obtener hechos agregados");
+        logger.info("=== REST API Endpoints ===");
+        logger.info("Service Registry:");
+        logger.info("  POST /fuentes - Registrar nueva fuente");
+        logger.info("  GET /fuentes - Obtener todas las fuentes");
+        logger.info("  PUT /fuentes/{uuid} - Actualizar fuente existente");
+        logger.info("  DELETE /fuentes/{uuid} - Eliminar fuente");
+        logger.info("Agregador:");
+        logger.info("  POST /agregacion - Ejecutar proceso de agregación");
+        logger.info("  GET /hechos - Obtener hechos agregados");
+        logger.info("=== GraphQL API ===");
+        logger.info("  POST /graphql - GraphQL endpoint");
+        logger.info("  GET /graphiql - GraphQL playground UI");
+        logger.info("==================");
     }
 } 

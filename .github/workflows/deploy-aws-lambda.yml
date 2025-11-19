@@ -77,16 +77,14 @@ jobs:
           S3_BUCKET_ESTATICA: ${{ vars.S3_BUCKET_ESTATICA }}
           # Fuente Dinámica
           FUENTE_DINAMICA_DAO_TYPE: ${{ vars.FUENTE_DINAMICA_DAO_TYPE }}
-          COUCHDB_URL: ${{ secrets.COUCHDB_URL }}
-          COUCHDB_USER: ${{ secrets.COUCHDB_USER }}
-          COUCHDB_PASSWORD: ${{ secrets.COUCHDB_PASSWORD }}
-          COUCHDB_DB_DINAMICA: ${{ vars.COUCHDB_DB_DINAMICA }}
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          MONGODB_DB_DINAMICA: ${{ vars.MONGODB_DB_DINAMICA }}
           S3_BUCKET_DINAMICA: ${{ vars.S3_BUCKET_DINAMICA }}
           # Proxy MetaMapa
           METAMAPA_PROXY_URL: ${{ vars.METAMAPA_PROXY_URL }}
           # Proxy Demo
           FUENTE_PROXY_DEMO_DAO_TYPE: ${{ vars.FUENTE_PROXY_DEMO_DAO_TYPE }}
-          COUCHDB_DB_PROXY_DEMO: ${{ vars.COUCHDB_DB_PROXY_DEMO }}
+          MONGODB_DB_PROXY_DEMO: ${{ vars.MONGODB_DB_PROXY_DEMO }}
 
       - name: Get deployed endpoints
         run: |
@@ -102,16 +100,14 @@ jobs:
           S3_BUCKET_ESTATICA: ${{ vars.S3_BUCKET_ESTATICA }}
           # Fuente Dinámica
           FUENTE_DINAMICA_DAO_TYPE: ${{ vars.FUENTE_DINAMICA_DAO_TYPE }}
-          COUCHDB_URL: ${{ secrets.COUCHDB_URL }}
-          COUCHDB_USER: ${{ secrets.COUCHDB_USER }}
-          COUCHDB_PASSWORD: ${{ secrets.COUCHDB_PASSWORD }}
-          COUCHDB_DB_DINAMICA: ${{ vars.COUCHDB_DB_DINAMICA }}
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          MONGODB_DB_DINAMICA: ${{ vars.MONGODB_DB_DINAMICA }}
           S3_BUCKET_DINAMICA: ${{ vars.S3_BUCKET_DINAMICA }}
           # Proxy MetaMapa
           METAMAPA_PROXY_URL: ${{ vars.METAMAPA_PROXY_URL }}
           # Proxy Demo
           FUENTE_PROXY_DEMO_DAO_TYPE: ${{ vars.FUENTE_PROXY_DEMO_DAO_TYPE }}
-          COUCHDB_DB_PROXY_DEMO: ${{ vars.COUCHDB_DB_PROXY_DEMO }}
+          MONGODB_DB_PROXY_DEMO: ${{ vars.MONGODB_DB_PROXY_DEMO }}
 
       - name: Deployment summary
         run: |

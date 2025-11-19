@@ -66,6 +66,11 @@ public class HechoRepository {
 
             configHechos.put("url", fullUrl);
             this.dao = DAOFactory.createDAO(HechoDTO.class, daoType, configHechos);
+        } else if ("mongodb".equals(daoType)) {
+            // Para MongoDB, especificar la colección para hechos
+            Map<String, Object> configHechos = new java.util.HashMap<>(daoConfig);
+            configHechos.put("collection", "hechos");
+            this.dao = DAOFactory.createDAO(HechoDTO.class, daoType, configHechos);
         } else {
             this.dao = DAOFactory.createDAO(HechoDTO.class, daoType, daoConfig);
         }
