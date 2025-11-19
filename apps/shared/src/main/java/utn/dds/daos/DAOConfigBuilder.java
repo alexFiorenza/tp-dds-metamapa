@@ -107,23 +107,33 @@ public class DAOConfigBuilder {
     public static Map<String, Object> buildMongoDBConfig() {
         Map<String, Object> config = new HashMap<>();
 
-        // Variables de entorno para MongoDB
-        String mongoHost = getEnvOrDefault("MONGODB_HOST", "localhost");
-        String mongoPort = getEnvOrDefault("MONGODB_PORT", "27017");
-        String mongoUser = getEnvOrDefault("MONGODB_USER", "admin");
-        String mongoPassword = getEnvOrDefault("MONGODB_PASSWORD", "admin123");
-        String mongoAuthDb = getEnvOrDefault("MONGODB_AUTH_DB", "admin");
+        // Verificar si existe MONGODB_URI (para MongoDB Atlas)
+        String mongoUri = System.getenv("MONGODB_URI");
+
+        if (mongoUri != null && !mongoUri.isEmpty()) {
+            // MongoDB Atlas: usar URI directamente
+            config.put("connectionString", mongoUri);
+            config.put("useServerApi", true);
+        } else {
+            // MongoDB local: construir connection string manualmente
+            String mongoHost = getEnvOrDefault("MONGODB_HOST", "localhost");
+            String mongoPort = getEnvOrDefault("MONGODB_PORT", "27017");
+            String mongoUser = getEnvOrDefault("MONGODB_USER", "admin");
+            String mongoPassword = getEnvOrDefault("MONGODB_PASSWORD", "admin123");
+            String mongoAuthDb = getEnvOrDefault("MONGODB_AUTH_DB", "admin");
+
+            String connectionString = String.format(
+                "mongodb://%s:%s@%s:%s/?authSource=%s",
+                mongoUser, mongoPassword, mongoHost, mongoPort, mongoAuthDb
+            );
+
+            config.put("connectionString", connectionString);
+            config.put("useServerApi", false);
+        }
+
         String mongoDatabase = getEnvOrDefault("MONGODB_DB", "metamapa_db");
-
-        // Construir connection string
-        String connectionString = String.format(
-            "mongodb://%s:%s@%s:%s/%s?authSource=%s",
-            mongoUser, mongoPassword, mongoHost, mongoPort, mongoDatabase, mongoAuthDb
-        );
-
-        config.put("connectionString", connectionString);
         config.put("database", mongoDatabase);
-        config.put("dbPrefix", mongoDatabase); // Para compatibilidad con los repositorios
+        config.put("dbPrefix", mongoDatabase);
 
         return config;
     }

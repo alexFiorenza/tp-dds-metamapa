@@ -3,6 +3,8 @@ package utn.dds.daos;
 import com.google.gson.Gson;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.ServerApi;
+import com.mongodb.ServerApiVersion;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
@@ -49,12 +51,21 @@ public class MongoDB<T> implements IDAO<T> {
                 fromProviders(PojoCodecProvider.builder().automatic(true).build())
             );
 
-            // Crear cliente MongoDB
-            MongoClientSettings settings = MongoClientSettings.builder()
+            // Crear builder de settings
+            MongoClientSettings.Builder settingsBuilder = MongoClientSettings.builder()
                 .applyConnectionString(new ConnectionString(connectionString))
-                .codecRegistry(pojoCodecRegistry)
-                .build();
+                .codecRegistry(pojoCodecRegistry);
 
+            // Si es MongoDB Atlas (mongodb+srv), agregar Server API V1
+            if (connectionString.contains("mongodb+srv")) {
+                logger.info("Detectado MongoDB Atlas, usando Server API V1");
+                ServerApi serverApi = ServerApi.builder()
+                    .version(ServerApiVersion.V1)
+                    .build();
+                settingsBuilder.serverApi(serverApi);
+            }
+
+            MongoClientSettings settings = settingsBuilder.build();
             this.mongoClient = MongoClients.create(settings);
             this.database = mongoClient.getDatabase(databaseName);
             this.collection = database.getCollection(collectionName);
