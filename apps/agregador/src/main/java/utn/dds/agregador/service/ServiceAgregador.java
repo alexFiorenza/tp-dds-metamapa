@@ -3,6 +3,8 @@ package utn.dds.agregador.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utn.dds.agregador.persistencia.HechoRepository;
+import utn.dds.agregador.persistencia.AgregacionJobRepository;
+import utn.dds.agregador.dominio.AgregacionJob;
 import utn.dds.dominio.Hecho;
 import utn.dds.dominio.criterios.EstrategiaDeteccionDuplicados;
 import utn.dds.dominio.criterios.EstrategiaTituloUbicacionFecha;
@@ -25,21 +27,28 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ServiceAgregador {
 
     private static final Logger logger = LoggerFactory.getLogger(ServiceAgregador.class);
 
     private HechoRepository hechoRepository;
+    private AgregacionJobRepository jobRepository;
     private ServiceRegistry serviceRegistry;
     private HttpClient httpClient;
     private ObjectMapper objectMapper;
     private EstrategiaDeteccionDuplicados estrategiaDeteccionDuplicados;
     private NormalizadorClient normalizadorClient;
+    private ExecutorService executorService;
 
     public ServiceAgregador(HechoRepository hechoRepository, ServiceRegistry serviceRegistry) {
         this.hechoRepository = hechoRepository;
+        this.jobRepository = new AgregacionJobRepository();
         this.serviceRegistry = serviceRegistry;
+        this.executorService = Executors.newFixedThreadPool(3); // Máximo 3 agregaciones simultáneas
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
                 .build();
@@ -188,6 +197,181 @@ public class ServiceAgregador {
     
     private static final int NORMALIZADOR_BATCH_SIZE = 1000;
 
+    /**
+     * Inicia una agregación asíncrona y retorna inmediatamente con el ID del job
+     */
+    public String iniciarAgregacionAsincrona() {
+        // Generar ID único para el job
+        String jobId = "agg-" + UUID.randomUUID().toString();
+
+        // Obtener total de fuentes
+        List<FuenteDTO> fuentes = serviceRegistry.obtenerTodasLasFuentes();
+
+        // Crear el job en la base de datos
+        AgregacionJob job = new AgregacionJob(jobId, fuentes.size());
+        jobRepository.guardar(job);
+
+        logger.info("Job de agregación creado: {} con {} fuentes", jobId, fuentes.size());
+
+        // Ejecutar la agregación en background
+        executorService.submit(() -> {
+            try {
+                agregacionConJob(jobId);
+            } catch (Exception e) {
+                logger.error("Error fatal en el job {}: {}", jobId, e.getMessage(), e);
+                marcarJobComoError(jobId, e.getMessage());
+            }
+        });
+
+        return jobId;
+    }
+
+    /**
+     * Obtiene el estado de un job de agregación
+     */
+    public AgregacionJob obtenerEstadoJob(String jobId) {
+        return jobRepository.obtenerPorId(jobId);
+    }
+
+    /**
+     * Lista los jobs recientes
+     */
+    public List<AgregacionJob> obtenerJobsRecientes(int limit) {
+        return jobRepository.obtenerRecientes(limit);
+    }
+
+    /**
+     * Marca un job como error
+     */
+    private void marcarJobComoError(String jobId, String mensajeError) {
+        try {
+            AgregacionJob job = jobRepository.obtenerPorId(jobId);
+            if (job != null) {
+                job.marcarComoError(mensajeError);
+                jobRepository.actualizar(job);
+            }
+        } catch (Exception e) {
+            logger.error("Error al marcar job {} como error: {}", jobId, e.getMessage());
+        }
+    }
+
+    /**
+     * Ejecuta la agregación y actualiza el progreso del job
+     */
+    private void agregacionConJob(String jobId) {
+        LocalDateTime fechaEjecucion = LocalDateTime.now();
+        List<FuenteDTO> fuentes = serviceRegistry.obtenerTodasLasFuentes();
+        List<Hecho> hechosAgregados = new ArrayList<>();
+        List<String> fuentesConError = new ArrayList<>();
+        int hechosObtenidos = 0;
+        int fuentesProcesadas = 0;
+
+        for (FuenteDTO fuente : fuentes) {
+            try {
+                // Verificar si es fuente estática ya procesada
+                if ("estatica".equals(fuente.getTipo())) {
+                    Map<String, Object> metadata = fuente.getMetadata();
+                    if (metadata != null && Boolean.TRUE.equals(metadata.get("procesado"))) {
+                        logger.info("Saltando fuente estática ya procesada: {}", fuente.getHost());
+                        fuentesProcesadas++;
+                        continue;
+                    }
+                }
+
+                String urlCompleta = construirUrlCompleta(fuente);
+                List<Hecho> hechosDeEstaFuente = obtenerHechosDesdeFuente(urlCompleta, fuente);
+                hechosObtenidos += hechosDeEstaFuente.size();
+                hechosAgregados.addAll(hechosDeEstaFuente);
+
+                // Actualizar metadata con timestamp y estado
+                Map<String, Object> metadata = fuente.getMetadata();
+                if (metadata == null) {
+                    metadata = new HashMap<>();
+                }
+
+                // Actualizar timestamp de última consulta
+                metadata.put("ultimaConsulta", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+
+                // Marcar como procesado si es fuente estática
+                if ("estatica".equals(fuente.getTipo())) {
+                    metadata.put("procesado", true);
+                    logger.info("Fuente estática marcada como procesada: {}", fuente.getHost());
+                }
+
+                fuente.setMetadata(metadata);
+                serviceRegistry.actualizar(fuente);
+
+                fuentesProcesadas++;
+
+                // Actualizar progreso del job
+                actualizarProgresoJob(jobId, fuentesProcesadas, hechosObtenidos);
+
+                logger.info("Fuente consultada: {} - Hechos obtenidos: {}", fuente.getHost(), hechosDeEstaFuente.size());
+            } catch (Exception e) {
+                String errorMsg = fuente.getHost() + " - " + e.getMessage();
+                fuentesConError.add(errorMsg);
+                fuentesProcesadas++;
+                actualizarProgresoJob(jobId, fuentesProcesadas, hechosObtenidos);
+                logger.error("Error al obtener datos de la fuente: {}", errorMsg, e);
+            }
+        }
+
+        if (hechosAgregados.isEmpty()) {
+            completarJob(jobId, 0, fuentesConError);
+            return;
+        }
+
+        // Normalizar hechos antes de filtrar duplicados
+        List<Hecho> hechosNormalizados = normalizarPorLotes(hechosAgregados);
+
+        // Filtrar duplicados después de normalizar
+        List<Hecho> hechosSinDuplicados = hechosNormalizados.isEmpty()
+            ? List.of()
+            : filtrarDuplicados(hechosNormalizados);
+
+        // Guardar únicamente hechos sin duplicados
+        if (!hechosSinDuplicados.isEmpty()) {
+            hechoRepository.saveAll(hechosSinDuplicados);
+        }
+
+        // Completar el job
+        completarJob(jobId, hechosSinDuplicados.size(), fuentesConError);
+    }
+
+    /**
+     * Actualiza el progreso de un job
+     */
+    private void actualizarProgresoJob(String jobId, int fuentesProcesadas, int hechosObtenidos) {
+        try {
+            AgregacionJob job = jobRepository.obtenerPorId(jobId);
+            if (job != null) {
+                job.actualizarProgreso(fuentesProcesadas, hechosObtenidos);
+                jobRepository.actualizar(job);
+            }
+        } catch (Exception e) {
+            logger.error("Error al actualizar progreso del job {}: {}", jobId, e.getMessage());
+        }
+    }
+
+    /**
+     * Completa un job marcándolo como exitoso
+     */
+    private void completarJob(String jobId, int hechosAgregados, List<String> errores) {
+        try {
+            AgregacionJob job = jobRepository.obtenerPorId(jobId);
+            if (job != null) {
+                job.completar(hechosAgregados, errores);
+                jobRepository.actualizar(job);
+                logger.info("Job {} completado. Hechos agregados: {}", jobId, hechosAgregados);
+            }
+        } catch (Exception e) {
+            logger.error("Error al completar job {}: {}", jobId, e.getMessage());
+        }
+    }
+
+    /**
+     * Método legacy: ejecuta agregación síncrona (mantener para compatibilidad)
+     */
     public ResultadoAgregacionDTO agregacion() {
         LocalDateTime fechaEjecucion = LocalDateTime.now();
         List<FuenteDTO> fuentes = serviceRegistry.obtenerTodasLasFuentes();

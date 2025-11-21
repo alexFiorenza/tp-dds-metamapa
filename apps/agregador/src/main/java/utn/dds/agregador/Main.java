@@ -105,6 +105,8 @@ public class Main {
 
         // REST API - Agregador
         app.post("/agregacion", controllerAgregador::agregacion);
+        app.get("/agregacion", controllerAgregador::listarAgregaciones);
+        app.get("/agregacion/{jobId}", controllerAgregador::obtenerEstadoAgregacion);
         app.get("/hechos", controllerAgregador::obtenerHechos);
 
         // GraphQL API

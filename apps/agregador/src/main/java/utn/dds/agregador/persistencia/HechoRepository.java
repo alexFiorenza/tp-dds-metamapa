@@ -7,6 +7,7 @@ import utn.dds.dominio.Hecho;
 import utn.dds.dominio.EstadoHecho;
 import utn.dds.dominio.criterios.HechoStrategy;
 import utn.dds.dto.RespuestaPaginadaDTO;
+import utn.dds.persistencia.StrategyToSQLAdapter;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
