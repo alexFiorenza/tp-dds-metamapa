@@ -10,6 +10,14 @@
     "analyze": "ANALYZE=true next build"
   },
   "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/sdk-trace-web": "^1.29.0",
+    "@opentelemetry/instrumentation": "^0.56.0",
+    "@opentelemetry/instrumentation-fetch": "^0.56.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.56.0",
+    "@opentelemetry/context-zone": "^1.29.0",
+    "@opentelemetry/resources": "^1.29.0",
+    "@opentelemetry/semantic-conventions": "^1.29.0",
     "@clerk/nextjs": "^6.33.7",
     "@heroui/react": "^2.8.5",
     "@hookform/resolvers": "^3.10.0",
