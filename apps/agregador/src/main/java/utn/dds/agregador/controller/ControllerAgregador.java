@@ -7,6 +7,7 @@ import utn.dds.dominio.Hecho;
 import utn.dds.dominio.criterios.HechoStrategy;
 import utn.dds.dto.ResultadoAgregacionDTO;
 import utn.dds.dto.RespuestaPaginadaDTO;
+import utn.dds.dto.HechoDTO;
 
 import java.util.List;
 
@@ -93,7 +94,7 @@ public class ControllerAgregador {
             // Crear filtros usando el Factory
             List<HechoStrategy> filtros = FiltroFactory.crearFiltros(ctx);
 
-            RespuestaPaginadaDTO<Hecho> respuesta = serviceAgregador.obtenerHechos(filtros, pagina, tamanioPagina);
+            RespuestaPaginadaDTO<HechoDTO> respuesta = serviceAgregador.obtenerHechos(filtros, pagina, tamanioPagina);
             ctx.json(respuesta);
         } catch (IllegalArgumentException e) {
             ctx.status(400).result("Error en parámetros de filtro: " + e.getMessage());

@@ -57,31 +57,28 @@ public class ServiceAgregador {
     }
     
     private List<Hecho> filtrarDuplicados(List<Hecho> nuevosHechos) {
-        List<Hecho> hechosExistentes = hechoRepository.findAll(); // Usar findAll para incluir todos los hechos
         List<Hecho> hechosSinDuplicados = new ArrayList<>();
         List<Hecho> hechosParaActualizar = new ArrayList<>();
 
-        // Mapa para cachear contribuyentes existentes por userId
-        Map<String, utn.dds.dominio.Contribuyente> contribuyentesCache = new HashMap<>();
+        // Paso 1: Obtener todos los userIds únicos y cargar contribuyentes en una sola query
+        java.util.Set<String> userIds = nuevosHechos.stream()
+            .filter(h -> h.getContribuyente() != null && h.getContribuyente().getUserId() != null)
+            .map(h -> h.getContribuyente().getUserId())
+            .collect(java.util.stream.Collectors.toSet());
+
+        Map<String, utn.dds.dominio.Contribuyente> contribuyentesCache =
+            hechoRepository.findContribuyentesByUserIds(userIds);
+
+        // Paso 2: Cache local para duplicados dentro de la sesión actual
+        Map<String, Hecho> hechosPorUuid = new HashMap<>();
+        Map<String, Hecho> hechosPorContenido = new HashMap<>();
 
         for (Hecho nuevoHecho : nuevosHechos) {
-            // Resolver contribuyente existente antes de procesar el hecho
+            // Resolver contribuyente existente
             if (nuevoHecho.getContribuyente() != null && nuevoHecho.getContribuyente().getUserId() != null) {
                 String userId = nuevoHecho.getContribuyente().getUserId();
-
-                // Buscar en cache o en base de datos
                 utn.dds.dominio.Contribuyente contribuyenteExistente = contribuyentesCache.get(userId);
-                if (contribuyenteExistente == null) {
-                    // Buscar directamente en la base de datos usando el nuevo método
-                    contribuyenteExistente = hechoRepository.findContribuyenteByUserId(userId);
 
-                    if (contribuyenteExistente != null) {
-                        contribuyentesCache.put(userId, contribuyenteExistente);
-                        logger.info("Contribuyente existente encontrado para userId: {}", userId);
-                    }
-                }
-
-                // Si encontramos un contribuyente existente, reutilizarlo
                 if (contribuyenteExistente != null) {
                     nuevoHecho.setContribuyente(contribuyenteExistente);
                 } else {
@@ -90,11 +87,17 @@ public class ServiceAgregador {
                 }
             }
 
-            // Primero verificar si existe un hecho con el mismo UUID (actualización)
-            Hecho hechoExistenteConMismoUuid = hechosExistentes.stream()
-                .filter(h -> h.getUuid() != null && h.getUuid().equals(nuevoHecho.getUuid()))
-                .findFirst()
-                .orElse(null);
+            // Verificar si existe un hecho con el mismo UUID (actualización)
+            Hecho hechoExistenteConMismoUuid = null;
+            if (nuevoHecho.getUuid() != null) {
+                // Primero buscar en cache de esta sesión
+                hechoExistenteConMismoUuid = hechosPorUuid.get(nuevoHecho.getUuid());
+
+                // Si no está en cache, buscar en BD con query SQL
+                if (hechoExistenteConMismoUuid == null) {
+                    hechoExistenteConMismoUuid = hechoRepository.findById(nuevoHecho.getUuid());
+                }
+            }
 
             if (hechoExistenteConMismoUuid != null) {
                 // Es una actualización: actualizar el hecho existente con los nuevos datos
@@ -104,18 +107,35 @@ public class ServiceAgregador {
                 continue;
             }
 
-            // Si no es actualización, verificar duplicados por contenido
-            boolean esDuplicado = hechosExistentes.stream()
-                .anyMatch(hechoExistente -> estrategiaDeteccionDuplicados.esDuplicado(nuevoHecho, hechoExistente));
+            // Verificar duplicados por contenido (título + ubicación + fecha)
+            String claveDuplicado = generarClaveDuplicado(nuevoHecho);
 
-            if (!esDuplicado) {
-                // También verificar contra otros hechos ya agregados en esta sesión
-                boolean esDuplicadoEnSesion = hechosSinDuplicados.stream()
-                    .anyMatch(hechoEnSesion -> estrategiaDeteccionDuplicados.esDuplicado(nuevoHecho, hechoEnSesion));
+            // Primero verificar en cache de esta sesión
+            boolean esDuplicadoEnSesion = hechosPorContenido.containsKey(claveDuplicado);
 
-                if (!esDuplicadoEnSesion) {
+            if (!esDuplicadoEnSesion) {
+                // Verificar en BD con query SQL optimizada
+                Hecho duplicadoEnBD = hechoRepository.findDuplicado(
+                    nuevoHecho.getTitulo(),
+                    nuevoHecho.getLatitud(),
+                    nuevoHecho.getLongitud(),
+                    nuevoHecho.getFechaAcontecimiento()
+                );
+
+                if (duplicadoEnBD == null) {
+                    // No es duplicado, agregar
                     hechosSinDuplicados.add(nuevoHecho);
+
+                    // Agregar a caches locales
+                    if (nuevoHecho.getUuid() != null) {
+                        hechosPorUuid.put(nuevoHecho.getUuid(), nuevoHecho);
+                    }
+                    hechosPorContenido.put(claveDuplicado, nuevoHecho);
+                } else {
+                    logger.debug("Hecho duplicado encontrado en BD: {}", nuevoHecho.getTitulo());
                 }
+            } else {
+                logger.debug("Hecho duplicado encontrado en sesión: {}", nuevoHecho.getTitulo());
             }
         }
 
@@ -126,6 +146,22 @@ public class ServiceAgregador {
         }
 
         return hechosSinDuplicados;
+    }
+
+    /**
+     * Genera una clave única para detectar duplicados por contenido
+     */
+    private String generarClaveDuplicado(Hecho hecho) {
+        String tituloNormalizado = hecho.getTitulo() != null
+            ? hecho.getTitulo().trim().toLowerCase()
+            : "";
+
+        return String.format("%s|%.4f|%.4f|%s",
+            tituloNormalizado,
+            hecho.getLatitud(),
+            hecho.getLongitud(),
+            hecho.getFechaAcontecimiento()
+        );
     }
     
     /**
@@ -425,14 +461,14 @@ public class ServiceAgregador {
     /**
      * Obtiene hechos sin filtros (método de compatibilidad)
      */
-    public RespuestaPaginadaDTO<Hecho> obtenerHechos(int pagina, int tamanioPagina) {
+    public RespuestaPaginadaDTO<HechoDTO> obtenerHechos(int pagina, int tamanioPagina) {
         return obtenerHechos(new ArrayList<>(), pagina, tamanioPagina);
     }
 
     /**
      * Obtiene hechos con filtros opcionales y paginación
      */
-    public RespuestaPaginadaDTO<Hecho> obtenerHechos(List<HechoStrategy> filtros, int pagina, int tamanioPagina) {
+    public RespuestaPaginadaDTO<HechoDTO> obtenerHechos(List<HechoStrategy> filtros, int pagina, int tamanioPagina) {
         // Validaciones
         if (pagina < 0) {
             pagina = 0;
@@ -444,42 +480,15 @@ public class ServiceAgregador {
             tamanioPagina = 100; // Máximo 100 elementos por página
         }
 
-        // Obtener todos los hechos
-        List<Hecho> todosLosHechos = hechoRepository.find();
+        // Delegar al repositorio para obtener hechos con filtros
+        RespuestaPaginadaDTO<Hecho> respuestaHechos = hechoRepository.obtenerConFiltros(filtros, pagina, tamanioPagina);
 
-        // Aplicar filtros si existen
-        List<Hecho> hechosFiltrados = todosLosHechos;
-        if (filtros != null && !filtros.isEmpty()) {
-            hechosFiltrados = new ArrayList<>();
-            for (Hecho hecho : todosLosHechos) {
-                boolean cumpleTodos = true;
-                for (HechoStrategy filtro : filtros) {
-                    if (!filtro.cumple(hecho)) {
-                        cumpleTodos = false;
-                        break;
-                    }
-                }
-                if (cumpleTodos) {
-                    hechosFiltrados.add(hecho);
-                }
-            }
-        }
+        // Convertir a DTO
+        List<HechoDTO> hechosDTO = respuestaHechos.getDatos().stream()
+                .map(HechoDTO::fromHecho)
+                .collect(java.util.stream.Collectors.toList());
 
-        long totalElementos = hechosFiltrados.size();
-
-        // Calcular índices para la paginación
-        int indiceInicio = pagina * tamanioPagina;
-        int indiceFin = Math.min(indiceInicio + tamanioPagina, (int) totalElementos);
-
-        // Obtener datos de la página actual
-        List<Hecho> datosPagina;
-        if (indiceInicio >= totalElementos) {
-            datosPagina = new ArrayList<>();
-        } else {
-            datosPagina = hechosFiltrados.subList(indiceInicio, indiceFin);
-        }
-
-        return new RespuestaPaginadaDTO<>(datosPagina, pagina, tamanioPagina, totalElementos);
+        return new RespuestaPaginadaDTO<>(hechosDTO, pagina, tamanioPagina, respuestaHechos.getTotalElementos());
     }
 
     private List<Hecho> normalizarPorLotes(List<Hecho> hechos) {
