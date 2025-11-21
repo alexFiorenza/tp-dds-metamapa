@@ -8,6 +8,7 @@ import utn.dds.dominio.Coleccion;
 import utn.dds.dominio.criterios.HechoStrategy;
 import utn.dds.dto.RespuestaPaginadaDTO;
 import utn.dds.dto.HechoDTO;
+import utn.dds.persistencia.StrategyToSQLAdapter;
 
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;

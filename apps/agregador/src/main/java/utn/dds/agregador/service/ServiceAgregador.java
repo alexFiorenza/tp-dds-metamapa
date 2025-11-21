@@ -3,6 +3,8 @@ package utn.dds.agregador.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utn.dds.agregador.persistencia.HechoRepository;
+import utn.dds.agregador.persistencia.AgregacionJobRepository;
+import utn.dds.agregador.dominio.AgregacionJob;
 import utn.dds.dominio.Hecho;
 import utn.dds.dominio.criterios.EstrategiaDeteccionDuplicados;
 import utn.dds.dominio.criterios.EstrategiaTituloUbicacionFecha;
@@ -25,21 +27,28 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ServiceAgregador {
 
     private static final Logger logger = LoggerFactory.getLogger(ServiceAgregador.class);
 
     private HechoRepository hechoRepository;
+    private AgregacionJobRepository jobRepository;
     private ServiceRegistry serviceRegistry;
     private HttpClient httpClient;
     private ObjectMapper objectMapper;
     private EstrategiaDeteccionDuplicados estrategiaDeteccionDuplicados;
     private NormalizadorClient normalizadorClient;
+    private ExecutorService executorService;
 
     public ServiceAgregador(HechoRepository hechoRepository, ServiceRegistry serviceRegistry) {
         this.hechoRepository = hechoRepository;
+        this.jobRepository = new AgregacionJobRepository();
         this.serviceRegistry = serviceRegistry;
+        this.executorService = Executors.newFixedThreadPool(3); // Máximo 3 agregaciones simultáneas
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
                 .build();
@@ -57,31 +66,28 @@ public class ServiceAgregador {
     }
     
     private List<Hecho> filtrarDuplicados(List<Hecho> nuevosHechos) {
-        List<Hecho> hechosExistentes = hechoRepository.findAll(); // Usar findAll para incluir todos los hechos
         List<Hecho> hechosSinDuplicados = new ArrayList<>();
         List<Hecho> hechosParaActualizar = new ArrayList<>();
 
-        // Mapa para cachear contribuyentes existentes por userId
-        Map<String, utn.dds.dominio.Contribuyente> contribuyentesCache = new HashMap<>();
+        // Paso 1: Obtener todos los userIds únicos y cargar contribuyentes en una sola query
+        java.util.Set<String> userIds = nuevosHechos.stream()
+            .filter(h -> h.getContribuyente() != null && h.getContribuyente().getUserId() != null)
+            .map(h -> h.getContribuyente().getUserId())
+            .collect(java.util.stream.Collectors.toSet());
+
+        Map<String, utn.dds.dominio.Contribuyente> contribuyentesCache =
+            hechoRepository.findContribuyentesByUserIds(userIds);
+
+        // Paso 2: Cache local para duplicados dentro de la sesión actual
+        Map<String, Hecho> hechosPorUuid = new HashMap<>();
+        Map<String, Hecho> hechosPorContenido = new HashMap<>();
 
         for (Hecho nuevoHecho : nuevosHechos) {
-            // Resolver contribuyente existente antes de procesar el hecho
+            // Resolver contribuyente existente
             if (nuevoHecho.getContribuyente() != null && nuevoHecho.getContribuyente().getUserId() != null) {
                 String userId = nuevoHecho.getContribuyente().getUserId();
-
-                // Buscar en cache o en base de datos
                 utn.dds.dominio.Contribuyente contribuyenteExistente = contribuyentesCache.get(userId);
-                if (contribuyenteExistente == null) {
-                    // Buscar directamente en la base de datos usando el nuevo método
-                    contribuyenteExistente = hechoRepository.findContribuyenteByUserId(userId);
 
-                    if (contribuyenteExistente != null) {
-                        contribuyentesCache.put(userId, contribuyenteExistente);
-                        logger.info("Contribuyente existente encontrado para userId: {}", userId);
-                    }
-                }
-
-                // Si encontramos un contribuyente existente, reutilizarlo
                 if (contribuyenteExistente != null) {
                     nuevoHecho.setContribuyente(contribuyenteExistente);
                 } else {
@@ -90,11 +96,17 @@ public class ServiceAgregador {
                 }
             }
 
-            // Primero verificar si existe un hecho con el mismo UUID (actualización)
-            Hecho hechoExistenteConMismoUuid = hechosExistentes.stream()
-                .filter(h -> h.getUuid() != null && h.getUuid().equals(nuevoHecho.getUuid()))
-                .findFirst()
-                .orElse(null);
+            // Verificar si existe un hecho con el mismo UUID (actualización)
+            Hecho hechoExistenteConMismoUuid = null;
+            if (nuevoHecho.getUuid() != null) {
+                // Primero buscar en cache de esta sesión
+                hechoExistenteConMismoUuid = hechosPorUuid.get(nuevoHecho.getUuid());
+
+                // Si no está en cache, buscar en BD con query SQL
+                if (hechoExistenteConMismoUuid == null) {
+                    hechoExistenteConMismoUuid = hechoRepository.findById(nuevoHecho.getUuid());
+                }
+            }
 
             if (hechoExistenteConMismoUuid != null) {
                 // Es una actualización: actualizar el hecho existente con los nuevos datos
@@ -104,18 +116,35 @@ public class ServiceAgregador {
                 continue;
             }
 
-            // Si no es actualización, verificar duplicados por contenido
-            boolean esDuplicado = hechosExistentes.stream()
-                .anyMatch(hechoExistente -> estrategiaDeteccionDuplicados.esDuplicado(nuevoHecho, hechoExistente));
+            // Verificar duplicados por contenido (título + ubicación + fecha)
+            String claveDuplicado = generarClaveDuplicado(nuevoHecho);
 
-            if (!esDuplicado) {
-                // También verificar contra otros hechos ya agregados en esta sesión
-                boolean esDuplicadoEnSesion = hechosSinDuplicados.stream()
-                    .anyMatch(hechoEnSesion -> estrategiaDeteccionDuplicados.esDuplicado(nuevoHecho, hechoEnSesion));
+            // Primero verificar en cache de esta sesión
+            boolean esDuplicadoEnSesion = hechosPorContenido.containsKey(claveDuplicado);
 
-                if (!esDuplicadoEnSesion) {
+            if (!esDuplicadoEnSesion) {
+                // Verificar en BD con query SQL optimizada
+                Hecho duplicadoEnBD = hechoRepository.findDuplicado(
+                    nuevoHecho.getTitulo(),
+                    nuevoHecho.getLatitud(),
+                    nuevoHecho.getLongitud(),
+                    nuevoHecho.getFechaAcontecimiento()
+                );
+
+                if (duplicadoEnBD == null) {
+                    // No es duplicado, agregar
                     hechosSinDuplicados.add(nuevoHecho);
+
+                    // Agregar a caches locales
+                    if (nuevoHecho.getUuid() != null) {
+                        hechosPorUuid.put(nuevoHecho.getUuid(), nuevoHecho);
+                    }
+                    hechosPorContenido.put(claveDuplicado, nuevoHecho);
+                } else {
+                    logger.debug("Hecho duplicado encontrado en BD: {}", nuevoHecho.getTitulo());
                 }
+            } else {
+                logger.debug("Hecho duplicado encontrado en sesión: {}", nuevoHecho.getTitulo());
             }
         }
 
@@ -126,6 +155,22 @@ public class ServiceAgregador {
         }
 
         return hechosSinDuplicados;
+    }
+
+    /**
+     * Genera una clave única para detectar duplicados por contenido
+     */
+    private String generarClaveDuplicado(Hecho hecho) {
+        String tituloNormalizado = hecho.getTitulo() != null
+            ? hecho.getTitulo().trim().toLowerCase()
+            : "";
+
+        return String.format("%s|%.4f|%.4f|%s",
+            tituloNormalizado,
+            hecho.getLatitud(),
+            hecho.getLongitud(),
+            hecho.getFechaAcontecimiento()
+        );
     }
     
     /**
@@ -152,6 +197,181 @@ public class ServiceAgregador {
     
     private static final int NORMALIZADOR_BATCH_SIZE = 1000;
 
+    /**
+     * Inicia una agregación asíncrona y retorna inmediatamente con el ID del job
+     */
+    public String iniciarAgregacionAsincrona() {
+        // Generar ID único para el job
+        String jobId = "agg-" + UUID.randomUUID().toString();
+
+        // Obtener total de fuentes
+        List<FuenteDTO> fuentes = serviceRegistry.obtenerTodasLasFuentes();
+
+        // Crear el job en la base de datos
+        AgregacionJob job = new AgregacionJob(jobId, fuentes.size());
+        jobRepository.guardar(job);
+
+        logger.info("Job de agregación creado: {} con {} fuentes", jobId, fuentes.size());
+
+        // Ejecutar la agregación en background
+        executorService.submit(() -> {
+            try {
+                agregacionConJob(jobId);
+            } catch (Exception e) {
+                logger.error("Error fatal en el job {}: {}", jobId, e.getMessage(), e);
+                marcarJobComoError(jobId, e.getMessage());
+            }
+        });
+
+        return jobId;
+    }
+
+    /**
+     * Obtiene el estado de un job de agregación
+     */
+    public AgregacionJob obtenerEstadoJob(String jobId) {
+        return jobRepository.obtenerPorId(jobId);
+    }
+
+    /**
+     * Lista los jobs recientes
+     */
+    public List<AgregacionJob> obtenerJobsRecientes(int limit) {
+        return jobRepository.obtenerRecientes(limit);
+    }
+
+    /**
+     * Marca un job como error
+     */
+    private void marcarJobComoError(String jobId, String mensajeError) {
+        try {
+            AgregacionJob job = jobRepository.obtenerPorId(jobId);
+            if (job != null) {
+                job.marcarComoError(mensajeError);
+                jobRepository.actualizar(job);
+            }
+        } catch (Exception e) {
+            logger.error("Error al marcar job {} como error: {}", jobId, e.getMessage());
+        }
+    }
+
+    /**
+     * Ejecuta la agregación y actualiza el progreso del job
+     */
+    private void agregacionConJob(String jobId) {
+        LocalDateTime fechaEjecucion = LocalDateTime.now();
+        List<FuenteDTO> fuentes = serviceRegistry.obtenerTodasLasFuentes();
+        List<Hecho> hechosAgregados = new ArrayList<>();
+        List<String> fuentesConError = new ArrayList<>();
+        int hechosObtenidos = 0;
+        int fuentesProcesadas = 0;
+
+        for (FuenteDTO fuente : fuentes) {
+            try {
+                // Verificar si es fuente estática ya procesada
+                if ("estatica".equals(fuente.getTipo())) {
+                    Map<String, Object> metadata = fuente.getMetadata();
+                    if (metadata != null && Boolean.TRUE.equals(metadata.get("procesado"))) {
+                        logger.info("Saltando fuente estática ya procesada: {}", fuente.getHost());
+                        fuentesProcesadas++;
+                        continue;
+                    }
+                }
+
+                String urlCompleta = construirUrlCompleta(fuente);
+                List<Hecho> hechosDeEstaFuente = obtenerHechosDesdeFuente(urlCompleta, fuente);
+                hechosObtenidos += hechosDeEstaFuente.size();
+                hechosAgregados.addAll(hechosDeEstaFuente);
+
+                // Actualizar metadata con timestamp y estado
+                Map<String, Object> metadata = fuente.getMetadata();
+                if (metadata == null) {
+                    metadata = new HashMap<>();
+                }
+
+                // Actualizar timestamp de última consulta
+                metadata.put("ultimaConsulta", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+
+                // Marcar como procesado si es fuente estática
+                if ("estatica".equals(fuente.getTipo())) {
+                    metadata.put("procesado", true);
+                    logger.info("Fuente estática marcada como procesada: {}", fuente.getHost());
+                }
+
+                fuente.setMetadata(metadata);
+                serviceRegistry.actualizar(fuente);
+
+                fuentesProcesadas++;
+
+                // Actualizar progreso del job
+                actualizarProgresoJob(jobId, fuentesProcesadas, hechosObtenidos);
+
+                logger.info("Fuente consultada: {} - Hechos obtenidos: {}", fuente.getHost(), hechosDeEstaFuente.size());
+            } catch (Exception e) {
+                String errorMsg = fuente.getHost() + " - " + e.getMessage();
+                fuentesConError.add(errorMsg);
+                fuentesProcesadas++;
+                actualizarProgresoJob(jobId, fuentesProcesadas, hechosObtenidos);
+                logger.error("Error al obtener datos de la fuente: {}", errorMsg, e);
+            }
+        }
+
+        if (hechosAgregados.isEmpty()) {
+            completarJob(jobId, 0, fuentesConError);
+            return;
+        }
+
+        // Normalizar hechos antes de filtrar duplicados
+        List<Hecho> hechosNormalizados = normalizarPorLotes(hechosAgregados);
+
+        // Filtrar duplicados después de normalizar
+        List<Hecho> hechosSinDuplicados = hechosNormalizados.isEmpty()
+            ? List.of()
+            : filtrarDuplicados(hechosNormalizados);
+
+        // Guardar únicamente hechos sin duplicados
+        if (!hechosSinDuplicados.isEmpty()) {
+            hechoRepository.saveAll(hechosSinDuplicados);
+        }
+
+        // Completar el job
+        completarJob(jobId, hechosSinDuplicados.size(), fuentesConError);
+    }
+
+    /**
+     * Actualiza el progreso de un job
+     */
+    private void actualizarProgresoJob(String jobId, int fuentesProcesadas, int hechosObtenidos) {
+        try {
+            AgregacionJob job = jobRepository.obtenerPorId(jobId);
+            if (job != null) {
+                job.actualizarProgreso(fuentesProcesadas, hechosObtenidos);
+                jobRepository.actualizar(job);
+            }
+        } catch (Exception e) {
+            logger.error("Error al actualizar progreso del job {}: {}", jobId, e.getMessage());
+        }
+    }
+
+    /**
+     * Completa un job marcándolo como exitoso
+     */
+    private void completarJob(String jobId, int hechosAgregados, List<String> errores) {
+        try {
+            AgregacionJob job = jobRepository.obtenerPorId(jobId);
+            if (job != null) {
+                job.completar(hechosAgregados, errores);
+                jobRepository.actualizar(job);
+                logger.info("Job {} completado. Hechos agregados: {}", jobId, hechosAgregados);
+            }
+        } catch (Exception e) {
+            logger.error("Error al completar job {}: {}", jobId, e.getMessage());
+        }
+    }
+
+    /**
+     * Método legacy: ejecuta agregación síncrona (mantener para compatibilidad)
+     */
     public ResultadoAgregacionDTO agregacion() {
         LocalDateTime fechaEjecucion = LocalDateTime.now();
         List<FuenteDTO> fuentes = serviceRegistry.obtenerTodasLasFuentes();
@@ -425,14 +645,14 @@ public class ServiceAgregador {
     /**
      * Obtiene hechos sin filtros (método de compatibilidad)
      */
-    public RespuestaPaginadaDTO<Hecho> obtenerHechos(int pagina, int tamanioPagina) {
+    public RespuestaPaginadaDTO<HechoDTO> obtenerHechos(int pagina, int tamanioPagina) {
         return obtenerHechos(new ArrayList<>(), pagina, tamanioPagina);
     }
 
     /**
      * Obtiene hechos con filtros opcionales y paginación
      */
-    public RespuestaPaginadaDTO<Hecho> obtenerHechos(List<HechoStrategy> filtros, int pagina, int tamanioPagina) {
+    public RespuestaPaginadaDTO<HechoDTO> obtenerHechos(List<HechoStrategy> filtros, int pagina, int tamanioPagina) {
         // Validaciones
         if (pagina < 0) {
             pagina = 0;
@@ -444,42 +664,15 @@ public class ServiceAgregador {
             tamanioPagina = 100; // Máximo 100 elementos por página
         }
 
-        // Obtener todos los hechos
-        List<Hecho> todosLosHechos = hechoRepository.find();
+        // Delegar al repositorio para obtener hechos con filtros
+        RespuestaPaginadaDTO<Hecho> respuestaHechos = hechoRepository.obtenerConFiltros(filtros, pagina, tamanioPagina);
 
-        // Aplicar filtros si existen
-        List<Hecho> hechosFiltrados = todosLosHechos;
-        if (filtros != null && !filtros.isEmpty()) {
-            hechosFiltrados = new ArrayList<>();
-            for (Hecho hecho : todosLosHechos) {
-                boolean cumpleTodos = true;
-                for (HechoStrategy filtro : filtros) {
-                    if (!filtro.cumple(hecho)) {
-                        cumpleTodos = false;
-                        break;
-                    }
-                }
-                if (cumpleTodos) {
-                    hechosFiltrados.add(hecho);
-                }
-            }
-        }
+        // Convertir a DTO
+        List<HechoDTO> hechosDTO = respuestaHechos.getDatos().stream()
+                .map(HechoDTO::fromHecho)
+                .collect(java.util.stream.Collectors.toList());
 
-        long totalElementos = hechosFiltrados.size();
-
-        // Calcular índices para la paginación
-        int indiceInicio = pagina * tamanioPagina;
-        int indiceFin = Math.min(indiceInicio + tamanioPagina, (int) totalElementos);
-
-        // Obtener datos de la página actual
-        List<Hecho> datosPagina;
-        if (indiceInicio >= totalElementos) {
-            datosPagina = new ArrayList<>();
-        } else {
-            datosPagina = hechosFiltrados.subList(indiceInicio, indiceFin);
-        }
-
-        return new RespuestaPaginadaDTO<>(datosPagina, pagina, tamanioPagina, totalElementos);
+        return new RespuestaPaginadaDTO<>(hechosDTO, pagina, tamanioPagina, respuestaHechos.getTotalElementos());
     }
 
     private List<Hecho> normalizarPorLotes(List<Hecho> hechos) {

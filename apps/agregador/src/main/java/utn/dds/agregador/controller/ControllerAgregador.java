@@ -7,8 +7,13 @@ import utn.dds.dominio.Hecho;
 import utn.dds.dominio.criterios.HechoStrategy;
 import utn.dds.dto.ResultadoAgregacionDTO;
 import utn.dds.dto.RespuestaPaginadaDTO;
+import utn.dds.dto.HechoDTO;
+import utn.dds.dto.AgregacionJobDTO;
+import utn.dds.agregador.dominio.AgregacionJob;
 
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ControllerAgregador {
     
@@ -19,27 +24,141 @@ public class ControllerAgregador {
     }
     
     @OpenApi(
-        summary = "Ejecutar proceso de agregación",
+        summary = "Iniciar proceso de agregación asíncrono",
         operationId = "ejecutarAgregacion",
         path = "/agregacion",
         methods = HttpMethod.POST,
         tags = {"Agregación"},
-        description = "Procesa todas las fuentes registradas y agrega nuevos hechos al repositorio",
+        description = "Inicia el proceso de agregación en segundo plano y retorna inmediatamente con un ID de job para consultar el estado",
         responses = {
             @OpenApiResponse(
-                status = "200", 
-                description = "Agregación completada exitosamente con información detallada del proceso",
-                content = {@OpenApiContent(from = ResultadoAgregacionDTO.class)}
+                status = "202",
+                description = "Agregación iniciada exitosamente. Use el jobId para consultar el estado",
+                content = {@OpenApiContent(from = Map.class)}
             ),
-            @OpenApiResponse(status = "500", description = "Error durante el proceso de agregación")
+            @OpenApiResponse(status = "500", description = "Error al iniciar el proceso de agregación")
         }
     )
     public void agregacion(Context ctx) {
         try {
-            ResultadoAgregacionDTO resultado = serviceAgregador.agregacion();
-            ctx.status(200).json(resultado);
+            String jobId = serviceAgregador.iniciarAgregacionAsincrona();
+            Map<String, Object> response = new HashMap<>();
+            response.put("jobId", jobId);
+            response.put("estado", "EN_PROGRESO");
+            response.put("mensaje", "Agregación iniciada. Consulte el estado en GET /agregacion/" + jobId);
+            ctx.status(202).json(response);
         } catch (Exception e) {
-            ctx.status(500).result("Error durante el proceso de agregación: " + e.getMessage());
+            ctx.status(500).result("Error al iniciar el proceso de agregación: " + e.getMessage());
+        }
+    }
+
+    @OpenApi(
+        summary = "Listar agregaciones recientes",
+        operationId = "listarAgregaciones",
+        path = "/agregacion",
+        methods = HttpMethod.GET,
+        tags = {"Agregación"},
+        description = "Lista las agregaciones más recientes",
+        queryParams = {
+            @OpenApiParam(
+                name = "limit",
+                description = "Cantidad máxima de jobs a retornar. Por defecto: 20",
+                required = false,
+                type = Integer.class
+            )
+        },
+        responses = {
+            @OpenApiResponse(
+                status = "200",
+                description = "Lista de agregaciones obtenida exitosamente",
+                content = {@OpenApiContent(from = List.class)}
+            ),
+            @OpenApiResponse(status = "500", description = "Error al obtener las agregaciones")
+        }
+    )
+    public void listarAgregaciones(Context ctx) {
+        try {
+            int limit = ctx.queryParamAsClass("limit", Integer.class).getOrDefault(20);
+
+            // Validar límite
+            if (limit > 100) {
+                limit = 100;
+            }
+            if (limit < 1) {
+                limit = 1;
+            }
+
+            List<AgregacionJob> jobs = serviceAgregador.obtenerJobsRecientes(limit);
+
+            // Convertir a DTOs
+            List<AgregacionJobDTO> dtos = jobs.stream()
+                .map(job -> new AgregacionJobDTO(
+                    job.getId(),
+                    job.getEstado().toString(),
+                    job.getFechaInicio(),
+                    job.getFechaFin(),
+                    job.getFuentesConsultadas(),
+                    job.getTotalFuentes(),
+                    job.getHechosObtenidos(),
+                    job.getHechosAgregados(),
+                    job.getErroresAsList(),
+                    job.getMensajeError()
+                ))
+                .collect(java.util.stream.Collectors.toList());
+
+            ctx.status(200).json(dtos);
+        } catch (Exception e) {
+            ctx.status(500).result("Error al obtener las agregaciones: " + e.getMessage());
+        }
+    }
+
+    @OpenApi(
+        summary = "Obtener estado de una agregación",
+        operationId = "obtenerEstadoAgregacion",
+        path = "/agregacion/{jobId}",
+        methods = HttpMethod.GET,
+        tags = {"Agregación"},
+        description = "Consulta el estado actual de un job de agregación",
+        pathParams = {
+            @OpenApiParam(name = "jobId", description = "ID del job de agregación", required = true)
+        },
+        responses = {
+            @OpenApiResponse(
+                status = "200",
+                description = "Estado del job obtenido exitosamente",
+                content = {@OpenApiContent(from = AgregacionJobDTO.class)}
+            ),
+            @OpenApiResponse(status = "404", description = "Job no encontrado"),
+            @OpenApiResponse(status = "500", description = "Error al obtener el estado del job")
+        }
+    )
+    public void obtenerEstadoAgregacion(Context ctx) {
+        try {
+            String jobId = ctx.pathParam("jobId");
+            AgregacionJob job = serviceAgregador.obtenerEstadoJob(jobId);
+
+            if (job == null) {
+                ctx.status(404).result("Job no encontrado: " + jobId);
+                return;
+            }
+
+            // Convertir a DTO
+            AgregacionJobDTO dto = new AgregacionJobDTO(
+                job.getId(),
+                job.getEstado().toString(),
+                job.getFechaInicio(),
+                job.getFechaFin(),
+                job.getFuentesConsultadas(),
+                job.getTotalFuentes(),
+                job.getHechosObtenidos(),
+                job.getHechosAgregados(),
+                job.getErroresAsList(),
+                job.getMensajeError()
+            );
+
+            ctx.status(200).json(dto);
+        } catch (Exception e) {
+            ctx.status(500).result("Error al obtener el estado del job: " + e.getMessage());
         }
     }
     
@@ -93,7 +212,7 @@ public class ControllerAgregador {
             // Crear filtros usando el Factory
             List<HechoStrategy> filtros = FiltroFactory.crearFiltros(ctx);
 
-            RespuestaPaginadaDTO<Hecho> respuesta = serviceAgregador.obtenerHechos(filtros, pagina, tamanioPagina);
+            RespuestaPaginadaDTO<HechoDTO> respuesta = serviceAgregador.obtenerHechos(filtros, pagina, tamanioPagina);
             ctx.json(respuesta);
         } catch (IllegalArgumentException e) {
             ctx.status(400).result("Error en parámetros de filtro: " + e.getMessage());

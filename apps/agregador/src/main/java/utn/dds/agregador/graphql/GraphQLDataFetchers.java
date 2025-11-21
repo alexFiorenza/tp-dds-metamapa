@@ -10,6 +10,7 @@ import utn.dds.dto.ResultadoAgregacionDTO;
 import utn.dds.dto.RespuestaPaginadaDTO;
 import utn.dds.dto.FuenteDTO;
 import utn.dds.dto.FuenteRequestDTO;
+import utn.dds.dto.HechoDTO;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,12 +53,12 @@ public class GraphQLDataFetchers {
                 filtros = FiltroFactory.crearFiltrosDesdeMap(filtrosMap);
             }
 
-            RespuestaPaginadaDTO<Hecho> respuesta = serviceAgregador.obtenerHechos(filtros, pagina, tamanioPagina);
+            RespuestaPaginadaDTO<HechoDTO> respuesta = serviceAgregador.obtenerHechos(filtros, pagina, tamanioPagina);
 
             // Convertir a Map para GraphQL
             Map<String, Object> resultado = new HashMap<>();
             resultado.put("datos", respuesta.getDatos().stream()
-                .map(this::hechoToMap)
+                .map(this::hechoDTOToMap)
                 .collect(Collectors.toList()));
             resultado.put("pagina", respuesta.getPagina());
             resultado.put("tamanioPagina", respuesta.getTamanioPagina());
@@ -172,6 +173,38 @@ public class GraphQLDataFetchers {
      * Convierte un Hecho a Map para GraphQL
      */
     private Map<String, Object> hechoToMap(Hecho hecho) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("uuid", hecho.getUuid());
+        map.put("titulo", hecho.getTitulo());
+        map.put("descripcion", hecho.getDescripcion());
+        map.put("categoria", hecho.getCategoria());
+        map.put("fechaAcontecimiento", hecho.getFechaAcontecimiento());
+        map.put("origen", hecho.getOrigen());
+        map.put("tipo", hecho.getTipo());
+        map.put("fechaCarga", hecho.getFechaCarga());
+        map.put("estado", hecho.getEstado());
+
+        // Ubicación
+        Map<String, Object> ubicacion = new HashMap<>();
+        ubicacion.put("latitud", hecho.getLatitud());
+        ubicacion.put("longitud", hecho.getLongitud());
+        map.put("ubicacion", ubicacion);
+
+        // Contribuyente
+        if (hecho.getContribuyente() != null) {
+            Map<String, Object> contribuyente = new HashMap<>();
+            contribuyente.put("userId", hecho.getContribuyente().getUserId());
+            contribuyente.put("nombre", hecho.getContribuyente().getNombre());
+            map.put("contribuyente", contribuyente);
+        }
+
+        return map;
+    }
+
+    /**
+     * Convierte un HechoDTO a Map para GraphQL
+     */
+    private Map<String, Object> hechoDTOToMap(HechoDTO hecho) {
         Map<String, Object> map = new HashMap<>();
         map.put("uuid", hecho.getUuid());
         map.put("titulo", hecho.getTitulo());
