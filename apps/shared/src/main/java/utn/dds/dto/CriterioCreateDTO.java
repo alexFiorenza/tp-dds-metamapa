@@ -27,31 +27,79 @@ public class CriterioCreateDTO {
 
     // Método para convertir DTO a HechoStrategy
     public HechoStrategy toHechoStrategy() {
-        switch (tipo.toLowerCase()) {
+        if (tipo == null || tipo.trim().isEmpty()) {
+            throw new IllegalArgumentException("El tipo de criterio es obligatorio");
+        }
+
+        String tipoNormalizado = tipo.toLowerCase().trim();
+
+        switch (tipoNormalizado) {
             case "titulo":
+                if (titulo == null || titulo.trim().isEmpty()) {
+                    throw new IllegalArgumentException("El campo 'titulo' es obligatorio para criterio tipo 'titulo'");
+                }
                 return new TituloStrategy(titulo);
+
             case "categoria":
+                if (categoria == null || categoria.trim().isEmpty()) {
+                    throw new IllegalArgumentException("El campo 'categoria' es obligatorio para criterio tipo 'categoria'");
+                }
                 return new CategoriaStrategy(categoria);
+
             case "descripcion":
+                if (descripcion == null || descripcion.trim().isEmpty()) {
+                    throw new IllegalArgumentException("El campo 'descripcion' es obligatorio para criterio tipo 'descripcion'");
+                }
                 return new DescripcionStrategy(descripcion);
+
             case "origen":
+                if (origen == null || origen.trim().isEmpty()) {
+                    throw new IllegalArgumentException("El campo 'origen' es obligatorio para criterio tipo 'origen'");
+                }
                 return new OrigenStrategy(origen);
+
             case "fechaacontecimiento":
+            case "fecha_acontecimiento":
+                if (fechaAcontecimiento == null) {
+                    throw new IllegalArgumentException("El campo 'fechaAcontecimiento' es obligatorio para criterio tipo 'fechaAcontecimiento'");
+                }
                 return new FechaAcontecimientoStrategy(fechaAcontecimiento);
+
             case "fechacarga":
+            case "fecha_carga":
+                if (fechaCarga == null) {
+                    throw new IllegalArgumentException("El campo 'fechaCarga' es obligatorio para criterio tipo 'fechaCarga'");
+                }
                 return new FechaCargaStrategy(fechaCarga);
+
             case "longitud":
+                if (longitud == null) {
+                    throw new IllegalArgumentException("El campo 'longitud' es obligatorio para criterio tipo 'longitud'");
+                }
                 return new LongitudStrategy(longitud);
+
             case "latitud":
+                if (latitud == null) {
+                    throw new IllegalArgumentException("El campo 'latitud' es obligatorio para criterio tipo 'latitud'");
+                }
                 return new LatitudStrategy(latitud);
+
             case "estado":
+                if (estado == null || estado.trim().isEmpty()) {
+                    throw new IllegalArgumentException("El campo 'estado' es obligatorio para criterio tipo 'estado'");
+                }
                 EstadoHecho estadoEnum = EstadoHecho.valueOf(estado.toUpperCase());
                 return new EstadoStrategy(estadoEnum);
+
             case "etiquetas":
+                if (etiquetas == null || etiquetas.trim().isEmpty()) {
+                    throw new IllegalArgumentException("El campo 'etiquetas' es obligatorio para criterio tipo 'etiquetas'");
+                }
                 List<String> etiquetasList = Arrays.asList(etiquetas.split(","));
                 return new EtiquetasStrategy(etiquetasList);
+
             default:
-                throw new IllegalArgumentException("Tipo de criterio no válido: " + tipo);
+                throw new IllegalArgumentException("Tipo de criterio no válido: " + tipo + ". Tipos válidos: titulo, categoria, descripcion, origen, fechaAcontecimiento, fechaCarga, longitud, latitud, estado, etiquetas");
         }
     }
 
