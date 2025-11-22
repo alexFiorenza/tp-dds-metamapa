@@ -124,11 +124,24 @@ export function ColeccionDetailView({ coleccion, initialData, fetchPage, backUrl
             <div className="mt-4">
               <h3 className="text-sm font-semibold mb-2 text-foreground">Criterios de Pertenencia</h3>
               <div className="flex flex-wrap gap-1.5">
-                {coleccion.criteriosDePertenencia.map((criterio, idx) => (
-                  <Chip key={idx} size="sm" variant="flat" color="secondary">
-                    {criterio.categoria}
-                  </Chip>
-                ))}
+                {coleccion.criteriosDePertenencia.map((criterio, idx) => {
+                  // Obtener el valor del campo correspondiente al tipo
+                  const valor = criterio.tipo === 'categoria' ? criterio.categoria :
+                               criterio.tipo === 'descripcion' ? criterio.descripcion :
+                               criterio.tipo === 'titulo' ? criterio.titulo :
+                               criterio.tipo === 'origen' ? criterio.origen :
+                               criterio.tipo === 'estado' ? criterio.estado :
+                               criterio.tipo === 'etiquetas' ? criterio.etiquetas :
+                               criterio.tipo === 'fecha_acontecimiento' ? criterio.fechaAcontecimiento :
+                               criterio.tipo === 'coordenadas' ? `${criterio.latitud}, ${criterio.longitud}` :
+                               'Sin valor';
+
+                  return (
+                    <Chip key={idx} size="sm" variant="flat" color="secondary">
+                      {criterio.tipo}: {valor}
+                    </Chip>
+                  );
+                })}
               </div>
             </div>
           )}

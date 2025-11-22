@@ -163,6 +163,35 @@ export function FormularioColeccion({
     }))
   }
 
+  // Función para validar si el nuevo criterio está completo
+  const isNuevoCriterioValido = () => {
+    if (!nuevoCriterio.tipo) return false
+
+    const tipo = nuevoCriterio.tipo.toLowerCase()
+
+    // Validar que el campo correspondiente al tipo tenga valor
+    switch (tipo) {
+      case "titulo":
+        return !!nuevoCriterio.titulo?.trim()
+      case "categoria":
+        return !!nuevoCriterio.categoria?.trim()
+      case "descripcion":
+        return !!nuevoCriterio.descripcion?.trim()
+      case "origen":
+        return !!nuevoCriterio.origen?.trim()
+      case "fecha_acontecimiento":
+        return !!nuevoCriterio.fechaAcontecimiento
+      case "estado":
+        return !!nuevoCriterio.estado?.trim()
+      case "etiquetas":
+        return !!nuevoCriterio.etiquetas?.trim()
+      case "coordenadas":
+        return !!(nuevoCriterio.longitud && nuevoCriterio.latitud)
+      default:
+        return false
+    }
+  }
+
   // Función para validar si el formulario está completo
   const isFormValid = () => {
     return (
@@ -273,11 +302,11 @@ export function FormularioColeccion({
                       isPressable
                       onPress={() => toggleFuente(fuente.uuid)}
                       shadow="sm"
-                      className={
+                      className={`w-full ${
                         formData.fuentesIds.includes(fuente.uuid)
                           ? "border-2 border-primary bg-primary-50"
                           : "border border-divider bg-content1"
-                      }
+                      }`}
                     >
                       <CardBody className="p-4">
                         <div className="flex items-center gap-4">
@@ -293,8 +322,22 @@ export function FormularioColeccion({
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-foreground truncate">{fuente.host}</p>
-                            <p className="text-xs text-default-500 truncate mt-1">UUID: {fuente.uuid}</p>
+                            <p className="text-sm font-medium text-foreground truncate">
+                              {fuente.tipo || 'Fuente sin tipo'}
+                            </p>
+                            <p className="text-xs text-default-500 truncate mt-1">
+                              {fuente.params && Object.keys(fuente.params).length > 0
+                                ? Object.entries(fuente.params)
+                                    .map(([key, value]) => {
+                                      // Convertir objetos y arrays a JSON string
+                                      const displayValue = typeof value === 'object' && value !== null
+                                        ? JSON.stringify(value)
+                                        : String(value);
+                                      return `${key}: ${displayValue}`;
+                                    })
+                                    .join(', ')
+                                : 'Sin parámetros'}
+                            </p>
                           </div>
                         </div>
                       </CardBody>
@@ -494,6 +537,7 @@ export function FormularioColeccion({
                       onPress={agregarCriterio}
                       startContent={<i className="ri-add-line" />}
                       className="w-full"
+                      isDisabled={!isNuevoCriterioValido()}
                     >
                       Agregar Criterio
                     </Button>
@@ -516,9 +560,19 @@ export function FormularioColeccion({
                                   {TIPOS_CRITERIO.find((t) => t.value === criterio.tipo)?.label}
                                 </Chip>
                                 <span className="text-sm text-foreground">
-                                  {criterio.titulo || criterio.categoria || criterio.descripcion || criterio.origen || criterio.estado || criterio.etiquetas ||
-                                    (criterio.latitud && criterio.longitud ? `(${criterio.latitud}, ${criterio.longitud})` : "") ||
-                                    criterio.fechaAcontecimiento || "Sin valor"}
+                                  {(() => {
+                                    const tipo = criterio.tipo?.toLowerCase();
+                                    if (tipo === 'titulo') return criterio.titulo;
+                                    if (tipo === 'categoria') return criterio.categoria;
+                                    if (tipo === 'descripcion') return criterio.descripcion;
+                                    if (tipo === 'origen') return criterio.origen;
+                                    if (tipo === 'estado') return criterio.estado;
+                                    if (tipo === 'etiquetas') return criterio.etiquetas;
+                                    if (tipo === 'fecha_acontecimiento') return criterio.fechaAcontecimiento;
+                                    if (tipo === 'coordenadas' && criterio.latitud && criterio.longitud)
+                                      return `(${criterio.latitud}, ${criterio.longitud})`;
+                                    return "Sin valor";
+                                  })()}
                                 </span>
                               </div>
                             </div>

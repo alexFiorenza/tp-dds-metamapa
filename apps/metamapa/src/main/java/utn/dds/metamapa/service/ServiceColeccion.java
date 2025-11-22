@@ -96,25 +96,17 @@ public class ServiceColeccion {
         // 1. Buscar las fuentes por sus IDs
         List<Fuente> fuentes = buscarFuentesPorIds(coleccionCreateDTO.getFuentesIds());
 
-        // 2. Buscar hechos que tengan origen en alguna de estas fuentes
-        List<Hecho> hechosDeEstasFuentes = buscarHechosPorOrigenFuentes(fuentes);
+        // 2. Buscar y filtrar hechos en una sola operación
+        List<Hecho> hechosFiltrados = buscarHechosFiltrados(
+            fuentes,
+            coleccion.getCriteriosDePertenenciaAsStrategies()
+        );
 
-        // 3. Aplicar criterios de pertenencia para filtrar los hechos
-        List<HechoStrategy> criterios = coleccion.getCriteriosDePertenenciaAsStrategies();
-        List<Hecho> hechosFiltrados = aplicarCriterios(hechosDeEstasFuentes, criterios);
-
-        // 4. Establecer hechos y fuentes en la colección
+        // 3. Establecer relaciones
         coleccion.setHechos(hechosFiltrados);
         coleccion.setFuentes(fuentes);
 
-        // 5. Buscar las Hecho entities existentes por sus UUIDs
-        List<String> hechosIds = hechosFiltrados.stream()
-                .map(Hecho::getUuid)
-                .collect(Collectors.toList());
-        List<Hecho> hechoEntities = buscarHechoEntitiesPorIds(hechosIds);
-        coleccion.setHechos(hechoEntities);
-
-        // 6. Guardar la colección directamente (con las relaciones ManyToMany)
+        // 4. Guardar la colección directamente (con las relaciones ManyToMany)
         guardarColeccionConEntidades(coleccion);
 
         // 7. Retornar la colección creada como DTO
@@ -137,7 +129,11 @@ public class ServiceColeccion {
         return new ArrayList<>();
     }
 
-    private List<Hecho> buscarHechoEntitiesPorIds(List<String> hechosIds) {
+    /**
+     * Busca múltiples hechos por sus UUIDs en una sola query (batch).
+     * Mucho más eficiente que buscar uno por uno.
+     */
+    private List<Hecho> buscarHechosPorIds(List<String> hechosIds) {
         if (hechosIds == null || hechosIds.isEmpty()) {
             return new ArrayList<>();
         }
@@ -153,23 +149,33 @@ public class ServiceColeccion {
         return new ArrayList<>();
     }
 
+    /**
+     * Busca hechos por origen de fuentes (sin filtrar por criterios).
+     */
     private List<Hecho> buscarHechosPorOrigenFuentes(List<Fuente> fuentes) {
         if (fuentes == null || fuentes.isEmpty()) {
             return new ArrayList<>();
         }
 
-        // Extraer los UUIDs de las fuentes para buscar hechos con ese origen
         List<String> origenes = fuentes.stream()
                 .map(Fuente::getUuid)
                 .collect(Collectors.toList());
 
-        // Buscar todos los hechos que tengan origen en alguna de estas fuentes
-        List<Hecho> todosLosHechos = hechoRepository.obtenerTodos();
-        return todosLosHechos.stream()
-                .filter(hecho -> origenes.contains(hecho.getOrigen()))
-                .collect(Collectors.toList());
+        if (!(hechoDAO instanceof Hibernate)) {
+            return new ArrayList<>();
+        }
+
+        Hibernate<Hecho> hibernateDAO = (Hibernate<Hecho>) hechoDAO;
+        return hibernateDAO.executeQuery(em -> {
+            return em.createQuery("SELECT h FROM Hecho h WHERE h.origen IN :origenes", Hecho.class)
+                    .setParameter("origenes", origenes)
+                    .getResultList();
+        });
     }
 
+    /**
+     * Aplica criterios de filtrado en memoria.
+     */
     private List<Hecho> aplicarCriterios(List<Hecho> hechos, List<HechoStrategy> criterios) {
         if (criterios == null || criterios.isEmpty()) {
             return hechos;
@@ -178,6 +184,18 @@ public class ServiceColeccion {
         return hechos.stream()
                 .filter(hecho -> criterios.stream().allMatch(criterio -> criterio.cumple(hecho)))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Busca y filtra hechos en una sola operación optimizada.
+     * Reduce el número de queries y evita búsquedas redundantes.
+     */
+    private List<Hecho> buscarHechosFiltrados(List<Fuente> fuentes, List<HechoStrategy> criterios) {
+        // Buscar hechos de las fuentes
+        List<Hecho> hechosDeEstasFuentes = buscarHechosPorOrigenFuentes(fuentes);
+
+        // Aplicar criterios
+        return aplicarCriterios(hechosDeEstasFuentes, criterios);
     }
 
     private void guardarColeccionConEntidades(Coleccion coleccion) {
@@ -259,13 +277,7 @@ public class ServiceColeccion {
 
         // 7. Actualizar fuentes y hechos en la BD
         this.coleccionRepository.actualizarFuentes(id, nuevasFuentes);
-
-        List<Hecho> hechoEntities = hechosFiltrados.stream()
-            .map(hecho -> buscarHechoEntityPorId(hecho.getUuid()))
-            .filter(entity -> entity != null)
-            .collect(Collectors.toList());
-
-        this.coleccionRepository.actualizarHechos(id, hechoEntities);
+        this.coleccionRepository.actualizarHechos(id, hechosFiltrados);
     }
 
     private void actualizarSoloCriterios(String id, List<HechoStrategy> nuevosCriterios, Coleccion coleccionExistente) {
@@ -279,12 +291,7 @@ public class ServiceColeccion {
         List<Hecho> hechosFiltrados = aplicarCriterios(hechosExistentes, nuevosCriterios);
 
         // 4. Actualizar hechos filtrados
-        List<Hecho> hechoEntities = hechosFiltrados.stream()
-            .map(hecho -> buscarHechoEntityPorId(hecho.getUuid()))
-            .filter(entity -> entity != null)
-            .collect(Collectors.toList());
-
-        this.coleccionRepository.actualizarHechos(id, hechoEntities);
+        this.coleccionRepository.actualizarHechos(id, hechosFiltrados);
     }
 
     private void actualizarSoloFuentes(String id, List<String> nuevasFuentesIds, Coleccion coleccionExistente) {
@@ -307,13 +314,7 @@ public class ServiceColeccion {
 
         // 6. Actualizar fuentes y hechos en la BD
         this.coleccionRepository.actualizarFuentes(id, nuevasFuentes);
-
-        List<Hecho> hechoEntities = hechosFiltrados.stream()
-            .map(hecho -> buscarHechoEntityPorId(hecho.getUuid()))
-            .filter(entity -> entity != null)
-            .collect(Collectors.toList());
-
-        this.coleccionRepository.actualizarHechos(id, hechoEntities);
+        this.coleccionRepository.actualizarHechos(id, hechosFiltrados);
     }
 
     private List<HechoStrategy> convertirCriteriosDTO(List<utn.dds.dto.CriterioCreateDTO> criteriosDTO) {
@@ -332,14 +333,6 @@ public class ServiceColeccion {
             })
             .filter(criterio -> criterio != null)
             .collect(Collectors.toList());
-    }
-
-    private Hecho buscarHechoEntityPorId(String uuid) {
-        if (hechoDAO instanceof Hibernate) {
-            Hibernate<Hecho> hibernateDAO = (Hibernate<Hecho>) hechoDAO;
-            return hibernateDAO.findById(uuid);
-        }
-        return null;
     }
 
     public void eliminarColeccion(String id) {

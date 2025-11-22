@@ -17,7 +17,7 @@ public class Criterio {
     @Column(name = "uuid")
     private String uuid;
 
-    @Column(name = "id_coleccion")
+    @Column(name = "coleccion_handle")
     private String idColeccion;
 
     @Column(name = "tipo", nullable = false)

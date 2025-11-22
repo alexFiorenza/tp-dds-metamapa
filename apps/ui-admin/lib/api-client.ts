@@ -376,8 +376,20 @@ export class ApiClient {
   static async obtenerFuentes(token?: string | null): Promise<FuenteDTO[]> {
     if (USE_MOCK) {
       return [
-        { uuid: "1", host: "http://fuente-estatica:7001", params: {} },
-        { uuid: "2", host: "http://fuente-dinamica:7002", params: {} },
+        {
+          uuid: "1",
+          host: "http://fuente-estatica:7001",
+          params: { endpoint: "/api/hechos" },
+          tipo: "estatica",
+          metadata: {}
+        },
+        {
+          uuid: "2",
+          host: "http://fuente-dinamica:7002",
+          params: { interval: "5m", filter: "categoria=deportes" },
+          tipo: "dinamica",
+          metadata: {}
+        },
       ]
     }
 

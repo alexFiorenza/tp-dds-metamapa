@@ -57,7 +57,17 @@ public class ColeccionDTO {
                     .map(criterio -> {
                         CriterioCreateDTO criterioDTO = new CriterioCreateDTO();
                         criterioDTO.setTipo(criterio.getTipo());
+                        // Mapear todos los campos del criterio
+                        criterioDTO.setTitulo(criterio.getTitulo());
+                        criterioDTO.setCategoria(criterio.getCategoria());
+                        criterioDTO.setDescripcion(criterio.getDescripcion());
+                        criterioDTO.setOrigen(criterio.getOrigen());
+                        criterioDTO.setFechaAcontecimiento(criterio.getFechaAcontecimiento());
+                        criterioDTO.setFechaCarga(criterio.getFechaCarga());
+                        criterioDTO.setLongitud(criterio.getLongitud());
+                        criterioDTO.setLatitud(criterio.getLatitud());
                         criterioDTO.setEstado(criterio.getEstado());
+                        criterioDTO.setEtiquetas(criterio.getEtiquetas());
                         return criterioDTO;
                     })
                     .collect(Collectors.toList())

@@ -36,6 +36,8 @@ export interface FuenteDTO {
   host: string
   params: Record<string, any>
   uuid: string
+  tipo?: string // "estatica", "proxy", "dinamica"
+  metadata?: Record<string, any>
 }
 
 export interface CriterioCreateDTO {
