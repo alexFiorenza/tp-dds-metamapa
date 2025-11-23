@@ -4,12 +4,16 @@ import { useState, useEffect } from 'react'
 import { MapWrapper } from './map-wrapper'
 import { HechoListItem } from './hecho-list-item'
 import { HechoDetailModal } from './hecho-detail-modal'
-import { Button, Pagination, Card, CardBody, Chip, Spinner, Tabs, Tab } from '@heroui/react'
+import { FormularioColeccion } from './formulario-coleccion'
+import { Button, Pagination, Card, CardBody, Chip, Spinner, Tabs, Tab, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/react'
 import { motion, AnimatePresence } from 'motion/react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useUserRole } from '@/hooks/use-user-role'
 import { useSidebarContext } from './layout-wrapper'
-import type { HechoDTO, RespuestaPaginadaDTO } from '@/types/api'
+import { useAuth } from '@clerk/nextjs'
+import { ApiClient } from '@/lib/api-client'
+import type { HechoDTO, RespuestaPaginadaDTO, FuenteDTO, ColeccionCreateDTO } from '@/types/api'
 import type { ColeccionDTO } from '@/types/api'
 
 interface ColeccionDetailViewProps {
@@ -23,6 +27,8 @@ interface ColeccionDetailViewProps {
 export function ColeccionDetailView({ coleccion, initialData, fetchPage, backUrl = "/colecciones", backLabel = "Volver a Colecciones" }: ColeccionDetailViewProps) {
   const { isAdmin } = useUserRole()
   const { isCollapsed } = useSidebarContext()
+  const { getToken } = useAuth()
+  const router = useRouter()
   const [selectedHechoId, setSelectedHechoId] = useState<string | undefined>()
   const [hoveredHechoId, setHoveredHechoId] = useState<string | undefined>()
   const [hechoDetailOpen, setHechoDetailOpen] = useState(false)
@@ -30,8 +36,63 @@ export function ColeccionDetailView({ coleccion, initialData, fetchPage, backUrl
   const [data, setData] = useState<RespuestaPaginadaDTO<HechoDTO>>(initialData)
   const [isLoading, setIsLoading] = useState(false)
   const [modoNavegacion, setModoNavegacion] = useState<'irrestricto' | 'curado'>('curado')
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [fuentes, setFuentes] = useState<FuenteDTO[]>([])
+  const [loading, setLoading] = useState(false)
 
   const selectedHecho = data.datos.find(h => h.uuid === selectedHechoId)
+
+  // Cargar fuentes si es admin
+  useEffect(() => {
+    if (isAdmin) {
+      cargarFuentes()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin])
+
+  const cargarFuentes = async () => {
+    try {
+      const token = await getToken()
+      const fuentesData = await ApiClient.obtenerFuentes(token)
+      setFuentes(fuentesData)
+    } catch (error) {
+      console.error("Error al cargar fuentes:", error)
+      setFuentes([])
+    }
+  }
+
+  const handleEditarColeccion = async (coleccionData: ColeccionCreateDTO) => {
+    setLoading(true)
+    try {
+      const token = await getToken()
+      await ApiClient.actualizarColeccion(coleccion.handle, coleccionData, token)
+      setIsEditModalOpen(false)
+      // Recargar la página para mostrar los cambios
+      router.refresh()
+    } catch (error) {
+      console.error("Error al editar colección:", error)
+      throw error
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleEliminarColeccion = async () => {
+    setLoading(true)
+    try {
+      const token = await getToken()
+      await ApiClient.eliminarColeccion(coleccion.handle, token)
+      setIsDeleteModalOpen(false)
+      // Redirigir a la página de colecciones
+      router.push(backUrl)
+    } catch (error) {
+      console.error("Error al eliminar colección:", error)
+      throw error
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Resetear página cuando cambian los datos iniciales (por filtros o modo)
   useEffect(() => {
@@ -126,15 +187,19 @@ export function ColeccionDetailView({ coleccion, initialData, fetchPage, backUrl
               <div className="flex flex-wrap gap-1.5">
                 {coleccion.criteriosDePertenencia.map((criterio, idx) => {
                   // Obtener el valor del campo correspondiente al tipo
-                  const valor = criterio.tipo === 'categoria' ? criterio.categoria :
-                               criterio.tipo === 'descripcion' ? criterio.descripcion :
-                               criterio.tipo === 'titulo' ? criterio.titulo :
-                               criterio.tipo === 'origen' ? criterio.origen :
-                               criterio.tipo === 'estado' ? criterio.estado :
-                               criterio.tipo === 'etiquetas' ? criterio.etiquetas :
-                               criterio.tipo === 'fecha_acontecimiento' ? criterio.fechaAcontecimiento :
-                               criterio.tipo === 'coordenadas' ? `${criterio.latitud}, ${criterio.longitud}` :
-                               'Sin valor';
+                  const tipo = criterio.tipo?.toLowerCase();
+                  const valor = tipo === 'categoria' ? criterio.categoria :
+                               tipo === 'descripcion' ? criterio.descripcion :
+                               tipo === 'titulo' ? criterio.titulo :
+                               tipo === 'origen' ? criterio.origen :
+                               tipo === 'estado' ? criterio.estado :
+                               tipo === 'etiquetas' ? criterio.etiquetas :
+                               tipo === 'fecha_acontecimiento' ? criterio.fechaAcontecimiento :
+                               tipo === 'coordenadas' ? `${criterio.latitud}, ${criterio.longitud}` :
+                               null;
+
+                  // No mostrar si no hay valor
+                  if (!valor) return null;
 
                   return (
                     <Chip key={idx} size="sm" variant="flat" color="secondary">
@@ -149,10 +214,23 @@ export function ColeccionDetailView({ coleccion, initialData, fetchPage, backUrl
           {/* Actions - Solo para administradores */}
           {isAdmin && (
             <div className="flex gap-2 mt-4">
-              <Button variant="flat" size="sm" className="flex-1" startContent={<i className="ri-edit-line w-4 h-4" />}>
+              <Button
+                variant="flat"
+                size="sm"
+                className="flex-1"
+                startContent={<i className="ri-edit-line w-4 h-4" />}
+                onPress={() => setIsEditModalOpen(true)}
+              >
                 Editar
               </Button>
-              <Button variant="flat" color="danger" size="sm" className="flex-1" startContent={<i className="ri-delete-bin-line w-4 h-4" />}>
+              <Button
+                variant="flat"
+                color="danger"
+                size="sm"
+                className="flex-1"
+                startContent={<i className="ri-delete-bin-line w-4 h-4" />}
+                onPress={() => setIsDeleteModalOpen(true)}
+              >
                 Eliminar
               </Button>
             </div>
@@ -298,6 +376,87 @@ export function ColeccionDetailView({ coleccion, initialData, fetchPage, backUrl
           setSelectedHechoId(undefined)
         }}
       />
+
+      {/* Modal de edición */}
+      {isAdmin && (
+        <FormularioColeccion
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onSubmit={handleEditarColeccion}
+          fuentes={fuentes}
+          titulo="Editar Colección"
+          coleccionInicial={{
+            titulo: coleccion.titulo,
+            descripcion: coleccion.descripcion,
+            fuentesIds: coleccion.fuentes.map(f => f.uuid),
+            criteriosDePertenencia: coleccion.criteriosDePertenencia,
+            algoritmoConsenso: coleccion.algoritmoConsenso,
+          }}
+        />
+      )}
+
+      {/* Modal de confirmación de eliminación */}
+      {isAdmin && (
+        <Modal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          size="md"
+          backdrop="opaque"
+          placement="center"
+          classNames={{
+            backdrop: "bg-black/70 backdrop-blur-md",
+            wrapper: "items-center",
+            base: "bg-content1",
+          }}
+        >
+          <ModalContent className="bg-content1">
+            {(onClose) => (
+              <>
+                <ModalHeader className="flex flex-col gap-1 border-b border-divider px-6 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 flex items-center justify-center bg-danger/10 rounded-lg">
+                      <i className="ri-alert-line w-5 h-5 text-danger" />
+                    </div>
+                    <span>Confirmar Eliminación</span>
+                  </div>
+                </ModalHeader>
+                <ModalBody className="px-6 py-6">
+                  <p className="text-default-600">
+                    ¿Estás seguro de que deseas eliminar la colección{" "}
+                    <span className="font-semibold text-foreground">
+                      "{coleccion.titulo}"
+                    </span>
+                    ?
+                  </p>
+                  <p className="text-sm text-danger mt-2">
+                    Esta acción no se puede deshacer.
+                  </p>
+                </ModalBody>
+                <ModalFooter className="border-t border-divider px-6 py-4">
+                  <Button
+                    variant="light"
+                    onPress={() => {
+                      setIsDeleteModalOpen(false)
+                      onClose()
+                    }}
+                    isDisabled={loading}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    color="danger"
+                    onPress={handleEliminarColeccion}
+                    isLoading={loading}
+                    startContent={!loading ? <i className="ri-delete-bin-line" /> : undefined}
+                  >
+                    {loading ? "Eliminando..." : "Eliminar"}
+                  </Button>
+                </ModalFooter>
+              </>
+            )}
+          </ModalContent>
+        </Modal>
+      )}
     </div>
   )
 }

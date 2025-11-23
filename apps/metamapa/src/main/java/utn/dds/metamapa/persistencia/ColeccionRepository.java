@@ -9,6 +9,11 @@ import utn.dds.dominio.criterios.HechoStrategy;
 import utn.dds.dto.ColeccionDTO;
 import utn.dds.dto.RespuestaPaginadaDTO;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Predicate;
+
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -331,6 +336,74 @@ public class ColeccionRepository {
                         em.getTransaction().rollback();
                     }
                     throw new RuntimeException("Error al eliminar colección", e);
+                }
+            });
+        }
+    }
+
+    /**
+     * Asocia hechos de las fuentes especificadas a una colección,
+     * aplicando los criterios de pertenencia.
+     */
+    public void asociarHechosDesdeFuentes(String coleccionHandle, List<String> fuentesIds, List<HechoStrategy> criterios) {
+        if (dao instanceof Hibernate) {
+            Hibernate<Coleccion> hibernateDAO = (Hibernate<Coleccion>) dao;
+
+            hibernateDAO.executeQuery(em -> {
+                em.getTransaction().begin();
+                try {
+                    CriteriaBuilder cb = em.getCriteriaBuilder();
+
+                    // Query para seleccionar UUIDs de hechos que cumplen los criterios
+                    CriteriaQuery<String> selectQuery = cb.createQuery(String.class);
+                    Root<Hecho> hechoRoot = selectQuery.from(Hecho.class);
+
+                    List<Predicate> predicates = new ArrayList<>();
+
+                    // Filtro: origen debe estar en las fuentes seleccionadas
+                    if (fuentesIds != null && !fuentesIds.isEmpty()) {
+                        predicates.add(hechoRoot.get("origen").in(fuentesIds));
+                    }
+
+                    // Aplicar criterios adicionales
+                    if (criterios != null && !criterios.isEmpty()) {
+                        List<Predicate> criteriosPredicates =
+                            utn.dds.persistencia.StrategyToSQLAdapter.convertirStrategiasASQL(criterios, cb, hechoRoot);
+                        predicates.addAll(criteriosPredicates);
+                    }
+
+                    if (!predicates.isEmpty()) {
+                        selectQuery.where(cb.and(predicates.toArray(new Predicate[0])));
+                    }
+
+                    selectQuery.select(hechoRoot.get("uuid"));
+
+                    List<String> hechosUuids = em.createQuery(selectQuery).getResultList();
+
+                    // Insertar en lotes para evitar límites de SQL
+                    int batchSize = 1000;
+                    for (int i = 0; i < hechosUuids.size(); i += batchSize) {
+                        int endIndex = Math.min(i + batchSize, hechosUuids.size());
+                        List<String> batch = hechosUuids.subList(i, endIndex);
+
+                        String insertSql =
+                            "INSERT INTO coleccion_hechos (coleccion_handle, hecho_uuid) " +
+                            "SELECT :handle, uuid FROM hechos WHERE uuid IN (:uuids) " +
+                            "ON CONFLICT DO NOTHING";
+
+                        em.createNativeQuery(insertSql)
+                            .setParameter("handle", coleccionHandle)
+                            .setParameter("uuids", batch)
+                            .executeUpdate();
+                    }
+
+                    em.getTransaction().commit();
+                    return null;
+                } catch (Exception e) {
+                    if (em.getTransaction().isActive()) {
+                        em.getTransaction().rollback();
+                    }
+                    throw new RuntimeException("Error al asociar hechos a colección: " + e.getMessage(), e);
                 }
             });
         }

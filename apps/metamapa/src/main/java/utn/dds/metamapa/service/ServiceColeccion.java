@@ -76,6 +76,7 @@ public class ServiceColeccion {
         Coleccion coleccion = new Coleccion();
         coleccion.setTitulo(coleccionCreateDTO.getTitulo());
         coleccion.setDescripcion(coleccionCreateDTO.getDescripcion());
+
         // Convertir String a instancia de AlgoritmoConsenso usando el Factory
         String tipoAlgoritmo = coleccionCreateDTO.getAlgoritmoConsenso();
         coleccion.setAlgoritmoConsenso(
@@ -83,33 +84,36 @@ public class ServiceColeccion {
         );
 
         // Convertir criterios de DTO a Criterio domain entities
+        List<HechoStrategy> criteriosStrategy = new ArrayList<>();
         if (coleccionCreateDTO.getCriteriosDePertenencia() != null) {
             List<Criterio> criterios = new ArrayList<>();
             for (CriterioCreateDTO criterioDTO : coleccionCreateDTO.getCriteriosDePertenencia()) {
                 HechoStrategy strategy = criterioDTO.toHechoStrategy();
                 Criterio criterio = Criterio.fromHechoStrategy(strategy, coleccion.getHandle());
                 criterios.add(criterio);
+                criteriosStrategy.add(strategy);
             }
             coleccion.setCriteriosDePertenencia(criterios);
         }
 
         // 1. Buscar las fuentes por sus IDs
         List<Fuente> fuentes = buscarFuentesPorIds(coleccionCreateDTO.getFuentesIds());
-
-        // 2. Buscar y filtrar hechos en una sola operación
-        List<Hecho> hechosFiltrados = buscarHechosFiltrados(
-            fuentes,
-            coleccion.getCriteriosDePertenenciaAsStrategies()
-        );
-
-        // 3. Establecer relaciones
-        coleccion.setHechos(hechosFiltrados);
         coleccion.setFuentes(fuentes);
 
-        // 4. Guardar la colección directamente (con las relaciones ManyToMany)
+        // 2. Inicializar lista vacía de hechos (se poblará después)
+        coleccion.setHechos(new ArrayList<>());
+
+        // 3. Guardar la colección SIN hechos (mucho más rápido)
         guardarColeccionConEntidades(coleccion);
 
-        // 7. Retornar la colección creada como DTO
+        // 4. Asociar hechos directamente en la BD (evita cargar en memoria)
+        this.coleccionRepository.asociarHechosDesdeFuentes(
+            coleccion.getHandle(),
+            coleccionCreateDTO.getFuentesIds(),
+            criteriosStrategy
+        );
+
+        // 5. Retornar la colección creada como DTO
         return ColeccionDTO.from(coleccion);
     }
 
@@ -129,74 +133,6 @@ public class ServiceColeccion {
         return new ArrayList<>();
     }
 
-    /**
-     * Busca múltiples hechos por sus UUIDs en una sola query (batch).
-     * Mucho más eficiente que buscar uno por uno.
-     */
-    private List<Hecho> buscarHechosPorIds(List<String> hechosIds) {
-        if (hechosIds == null || hechosIds.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        if (hechoDAO instanceof Hibernate) {
-            Hibernate<Hecho> hibernateDAO = (Hibernate<Hecho>) hechoDAO;
-            return hibernateDAO.executeQuery(em -> {
-                return em.createQuery("SELECT h FROM Hecho h WHERE h.uuid IN :ids", Hecho.class)
-                        .setParameter("ids", hechosIds)
-                        .getResultList();
-            });
-        }
-        return new ArrayList<>();
-    }
-
-    /**
-     * Busca hechos por origen de fuentes (sin filtrar por criterios).
-     */
-    private List<Hecho> buscarHechosPorOrigenFuentes(List<Fuente> fuentes) {
-        if (fuentes == null || fuentes.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        List<String> origenes = fuentes.stream()
-                .map(Fuente::getUuid)
-                .collect(Collectors.toList());
-
-        if (!(hechoDAO instanceof Hibernate)) {
-            return new ArrayList<>();
-        }
-
-        Hibernate<Hecho> hibernateDAO = (Hibernate<Hecho>) hechoDAO;
-        return hibernateDAO.executeQuery(em -> {
-            return em.createQuery("SELECT h FROM Hecho h WHERE h.origen IN :origenes", Hecho.class)
-                    .setParameter("origenes", origenes)
-                    .getResultList();
-        });
-    }
-
-    /**
-     * Aplica criterios de filtrado en memoria.
-     */
-    private List<Hecho> aplicarCriterios(List<Hecho> hechos, List<HechoStrategy> criterios) {
-        if (criterios == null || criterios.isEmpty()) {
-            return hechos;
-        }
-
-        return hechos.stream()
-                .filter(hecho -> criterios.stream().allMatch(criterio -> criterio.cumple(hecho)))
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * Busca y filtra hechos en una sola operación optimizada.
-     * Reduce el número de queries y evita búsquedas redundantes.
-     */
-    private List<Hecho> buscarHechosFiltrados(List<Fuente> fuentes, List<HechoStrategy> criterios) {
-        // Buscar hechos de las fuentes
-        List<Hecho> hechosDeEstasFuentes = buscarHechosPorOrigenFuentes(fuentes);
-
-        // Aplicar criterios
-        return aplicarCriterios(hechosDeEstasFuentes, criterios);
-    }
 
     private void guardarColeccionConEntidades(Coleccion coleccion) {
         // Crear un DAO temporal para guardar la entidad directamente
@@ -262,59 +198,44 @@ public class ServiceColeccion {
         // 2. Buscar las nuevas fuentes por sus IDs
         List<Fuente> nuevasFuentes = buscarFuentesPorIds(nuevasFuentesIds);
 
-        // 3. Buscar hechos de las nuevas fuentes
-        List<Hecho> hechosNuevasFuentes = buscarHechosPorOrigenFuentes(nuevasFuentes);
-
-        // 4. Obtener hechos existentes de la colección actual
-        List<Hecho> hechosExistentes = coleccionExistente.getHechos();
-
-        // 5. Combinar hechos existentes + nuevos
-        List<Hecho> todosLosHechos = new ArrayList<>(hechosExistentes);
-        todosLosHechos.addAll(hechosNuevasFuentes);
-
-        // 6. Aplicar criterios a todos los hechos
-        List<Hecho> hechosFiltrados = aplicarCriterios(todosLosHechos, nuevosCriterios);
-
-        // 7. Actualizar fuentes y hechos en la BD
+        // 3. Actualizar fuentes
         this.coleccionRepository.actualizarFuentes(id, nuevasFuentes);
-        this.coleccionRepository.actualizarHechos(id, hechosFiltrados);
+
+        // 4. Limpiar hechos existentes y re-asociar con nuevos criterios
+        this.coleccionRepository.actualizarHechos(id, new ArrayList<>());
+
+        // 5. Asociar hechos directamente en BD (optimizado)
+        this.coleccionRepository.asociarHechosDesdeFuentes(id, nuevasFuentesIds, nuevosCriterios);
     }
 
     private void actualizarSoloCriterios(String id, List<HechoStrategy> nuevosCriterios, Coleccion coleccionExistente) {
         // 1. Actualizar criterios en la BD
         this.coleccionRepository.actualizarCriterios(id, nuevosCriterios);
 
-        // 2. Obtener hechos existentes
-        List<Hecho> hechosExistentes = coleccionExistente.getHechos();
+        // 2. Limpiar hechos existentes
+        this.coleccionRepository.actualizarHechos(id, new ArrayList<>());
 
-        // 3. Aplicar nuevos criterios a hechos existentes
-        List<Hecho> hechosFiltrados = aplicarCriterios(hechosExistentes, nuevosCriterios);
+        // 3. Re-asociar hechos con nuevos criterios (optimizado)
+        List<String> fuentesIds = coleccionExistente.getFuentes().stream()
+            .map(Fuente::getUuid)
+            .collect(Collectors.toList());
 
-        // 4. Actualizar hechos filtrados
-        this.coleccionRepository.actualizarHechos(id, hechosFiltrados);
+        this.coleccionRepository.asociarHechosDesdeFuentes(id, fuentesIds, nuevosCriterios);
     }
 
     private void actualizarSoloFuentes(String id, List<String> nuevasFuentesIds, Coleccion coleccionExistente) {
         // 1. Buscar las nuevas fuentes por sus IDs
         List<Fuente> nuevasFuentes = buscarFuentesPorIds(nuevasFuentesIds);
 
-        // 2. Buscar hechos de las nuevas fuentes
-        List<Hecho> hechosNuevasFuentes = buscarHechosPorOrigenFuentes(nuevasFuentes);
-
-        // 3. Obtener hechos existentes de la colección actual
-        List<Hecho> hechosExistentes = coleccionExistente.getHechos();
-
-        // 4. Combinar hechos existentes + nuevos
-        List<Hecho> todosLosHechos = new ArrayList<>(hechosExistentes);
-        todosLosHechos.addAll(hechosNuevasFuentes);
-
-        // 5. Aplicar criterios existentes si los hay
-        List<HechoStrategy> criteriosExistentes = coleccionExistente.getCriteriosDePertenenciaAsStrategies();
-        List<Hecho> hechosFiltrados = aplicarCriterios(todosLosHechos, criteriosExistentes);
-
-        // 6. Actualizar fuentes y hechos en la BD
+        // 2. Actualizar fuentes
         this.coleccionRepository.actualizarFuentes(id, nuevasFuentes);
-        this.coleccionRepository.actualizarHechos(id, hechosFiltrados);
+
+        // 3. Limpiar hechos existentes
+        this.coleccionRepository.actualizarHechos(id, new ArrayList<>());
+
+        // 4. Re-asociar hechos con las nuevas fuentes (optimizado)
+        List<HechoStrategy> criteriosExistentes = coleccionExistente.getCriteriosDePertenenciaAsStrategies();
+        this.coleccionRepository.asociarHechosDesdeFuentes(id, nuevasFuentesIds, criteriosExistentes);
     }
 
     private List<HechoStrategy> convertirCriteriosDTO(List<utn.dds.dto.CriterioCreateDTO> criteriosDTO) {

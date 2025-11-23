@@ -65,11 +65,28 @@ export function ColeccionesPageClient({ colecciones, totalColecciones }: Colecci
 
                           {coleccion.criteriosDePertenencia.length > 0 && (
                             <div className="flex flex-wrap gap-1.5 mb-3">
-                              {coleccion.criteriosDePertenencia.map((criterio, idx) => (
-                                <Chip key={idx} size="sm" variant="flat" color="secondary">
-                                  {criterio.categoria}
-                                </Chip>
-                              ))}
+                              {coleccion.criteriosDePertenencia.map((criterio, idx) => {
+                                // Obtener el valor del campo correspondiente al tipo
+                                const tipo = criterio.tipo?.toLowerCase();
+                                const valor = tipo === 'categoria' ? criterio.categoria :
+                                             tipo === 'descripcion' ? criterio.descripcion :
+                                             tipo === 'titulo' ? criterio.titulo :
+                                             tipo === 'origen' ? criterio.origen :
+                                             tipo === 'estado' ? criterio.estado :
+                                             tipo === 'etiquetas' ? criterio.etiquetas :
+                                             tipo === 'fecha_acontecimiento' ? criterio.fechaAcontecimiento :
+                                             tipo === 'coordenadas' ? `${criterio.latitud}, ${criterio.longitud}` :
+                                             null;
+
+                                // No mostrar si no hay valor
+                                if (!valor) return null;
+
+                                return (
+                                  <Chip key={idx} size="sm" variant="flat" color="secondary">
+                                    {criterio.tipo}: {valor}
+                                  </Chip>
+                                );
+                              })}
                             </div>
                           )}
 
