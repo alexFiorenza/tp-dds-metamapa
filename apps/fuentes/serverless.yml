@@ -18,7 +18,23 @@ provider:
     OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
 
   httpApi:
-    cors: true
+    cors:
+      allowedOrigins:
+        - '*'
+      allowedHeaders:
+        - Content-Type
+        - Authorization
+        - traceparent
+        - baggage
+      allowedMethods:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+        - OPTIONS
+      allowCredentials: false
+      maxAge: 3600
 
   logs:
     httpApi: true
