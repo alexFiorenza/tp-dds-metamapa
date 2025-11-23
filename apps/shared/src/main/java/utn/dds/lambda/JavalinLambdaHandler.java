@@ -205,8 +205,9 @@ public class JavalinLambdaHandler implements RequestHandler<APIGatewayV2HTTPEven
         Map<String, String> headers = new HashMap<>();
         headers.put("Content-Type", contentType != null ? contentType : "application/json");
         headers.put("Access-Control-Allow-Origin", "*");
-        headers.put("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-        headers.put("Access-Control-Allow-Headers", "Content-Type");
+        headers.put("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
+        headers.put("Access-Control-Allow-Headers", "Content-Type, Authorization, traceparent, baggage");
+        headers.put("Access-Control-Max-Age", "3600");
         response.setHeaders(headers);
 
         return response;
