@@ -191,7 +191,10 @@ export function AdminColeccionesView({ coleccionesIniciales, totalElementos }: A
                                            tipo === 'etiquetas' ? criterio.etiquetas :
                                            tipo === 'fecha_acontecimiento' ? criterio.fechaAcontecimiento :
                                            tipo === 'coordenadas' ? `${criterio.latitud}, ${criterio.longitud}` :
-                                           'Sin valor';
+                                           null;
+
+                              // No mostrar si no hay valor
+                              if (!valor) return null;
 
                               return (
                                 <Chip key={idx} size="sm" variant="flat" color="secondary">
