@@ -1,0 +1,63 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>utn.dds</groupId>
+    <artifactId>MetaMapa</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <!-- relativo al pom raíz -->
+    <relativePath>../../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>tests</artifactId>
+  <packaging>jar</packaging>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- dependencia al módulo shared (si tus tests usan Hecho) -->
+    <dependency>
+      <groupId>utn.dds</groupId>
+      <artifactId>shared</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+
+    <!-- dependencia al módulo metamapa (para acceder a los repositorios) -->
+    <dependency>
+      <groupId>utn.dds</groupId>
+      <artifactId>metamapa</artifactId>
+      <version>1.0-SNAPSHOT</version>
+    </dependency>
+
+    <!-- H2 Database para tests -->
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <version>2.2.224</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.1.2</version>
+      </plugin>
+    </plugins>
+  </build>
+</project>
