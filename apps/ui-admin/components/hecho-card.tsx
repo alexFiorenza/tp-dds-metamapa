@@ -1,0 +1,89 @@
+"use client"
+
+import type { HechoDTO } from "@/types/api"
+import { Card, CardBody, Chip } from "@heroui/react"
+import Image from "next/image"
+
+interface HechoCardProps {
+  hecho: HechoDTO
+  onClick?: () => void
+}
+
+export function HechoCard({ hecho, onClick }: HechoCardProps) {
+  // Filtrar solo imágenes por extensión (multimedia son URLs)
+  const imagenes = hecho.multimedia?.filter((url) =>
+    /\.(jpg|jpeg|png|gif|webp)$/i.test(url)
+  ) || []
+  const primeraImagen = imagenes[0]
+  const isOculto = hecho.estado === "OCULTO"
+
+  return (
+    <Card
+      className={`overflow-hidden ${isOculto ? 'opacity-50 border-2 border-dashed border-default-300' : ''}`}
+      onClick={onClick}
+    >
+      {primeraImagen && (
+        <div className="relative w-full h-40 bg-default-100">
+          <Image src={primeraImagen || "/placeholder.svg"} alt={hecho.titulo} fill className="object-cover" />
+          {imagenes.length > 1 && (
+            <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1">
+              <i className="ri-image-line h-3 w-3" />
+              {imagenes.length}
+            </div>
+          )}
+          {isOculto && (
+            <div className="absolute top-2 left-2 bg-default-900/80 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1">
+              <i className="ri-eye-off-line h-3 w-3" />
+              <span>Oculto</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      <CardBody className="space-y-2 p-4">
+        {isOculto && !primeraImagen && (
+          <div className="flex items-center gap-1.5 text-xs text-default-500 mb-1">
+            <i className="ri-eye-off-line h-3.5 w-3.5" />
+            <span className="font-medium">Hecho Oculto</span>
+          </div>
+        )}
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-semibold text-sm leading-tight">{hecho.titulo}</h3>
+          <Chip size="sm" color="secondary" className="shrink-0">
+            {hecho.categoria}
+          </Chip>
+        </div>
+
+        <p className="text-sm text-default-500 line-clamp-2">{hecho.descripcion}</p>
+
+        <div className="flex flex-col gap-1 text-xs text-default-500">
+          <div className="flex items-center gap-1">
+            <i className="ri-calendar-line h-3 w-3" />
+            <span>{new Date(hecho.fechaAcontecimiento).toLocaleDateString("es-AR")}</span>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <i className="ri-map-pin-line h-3 w-3" />
+            <span>
+              {hecho.latitud.toFixed(4)}, {hecho.longitud.toFixed(4)}
+            </span>
+          </div>
+        </div>
+
+        {hecho.etiquetas.length > 0 && (
+          <div className="flex items-center gap-1 flex-wrap">
+            <i className="ri-price-tag-3-line h-3 w-3 text-default-500" />
+            {hecho.etiquetas.slice(0, 3).map((etiqueta) => (
+              <Chip key={etiqueta} size="sm" variant="bordered">
+                {etiqueta}
+              </Chip>
+            ))}
+            {hecho.etiquetas.length > 3 && (
+              <span className="text-xs text-default-500">+{hecho.etiquetas.length - 3}</span>
+            )}
+          </div>
+        )}
+      </CardBody>
+    </Card>
+  )
+}

@@ -1,0 +1,143 @@
+# Schema GraphQL para Agregador MetaMapa
+
+scalar DateTime
+scalar Date
+scalar JSON
+
+# Queries - Consultas de datos
+type Query {
+  """Obtiene hechos agregados con filtros opcionales y paginación"""
+  hechos(
+    pagina: Int = 0
+    tamanioPagina: Int = 10
+    filtros: FiltrosHechoInput
+  ): HechosPaginados!
+
+  """Obtiene todas las fuentes registradas"""
+  fuentes: [Fuente!]!
+
+  """Obtiene fuentes por host"""
+  fuentesPorHost(host: String!): [Fuente!]!
+}
+
+# Mutations - Operaciones de modificación
+type Mutation {
+  """Ejecuta el proceso de agregación de todas las fuentes"""
+  ejecutarAgregacion: ResultadoAgregacion!
+
+  """Registra una nueva fuente de datos"""
+  registrarFuente(input: FuenteInput!): Fuente!
+
+  """Actualiza una fuente existente"""
+  actualizarFuente(uuid: String!, input: FuenteInput!): Fuente!
+
+  """Elimina una fuente (oculta sus hechos)"""
+  eliminarFuente(uuid: String!): Boolean!
+}
+
+# Tipos de datos
+
+type Hecho {
+  uuid: String!
+  titulo: String!
+  descripcion: String
+  categoria: String
+  fechaAcontecimiento: Date
+  origen: String
+  contribuyente: Contribuyente
+  tipo: TipoHecho
+  ubicacion: Ubicacion!
+  fechaCarga: DateTime
+  estado: EstadoHecho
+}
+
+type Ubicacion {
+  latitud: Float!
+  longitud: Float!
+}
+
+type Contribuyente {
+  userId: String!
+  nombre: String!
+}
+
+type Fuente {
+  uuid: String!
+  host: String!
+  params: JSON
+  tipo: String
+  metadata: JSON
+}
+
+type HechosPaginados {
+  datos: [Hecho!]!
+  pagina: Int!
+  tamanioPagina: Int!
+  totalElementos: Int!
+  totalPaginas: Int!
+  tieneSiguiente: Boolean!
+  tieneAnterior: Boolean!
+}
+
+type ResultadoAgregacion {
+  fuentesConsultadas: Int!
+  hechosObtenidos: Int!
+  hechosAlmacenados: Int!
+  fechaEjecucion: DateTime!
+  fuentesConError: [String!]!
+}
+
+# Inputs - Datos de entrada
+
+input FuenteInput {
+  host: String!
+  params: JSON
+  tipo: String
+  metadata: JSON
+}
+
+input FiltrosHechoInput {
+  """Filtrar por categoría"""
+  categoria: String
+
+  """Filtrar por título"""
+  titulo: String
+
+  """Filtrar por descripción"""
+  descripcion: String
+
+  """Filtrar por origen"""
+  origen: String
+
+  """Filtrar por fecha de acontecimiento (formato: YYYY-MM-DD)"""
+  fechaAcontecimiento: Date
+
+  """Filtrar por longitud exacta"""
+  longitud: Float
+
+  """Filtrar por latitud exacta"""
+  latitud: Float
+
+  """Filtrar por estado (ACTIVO, OCULTO, ELIMINADO)"""
+  estado: EstadoHecho
+
+  """Filtrar por fecha de carga (formato ISO: YYYY-MM-DDTHH:mm:ss)"""
+  fechaCarga: DateTime
+
+  """Filtrar por etiquetas (lista de etiquetas)"""
+  etiquetas: String
+}
+
+# Enums
+
+enum TipoHecho {
+  NORMAL
+  URGENTE
+  IMPORTANTE
+}
+
+enum EstadoHecho {
+  ACTIVO
+  OCULTO
+  ELIMINADO
+}

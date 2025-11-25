@@ -13,4 +13,8 @@ public class TituloStrategy implements HechoStrategy {
     public boolean cumple(Hecho hecho) {
         return hecho.getTitulo().toLowerCase().contains(titulo);
     }
+
+    public String getTitulo() {
+        return titulo;
+    }
 } 

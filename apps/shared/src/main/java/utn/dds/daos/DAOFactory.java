@@ -9,16 +9,37 @@ public class DAOFactory {
         switch (type.toLowerCase()) {
             case "filesystem":
                 String url = (String) config.get("url");
-                Path path = Paths.get(url);
-                return new FileSystem<>(path, clazz);
+                if (url != null) {
+                    Path path = Paths.get(url);
+                    return new FileSystem<>(path, clazz);
+                } else {
+                    return new FileSystem<>(clazz);
+                }
             case "s3":
                 String s3Url = (String) config.get("url");
                 String accessKey = (String) config.get("accessKey");
                 String secretKey = (String) config.get("secretKey");
                 String bucket = (String) config.get("bucket");
                 String endpoint = (String) config.get("endpoint");
+                String publicEndpoint = (String) config.get("publicEndpoint");
                 String region = (String) config.get("region");
-                return new S3<>(s3Url, accessKey, secretKey, bucket, endpoint, region);
+                if (s3Url != null) {
+                    return new S3<>(s3Url, accessKey, secretKey, bucket, endpoint, publicEndpoint, region);
+                } else {
+                    return new S3<>(accessKey, secretKey, bucket, endpoint, publicEndpoint, region);
+                }
+            case "hibernate":
+                return new Hibernate<>(clazz, config);
+            case "couchdb":
+                String urlDb = (String) config.get("url");
+                String username = (String) config.get("username");
+                String password = (String) config.get("password");
+                return new CouchDB<>(urlDb, username, password, clazz);
+            case "mongodb":
+                String connectionString = (String) config.get("connectionString");
+                String database = (String) config.get("database");
+                String collection = (String) config.get("collection");
+                return new MongoDB<>(connectionString, database, collection, clazz);
             default:
                 throw new IllegalArgumentException("Tipo de DAO no soportado: " + type);
         }

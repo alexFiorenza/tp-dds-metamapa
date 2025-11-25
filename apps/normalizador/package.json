@@ -1,0 +1,38 @@
+{
+  "name": "metamapa-normalizador",
+  "version": "1.0.0",
+  "description": "Serverless Function para normalización de hechos de MetaMapa",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "clean": "rm -rf dist",
+    "sls:offline": "serverless offline",
+    "sls:deploy": "npm run build && serverless deploy",
+    "sls:remove": "serverless remove",
+    "sls:logs": "serverless logs -f normalizar -t",
+    "sls:invoke": "serverless invoke -f normalizar --data '{\"body\":\"{\\\"hechos\\\":[],\\\"config\\\":{}}\"}'",
+    "test:local": "npm run build && npm run sls:offline"
+  },
+  "keywords": [
+    "normalizacion",
+    "metamapa",
+    "aws-lambda",
+    "serverless"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@types/aws-lambda": "^8.10.131"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "serverless": "^3.38.0",
+    "serverless-offline": "^13.3.3",
+    "serverless-plugin-typescript": "^2.1.5",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}

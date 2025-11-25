@@ -1,19 +1,91 @@
-version: '3.8'
-
 services:
+  # MinIO S3 Compatible Storage
+  minio:
+    image: minio/minio:latest
+    container_name: metamapa-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    environment:
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+    command: server /data --console-address ":9001"
+    restart: unless-stopped
+    networks:
+      - metamapa-network
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: metamapa-postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-metamapa_db}
+      - POSTGRES_USER=${POSTGRES_USER:-metamapa}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-metamapa123}
+    restart: unless-stopped
+    networks:
+      - metamapa-network
+
+  # MongoDB Database
+  mongodb:
+    image: mongo:7
+    container_name: metamapa-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_USER:-admin}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_PASSWORD:-admin123}
+      - MONGO_INITDB_DATABASE=${MONGODB_DB:-metamapa_db}
+    restart: unless-stopped
+    networks:
+      - metamapa-network
+
+  # pgAdmin
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: metamapa-pgadmin
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:-admin@metamapa.com}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD:-admin123}
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - metamapa-network
+
   # Fuentes Estáticas
   fuente-estatica:
     build:
       context: ./apps/fuentes/estatica
       dockerfile: Dockerfile
+    platform: linux/amd64
     ports:
       - "7001:7001"
     container_name: metamapa-fuente-estatica
     restart: unless-stopped
     environment:
-      - DAO_TYPE=filesystem
+      - DAO_TYPE=${FUENTE_ESTATICA_DAO_TYPE:-s3}
       - PROCESSOR_TYPE=csv
-      - DATA_URL=src/main/resources/data/desastres_naturales_argentina.csv
+      - S3_ENDPOINT=${S3_ENDPOINT}
+      - S3_PUBLIC_ENDPOINT=${S3_PUBLIC_ENDPOINT}
+      - S3_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - S3_SECRET_KEY=${MINIO_SECRET_KEY}
+      - S3_BUCKET=${S3_BUCKET}
+    depends_on:
+      - minio
     networks:
       - metamapa-network
 
@@ -22,10 +94,27 @@ services:
     build:
       context: ./apps/fuentes/dinamica
       dockerfile: Dockerfile
+    platform: linux/amd64
     ports:
       - "7002:7002"
     container_name: metamapa-fuente-dinamica
     restart: unless-stopped
+    environment:
+      - DAO_TYPE=${FUENTE_DINAMICA_DAO_TYPE:-mongodb}
+      - MONGODB_HOST=${MONGODB_HOST:-mongodb}
+      - MONGODB_PORT=${MONGODB_PORT:-27017}
+      - MONGODB_USER=${MONGODB_USER:-admin}
+      - MONGODB_PASSWORD=${MONGODB_PASSWORD:-admin123}
+      - MONGODB_DB=${MONGODB_DB_DINAMICA:-dinamica_db}
+      - MONGODB_AUTH_DB=${MONGODB_AUTH_DB:-admin}
+      - S3_ENDPOINT=${S3_ENDPOINT}
+      - S3_PUBLIC_ENDPOINT=${S3_PUBLIC_ENDPOINT}
+      - S3_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - S3_SECRET_KEY=${MINIO_SECRET_KEY}
+      - S3_BUCKET=${S3_BUCKET_DINAMICA}
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+    depends_on:
+      - mongodb
     networks:
       - metamapa-network
 
@@ -34,12 +123,13 @@ services:
     build:
       context: ./apps/fuentes/proxy/metamapa
       dockerfile: Dockerfile
+    platform: linux/amd64
     ports:
       - "7003:7003"
     container_name: metamapa-fuente-proxy-metamapa
     restart: unless-stopped
     environment:
-      - URL = https://56d05c91-ca57-4d58-acd5-6d61368e622a.mock.pstmn.io
+      - URL=https://56d05c91-ca57-4d58-acd5-6d61368e622a.mock.pstmn.io
     networks:
       - metamapa-network
 
@@ -48,12 +138,21 @@ services:
     build:
       context: ./apps/fuentes/proxy/demo
       dockerfile: Dockerfile
+    platform: linux/amd64
     ports:
       - "7004:7004"
     container_name: metamapa-fuente-proxy-demo
     restart: unless-stopped
     environment:
-      - DAO_TYPE=filesystem
+      - DAO_TYPE=${FUENTE_PROXY_DEMO_DAO_TYPE:-mongodb}
+      - MONGODB_HOST=${MONGODB_HOST:-mongodb}
+      - MONGODB_PORT=${MONGODB_PORT:-27017}
+      - MONGODB_USER=${MONGODB_USER:-admin}
+      - MONGODB_PASSWORD=${MONGODB_PASSWORD:-admin123}
+      - MONGODB_DB=${MONGODB_DB_PROXY_DEMO:-proxy_demo_db}
+      - MONGODB_AUTH_DB=${MONGODB_AUTH_DB:-admin}
+    depends_on:
+      - mongodb
     networks:
       - metamapa-network
 
@@ -62,10 +161,43 @@ services:
     build:
       context: ./apps/agregador
       dockerfile: Dockerfile
+    platform: linux/amd64
     ports:
       - "7005:7005"
     container_name: metamapa-agregador
     restart: unless-stopped
+    environment:
+      - DAO_TYPE=${AGREGADOR_DAO_TYPE:-hibernate}
+      - DB_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-metamapa_db}
+      - DB_USER=${POSTGRES_USER:-metamapa}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-metamapa123}
+      - NORMALIZADOR_URL=http://normalizador:3000
+      - NORMALIZADOR_ENABLED=${NORMALIZADOR_ENABLED:-true}
+    depends_on:
+      - postgres
+      - normalizador
+    networks:
+      - metamapa-network
+
+  # Normalizador (TypeScript/Node.js)
+  normalizador:
+    build:
+      context: ./apps/normalizador
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    ports:
+      - "3005:3000"
+    container_name: metamapa-normalizador
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - metamapa-network
 
@@ -74,10 +206,20 @@ services:
     build:
       context: ./apps/metamapa
       dockerfile: Dockerfile
+    platform: linux/amd64
     ports:
       - "7006:7006"
     container_name: metamapa-administrativo
     restart: unless-stopped
+    environment:
+      - DAO_TYPE=${METAMAPA_DAO_TYPE:-hibernate}
+      - DB_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-metamapa_db}
+      - DB_USER=${POSTGRES_USER:-metamapa}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-metamapa123}
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+      - SPAM_PALABRAS=casino,apuesta,dinero,gratis,premio,loteria,ganaste,clickea,sorteo,oferta,credito,prestamo,bitcoin,cripto,inversion,ganar,millones,efectivo,transferencia,rifa,bingo,poker,ruleta,slots,tragamonedas
+    depends_on:
+      - postgres
     networks:
       - metamapa-network
 
@@ -88,7 +230,7 @@ services:
     volumes:
       - ./apps/estadisticas/metric-collector/prometheus.yml:/etc/prometheus/prometheus.yml
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
+      - "--config.file=/etc/prometheus/prometheus.yml"
     ports:
       - "9090:9090"
     depends_on:
@@ -104,7 +246,7 @@ services:
     volumes:
       - ./apps/estadisticas/gestor-alertas/config.yml:/etc/alertmanager/config.yml
     command:
-      - '--config.file=/etc/alertmanager/config.yml'
+      - "--config.file=/etc/alertmanager/config.yml"
     ports:
       - "9093:9093"
     depends_on:
@@ -112,22 +254,56 @@ services:
     networks:
       - metamapa-network
 
-  # Scheduler para Proxy Demo
-  scheduler-proxy-demo:
-    build:
-      context: ./apps/scheduler
-      dockerfile: Dockerfile
-    container_name: scheduler-proxy-demo
-    restart: unless-stopped
+  # Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: metamapa-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
     environment:
-      - TARGET_URL=http://fuente-proxy-demo:7004/hechos
-      - HTTP_METHOD=PUT
-      - INTERVAL_SECONDS=3600
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      # Permitir embedding en iframes
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+      # Acceso anónimo con rol Viewer
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
     depends_on:
-      - fuente-proxy-demo
+      - postgres
+      - metric-collector
+    restart: unless-stopped
     networks:
       - metamapa-network
 
+  # Scheduler de Estadísticas usando Ofelia
+  scheduler:
+    image: mcuadros/ofelia:latest
+    container_name: metamapa-scheduler
+    command: daemon --docker
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - metamapa-network
+    labels:
+      ofelia.job-exec.actualizar-estadisticas.schedule: "@every 10m"
+      ofelia.job-exec.actualizar-estadisticas.container: "metamapa-postgres"
+      ofelia.job-exec.actualizar-estadisticas.user: "postgres"
+      ofelia.job-exec.actualizar-estadisticas.command: >
+        sh -c 'PGPASSWORD=$$POSTGRES_PASSWORD psql -U $$POSTGRES_USER -d $$POSTGRES_DB -c "SELECT analiticas.actualizar_estadisticas();"'
+
+volumes:
+  minio_data:
+  postgres_data:
+  pgadmin_data:
+  mongodb_data:
+  mongodb_config:
+  grafana_data:
+
 networks:
   metamapa-network:
-    driver: bridge 
+    driver: bridge

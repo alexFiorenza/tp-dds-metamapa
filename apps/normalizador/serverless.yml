@@ -1,0 +1,81 @@
+service: metamapa-normalizador
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: us-east-1
+  stage: prod
+  memorySize: 512
+  timeout: 30
+
+  environment:
+    NODE_ENV: production
+    PORT: 3005
+    # OpenTelemetry configuration
+    AWS_LAMBDA_EXEC_WRAPPER: /opt/otel-handler
+    OTEL_SERVICE_NAME: normalizador
+    OTEL_TRACES_SAMPLER: AlwaysOn
+    OTEL_PROPAGATORS: tracecontext,baggage
+    OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+
+  httpApi:
+    cors: true
+
+  logs:
+    httpApi: true
+
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource: '*'
+        - Effect: Allow
+          Action:
+            - xray:PutTraceSegments
+            - xray:PutTelemetryRecords
+          Resource: '*'
+
+package:
+  individually: true
+  patterns:
+    - '!node_modules/**'
+    - '!src/**'
+    - 'dist/**'
+    - 'package.json'
+
+functions:
+  normalizar:
+    handler: dist/lambda.normalizarHandler
+    description: 'Normaliza hechos según las reglas configuradas'
+    layers:
+      - arn:aws:lambda:us-east-1:901920570463:layer:aws-otel-nodejs-amd64-ver-1-18-1:4
+    events:
+      - httpApi:
+          path: /normalizar
+          method: post
+    memorySize: 1024
+    timeout: 28
+
+plugins:
+  - serverless-offline
+
+custom:
+  serverless-offline:
+    httpPort: 3005
+    lambdaPort: 3006
+    websocketPort: 3007
+    noPrependStageInUrl: true
+
+resources:
+  Resources:
+    NormalizarLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: /aws/lambda/${self:service}-${self:provider.stage}-normalizar
+        RetentionInDays: 7

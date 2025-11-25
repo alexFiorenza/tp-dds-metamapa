@@ -2,40 +2,41 @@ package utn.dds.dto;
 
 import utn.dds.dominio.EstadoHecho;
 import utn.dds.dominio.Hecho;
-import utn.dds.dominio.Origen;
 import utn.dds.dominio.TipoHecho;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class HechoDTO {
     private String titulo;
     private String descripcion;
     private String categoria;
-    private LocalDate fechaAcontecimiento;
-    private Origen origen;
-    private String contribuyenteNombre;
+    private String fechaAcontecimiento; // ISO-8601: "2025-10-29"
+    private String origen;
+    private ContribuyenteDTO contribuyente;
     private TipoHecho tipo;
     private double longitud;
     private double latitud;
-    private LocalDateTime fechaCarga;
+    private String fechaCarga; // ISO-8601: "2025-10-29T22:24:15"
     private EstadoHecho estado;
     private List<String> etiquetas;
+    private List<String> multimedia;
     private String uuid;
 
     public HechoDTO() {}
 
-    public HechoDTO(String titulo, String descripcion, String categoria, LocalDate fechaAcontecimiento,
-                    Origen origen, String contribuyenteNombre, TipoHecho tipo,
-                    double longitud, double latitud, LocalDateTime fechaCarga,
-                    EstadoHecho estado, List<String> etiquetas, String uuid) {
+    public HechoDTO(String titulo, String descripcion, String categoria, String fechaAcontecimiento,
+                    String origen, ContribuyenteDTO contribuyente, TipoHecho tipo,
+                    double longitud, double latitud, String fechaCarga,
+                    EstadoHecho estado, List<String> etiquetas, String uuid,List<String> multimedia) {
         this.titulo = titulo;
         this.descripcion = descripcion;
         this.categoria = categoria;
         this.fechaAcontecimiento = fechaAcontecimiento;
         this.origen = origen;
-        this.contribuyenteNombre = contribuyenteNombre;
+        this.contribuyente = contribuyente;
         this.tipo = tipo;
         this.longitud = longitud;
         this.latitud = latitud;
@@ -43,41 +44,117 @@ public class HechoDTO {
         this.estado = estado;
         this.etiquetas = etiquetas;
         this.uuid = uuid;
+        this.multimedia = multimedia;
     }
 
     public static HechoDTO fromHecho(Hecho hecho) {
+        ContribuyenteDTO contribuyenteDTO = null;
+        if (hecho.getContribuyente() != null) {
+            String nombreCompleto = hecho.getContribuyente().getNombre();
+            if (hecho.getContribuyente().getApellido() != null && !hecho.getContribuyente().getApellido().isEmpty()) {
+                nombreCompleto = nombreCompleto + " " + hecho.getContribuyente().getApellido();
+            }
+            contribuyenteDTO = new ContribuyenteDTO(nombreCompleto, hecho.getContribuyente().getUserId());
+        }
+        
         return new HechoDTO(
             hecho.getTitulo(),
             hecho.getDescripcion(),
             hecho.getCategoria(),
-            hecho.getFechaAcontecimiento(),
+            hecho.getFechaAcontecimiento() != null ? hecho.getFechaAcontecimiento().format(DateTimeFormatter.ISO_LOCAL_DATE) : null,
             hecho.getOrigen(),
-            hecho.getContribuyente() != null ? hecho.getContribuyente().getNombre() : null,
+            contribuyenteDTO,
             hecho.getTipo(),
             hecho.getLongitud(),
             hecho.getLatitud(),
-            hecho.getFechaCarga(),
+            hecho.getFechaCarga() != null ? hecho.getFechaCarga().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null,
             hecho.getEstado(),
             hecho.getEtiquetas(),
-            hecho.getUuid()
+            hecho.getUuid(),
+            hecho.getMultimedia()
         );
     }
 
     public Hecho toHecho() {
-        return new Hecho(
+        utn.dds.dominio.Contribuyente contribuyente = null;
+        
+        // Si hay contribuyente, crear el objeto Contribuyente del dominio
+        if (this.contribuyente != null && this.contribuyente.getUserId() != null && !this.contribuyente.getUserId().trim().isEmpty()) {
+            // Dividir el nombre completo en nombre y apellido
+            String nombreCompleto = this.contribuyente.getNombre() != null ? this.contribuyente.getNombre().trim() : "";
+            String nombre = "";
+            String apellido = "";
+            
+            if (!nombreCompleto.isEmpty()) {
+                String[] partes = nombreCompleto.split("\\s+", 2);
+                if (partes.length > 1) {
+                    nombre = partes[0];
+                    apellido = partes[1];
+                } else {
+                    // Si solo hay una palabra, usarla como nombre y dejar apellido vacío
+                    nombre = partes[0];
+                    apellido = "";
+                }
+            } else {
+                // Si no hay nombre, usar el userId como nombre
+                nombre = this.contribuyente.getUserId();
+            }
+            
+            contribuyente = new utn.dds.dominio.Contribuyente(nombre, apellido, null, this.contribuyente.getUserId());
+        }
+        
+        Hecho hecho = new Hecho(
             this.titulo,
             this.descripcion,
             this.categoria,
-            this.fechaAcontecimiento,
+            this.fechaAcontecimiento != null ? parseFechaAcontecimiento(this.fechaAcontecimiento) : null,
             this.origen,
-            null, // contribuyente - en el mock es null
+            contribuyente,
             this.tipo,
             this.longitud,
             this.latitud,
-            this.fechaCarga,
+            this.fechaCarga != null ? parseFechaCarga(this.fechaCarga) : null,
             this.estado,
-            this.etiquetas
+            this.etiquetas,
+            this.multimedia
         );
+
+        // Preservar el UUID del DTO si existe
+        if (this.uuid != null && !this.uuid.trim().isEmpty()) {
+            hecho.setUuid(this.uuid);
+        }
+
+        return hecho;
+    }
+
+    /**
+     * Parsea fechaAcontecimiento soportando múltiples formatos:
+     * - ISO_LOCAL_DATE: "2025-11-19"
+     * - ISO_DATE_TIME: "2025-11-19T04:00:00.000Z"
+     */
+    private LocalDate parseFechaAcontecimiento(String fecha) {
+        if (fecha.contains("T")) {
+            // Formato ISO-8601 completo, extraer solo la parte de la fecha
+            return LocalDate.parse(fecha.substring(0, 10), DateTimeFormatter.ISO_LOCAL_DATE);
+        } else {
+            // Formato solo fecha
+            return LocalDate.parse(fecha, DateTimeFormatter.ISO_LOCAL_DATE);
+        }
+    }
+
+    /**
+     * Parsea fechaCarga soportando múltiples formatos:
+     * - ISO_LOCAL_DATE_TIME: "2025-11-19T04:00:00"
+     * - ISO_DATE_TIME con timezone: "2025-11-19T04:00:00.000Z"
+     */
+    private LocalDateTime parseFechaCarga(String fecha) {
+        if (fecha.endsWith("Z") || fecha.contains("+")) {
+            // Formato ISO-8601 con timezone, parsear y convertir a LocalDateTime
+            return java.time.OffsetDateTime.parse(fecha, DateTimeFormatter.ISO_DATE_TIME).toLocalDateTime();
+        } else {
+            // Formato sin timezone
+            return LocalDateTime.parse(fecha, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        }
     }
 
     public String getTitulo() {
@@ -104,28 +181,28 @@ public class HechoDTO {
         this.categoria = categoria;
     }
 
-    public LocalDate getFechaAcontecimiento() {
+    public String getFechaAcontecimiento() {
         return fechaAcontecimiento;
     }
 
-    public void setFechaAcontecimiento(LocalDate fechaAcontecimiento) {
+    public void setFechaAcontecimiento(String fechaAcontecimiento) {
         this.fechaAcontecimiento = fechaAcontecimiento;
     }
 
-    public Origen getOrigen() {
+    public String getOrigen() {
         return origen;
     }
 
-    public void setOrigen(Origen origen) {
+    public void setOrigen(String origen) {
         this.origen = origen;
     }
 
-    public String getContribuyenteNombre() {
-        return contribuyenteNombre;
+    public ContribuyenteDTO getContribuyente() {
+        return contribuyente;
     }
 
-    public void setContribuyenteNombre(String contribuyenteNombre) {
-        this.contribuyenteNombre = contribuyenteNombre;
+    public void setContribuyente(ContribuyenteDTO contribuyente) {
+        this.contribuyente = contribuyente;
     }
 
     public TipoHecho getTipo() {
@@ -152,11 +229,11 @@ public class HechoDTO {
         this.latitud = latitud;
     }
 
-    public LocalDateTime getFechaCarga() {
+    public String getFechaCarga() {
         return fechaCarga;
     }
 
-    public void setFechaCarga(LocalDateTime fechaCarga) {
+    public void setFechaCarga(String fechaCarga) {
         this.fechaCarga = fechaCarga;
     }
 
@@ -183,4 +260,8 @@ public class HechoDTO {
     public void setUuid(String uuid) {
         this.uuid = uuid;
     }
+
+    public List<String> getMultimedia() { return multimedia; }
+
+    public void setMultimedia(List<String> multimedia) {this.multimedia = multimedia;}
 }

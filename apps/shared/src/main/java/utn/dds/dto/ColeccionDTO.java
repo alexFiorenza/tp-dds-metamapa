@@ -1,95 +1,135 @@
 package utn.dds.dto;
 
 import utn.dds.dominio.Coleccion;
-import utn.dds.dominio.Hecho;
-import utn.dds.dominio.criterios.HechoStrategy;
-
+import utn.dds.dominio.consenso.AlgoritmoConsensoFactory;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 public class ColeccionDTO {
+    private String handle;
     private String titulo;
     private String descripcion;
-    private List<HechoDTO> hechos;
-    private String handle;
-    private int cantidadHechos;
+    private List<FuenteDTO> fuentes;
+    private List<CriterioCreateDTO> criteriosDePertenencia;
+    private String algoritmoConsenso; // String para la API REST
 
-    // Constructor vacío para deserialización
     public ColeccionDTO() {}
 
-    // Constructor completo
-    public ColeccionDTO(String titulo, String descripcion, List<HechoDTO> hechos, String handle, int cantidadHechos) {
+    public ColeccionDTO(String handle, String titulo, String descripcion,
+                       List<FuenteDTO> fuentes,
+                       List<CriterioCreateDTO> criteriosDePertenencia,
+                       String algoritmoConsenso) {
+        this.handle = handle;
         this.titulo = titulo;
         this.descripcion = descripcion;
-        this.hechos = hechos;
-        this.handle = handle;
-        this.cantidadHechos = cantidadHechos;
+        this.fuentes = fuentes;
+        this.criteriosDePertenencia = criteriosDePertenencia;
+        this.algoritmoConsenso = algoritmoConsenso;
     }
 
-    // Método estático para crear DTO desde entidad de dominio
-    public static ColeccionDTO fromColeccion(Coleccion coleccion) {
-        List<HechoDTO> hechosDTO = coleccion.getHechos().stream()
-            .map(HechoDTO::fromHecho)
-            .collect(Collectors.toList());
-        
-        return new ColeccionDTO(
-            coleccion.getTitulo(),
-            coleccion.getHechos().isEmpty() ? "" : "Colección de " + coleccion.getHechos().size() + " hechos",
-            hechosDTO,
-            coleccion.getTitulo(), // Usando título como handle por simplicidad
-            coleccion.getHechos().size()
-        );
+    // Factory method para convertir desde dominio
+    public static ColeccionDTO from(Coleccion coleccion) {
+        if (coleccion == null) {
+            return null;
+        }
+
+        ColeccionDTO dto = new ColeccionDTO();
+        dto.setHandle(coleccion.getHandle());
+        dto.setTitulo(coleccion.getTitulo());
+        dto.setDescripcion(coleccion.getDescripcion());
+
+        // Mapear fuentes
+        if (coleccion.getFuentes() != null) {
+            dto.setFuentes(
+                coleccion.getFuentes().stream()
+                    .map(FuenteDTO::from)
+                    .collect(Collectors.toList())
+            );
+        } else {
+            dto.setFuentes(new ArrayList<>());
+        }
+
+        // Mapear criterios
+        if (coleccion.getCriteriosDePertenencia() != null) {
+            dto.setCriteriosDePertenencia(
+                coleccion.getCriteriosDePertenencia().stream()
+                    .map(criterio -> {
+                        CriterioCreateDTO criterioDTO = new CriterioCreateDTO();
+                        criterioDTO.setTipo(criterio.getTipo());
+                        // Mapear todos los campos del criterio
+                        criterioDTO.setTitulo(criterio.getTitulo());
+                        criterioDTO.setCategoria(criterio.getCategoria());
+                        criterioDTO.setDescripcion(criterio.getDescripcion());
+                        criterioDTO.setOrigen(criterio.getOrigen());
+                        criterioDTO.setFechaAcontecimiento(criterio.getFechaAcontecimiento());
+                        criterioDTO.setFechaCarga(criterio.getFechaCarga());
+                        criterioDTO.setLongitud(criterio.getLongitud());
+                        criterioDTO.setLatitud(criterio.getLatitud());
+                        criterioDTO.setEstado(criterio.getEstado());
+                        criterioDTO.setEtiquetas(criterio.getEtiquetas());
+                        return criterioDTO;
+                    })
+                    .collect(Collectors.toList())
+            );
+        } else {
+            dto.setCriteriosDePertenencia(new ArrayList<>());
+        }
+
+        // Mapear algoritmo de consenso (convertir de interfaz a String)
+        dto.setAlgoritmoConsenso(coleccion.getAlgoritmoConsenso() != null ? 
+            AlgoritmoConsensoFactory.obtenerTipo(coleccion.getAlgoritmoConsenso()) : "default");
+
+        return dto;
     }
 
-    // Método para crear DTO básico sin hechos (para listados)
-    public static ColeccionDTO fromColeccionBasic(Coleccion coleccion) {
-        return new ColeccionDTO(
-            coleccion.getTitulo(),
-            coleccion.getHechos().isEmpty() ? "" : "Colección de " + coleccion.getHechos().size() + " hechos",
-            null, // No incluir hechos en listados
-            coleccion.getTitulo(),
-            coleccion.getHechos().size()
-        );
+    // Getters
+    public String getHandle() {
+        return handle;
     }
 
-    // Getters y Setters
     public String getTitulo() {
         return titulo;
-    }
-
-    public void setTitulo(String titulo) {
-        this.titulo = titulo;
     }
 
     public String getDescripcion() {
         return descripcion;
     }
 
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
+    public List<FuenteDTO> getFuentes() {
+        return fuentes;
     }
 
-    public List<HechoDTO> getHechos() {
-        return hechos;
+    public List<CriterioCreateDTO> getCriteriosDePertenencia() {
+        return criteriosDePertenencia;
     }
 
-    public void setHechos(List<HechoDTO> hechos) {
-        this.hechos = hechos;
-    }
-
-    public String getHandle() {
-        return handle;
-    }
-
+    // Setters
     public void setHandle(String handle) {
         this.handle = handle;
     }
 
-    public int getCantidadHechos() {
-        return cantidadHechos;
+    public void setTitulo(String titulo) {
+        this.titulo = titulo;
     }
 
-    public void setCantidadHechos(int cantidadHechos) {
-        this.cantidadHechos = cantidadHechos;
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
+    public void setFuentes(List<FuenteDTO> fuentes) {
+        this.fuentes = fuentes;
+    }
+
+    public void setCriteriosDePertenencia(List<CriterioCreateDTO> criteriosDePertenencia) {
+        this.criteriosDePertenencia = criteriosDePertenencia;
+    }
+
+    public String getAlgoritmoConsenso() {
+        return algoritmoConsenso;
+    }
+
+    public void setAlgoritmoConsenso(String algoritmoConsenso) {
+        this.algoritmoConsenso = algoritmoConsenso;
     }
 }

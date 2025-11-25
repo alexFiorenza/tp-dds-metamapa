@@ -1,0 +1,200 @@
+name: Deploy to AWS Lambda
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/fuentes/**'
+      - 'apps/shared/**'
+      - 'apps/normalizador/**'
+      - 'apps/fuentes/serverless.yml'
+      - 'apps/normalizador/serverless.yml'
+      - '.github/workflows/deploy-aws-lambda.yml'
+  workflow_dispatch:
+
+env:
+  AWS_REGION: 'us-east-1'
+  JAVA_VERSION: '17'
+  NODE_VERSION: '20'
+
+jobs:
+  # Job para desplegar Fuentes
+  deploy-fuentes:
+    name: Deploy Fuentes Lambda
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build JARs with Maven
+        run: |
+          mvn clean package -DskipTests
+        working-directory: .
+
+      - name: Verify JARs were created
+        run: |
+          echo "Checking for JAR files..."
+          ls -lh apps/fuentes/estatica/target/*.jar
+          ls -lh apps/fuentes/dinamica/target/*.jar
+          ls -lh apps/fuentes/proxy/metamapa/target/*.jar
+          ls -lh apps/fuentes/proxy/demo/target/*.jar
+
+      - name: Setup Node.js (for Serverless Framework)
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Serverless Framework
+        run: npm install -g serverless@3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy Fuentes to AWS Lambda
+        run: |
+          serverless deploy --stage prod --verbose
+        working-directory: apps/fuentes
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # Fuente Estática
+          FUENTE_ESTATICA_DAO_TYPE: ${{ vars.FUENTE_ESTATICA_DAO_TYPE }}
+          S3_ENDPOINT: ${{ vars.S3_ENDPOINT }}
+          S3_PUBLIC_ENDPOINT: ${{ vars.S3_PUBLIC_ENDPOINT }}
+          S3_BUCKET_ESTATICA: ${{ vars.S3_BUCKET_ESTATICA }}
+          # Fuente Dinámica
+          FUENTE_DINAMICA_DAO_TYPE: ${{ vars.FUENTE_DINAMICA_DAO_TYPE }}
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          MONGODB_DB_DINAMICA: ${{ vars.MONGODB_DB_DINAMICA }}
+          S3_BUCKET_DINAMICA: ${{ vars.S3_BUCKET_DINAMICA }}
+          # Proxy MetaMapa
+          METAMAPA_PROXY_URL: ${{ vars.METAMAPA_PROXY_URL }}
+          # Proxy Demo
+          FUENTE_PROXY_DEMO_DAO_TYPE: ${{ vars.FUENTE_PROXY_DEMO_DAO_TYPE }}
+          MONGODB_DB_PROXY_DEMO: ${{ vars.MONGODB_DB_PROXY_DEMO }}
+
+      - name: Get deployed endpoints
+        run: |
+          serverless info --stage prod
+        working-directory: apps/fuentes
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # Fuente Estática
+          FUENTE_ESTATICA_DAO_TYPE: ${{ vars.FUENTE_ESTATICA_DAO_TYPE }}
+          S3_ENDPOINT: ${{ vars.S3_ENDPOINT }}
+          S3_PUBLIC_ENDPOINT: ${{ vars.S3_PUBLIC_ENDPOINT }}
+          S3_BUCKET_ESTATICA: ${{ vars.S3_BUCKET_ESTATICA }}
+          # Fuente Dinámica
+          FUENTE_DINAMICA_DAO_TYPE: ${{ vars.FUENTE_DINAMICA_DAO_TYPE }}
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          MONGODB_DB_DINAMICA: ${{ vars.MONGODB_DB_DINAMICA }}
+          S3_BUCKET_DINAMICA: ${{ vars.S3_BUCKET_DINAMICA }}
+          # Proxy MetaMapa
+          METAMAPA_PROXY_URL: ${{ vars.METAMAPA_PROXY_URL }}
+          # Proxy Demo
+          FUENTE_PROXY_DEMO_DAO_TYPE: ${{ vars.FUENTE_PROXY_DEMO_DAO_TYPE }}
+          MONGODB_DB_PROXY_DEMO: ${{ vars.MONGODB_DB_PROXY_DEMO }}
+
+      - name: Deployment summary
+        run: |
+          echo "✅ Fuentes deployment completed successfully!"
+          echo "🌍 Region: ${{ env.AWS_REGION }}"
+          echo "🏷️  Stage: prod"
+          echo "📦 Service: metamapa-fuentes"
+          echo ""
+          echo "Deployed functions:"
+          echo "  - fuente-estatica: GET /estatica/hechos"
+          echo "  - fuente-dinamica: GET/POST /dinamica/hechos"
+          echo "  - proxy-metamapa: GET /metamapa/hechos"
+          echo "  - proxy-demo: GET/PUT /demo/hechos"
+
+  # Job para desplegar Normalizador
+  deploy-normalizador:
+    name: Deploy Normalizador Lambda
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: apps/normalizador
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: apps/normalizador/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Verify build artifacts
+        run: |
+          echo "Checking for build artifacts..."
+          ls -lh dist/
+
+      - name: Install Serverless Framework
+        run: npm install -g serverless@3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy Normalizador to AWS Lambda
+        run: |
+          serverless deploy --stage prod --verbose
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Get deployed endpoints
+        run: |
+          serverless info --stage prod
+
+      - name: Deployment summary
+        run: |
+          echo "✅ Normalizador deployment completed successfully!"
+          echo "🌍 Region: ${{ env.AWS_REGION }}"
+          echo "🏷️  Stage: prod"
+          echo "📦 Service: metamapa-normalizador"
+          echo ""
+          echo "Deployed functions:"
+          echo "  - normalizar: POST /normalizar"
+
+  # Job de resumen final
+  summary:
+    name: Deployment summary
+    needs: [deploy-fuentes, deploy-normalizador]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Summary
+        run: |
+          echo "🚀 AWS Lambda Deployment Summary"
+          echo "================================"
+          echo ""
+          echo "✅ Fuentes: ${{ needs.deploy-fuentes.result }}"
+          echo "✅ Normalizador: ${{ needs.deploy-normalizador.result }}"

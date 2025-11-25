@@ -2,13 +2,16 @@ package utn.dds.dto;
 
 import utn.dds.dominio.EstadoSolicitud;
 import utn.dds.dominio.SolicitudEliminacion;
+import utn.dds.dominio.Hecho;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class SolicitudEliminacionDTO {
     private String texto;
-    private String hecho;
-    private LocalDateTime fechaSolicitud;
+    private String hecho; // UUID del hecho (mantener para compatibilidad)
+    private HechoDTO hechoDTO; // Hecho completo populado
+    private String fechaSolicitud; // ISO-8601: "2025-10-29T22:54:58"
     private EstadoSolicitud estado;
     private final String uuid;
 
@@ -18,12 +21,18 @@ public class SolicitudEliminacionDTO {
     }
 
     // Constructor completo
-    public SolicitudEliminacionDTO(String texto, String hecho, LocalDateTime fechaSolicitud, EstadoSolicitud estado, String uuid) {
+    public SolicitudEliminacionDTO(String texto, String hecho, HechoDTO hechoDTO, String fechaSolicitud, EstadoSolicitud estado, String uuid) {
         this.texto = texto;
         this.hecho = hecho;
+        this.hechoDTO = hechoDTO;
         this.fechaSolicitud = fechaSolicitud;
         this.estado = estado;
         this.uuid = uuid;
+    }
+
+    // Constructor sin HechoDTO (para compatibilidad)
+    public SolicitudEliminacionDTO(String texto, String hecho, String fechaSolicitud, EstadoSolicitud estado, String uuid) {
+        this(texto, hecho, null, fechaSolicitud, estado, uuid);
     }
 
     // Método estático para crear DTO desde entidad de dominio
@@ -31,7 +40,7 @@ public class SolicitudEliminacionDTO {
         return new SolicitudEliminacionDTO(
             solicitud.getTexto(),
             solicitud.getHecho(),
-            solicitud.getFechaSolicitud(),
+            solicitud.getFechaSolicitud() != null ? solicitud.getFechaSolicitud().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null,
             solicitud.getEstado(),
             solicitud.getUuid()
         );
@@ -42,7 +51,7 @@ public class SolicitudEliminacionDTO {
         return new SolicitudEliminacion(
             this.texto,
             this.hecho,
-            this.fechaSolicitud,
+            this.fechaSolicitud != null ? LocalDateTime.parse(this.fechaSolicitud, DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null,
             this.estado,
             this.uuid
         );
@@ -57,7 +66,11 @@ public class SolicitudEliminacionDTO {
         return hecho;
     }
 
-    public LocalDateTime getFechaSolicitud() {
+    public HechoDTO getHechoDTO() {
+        return hechoDTO;
+    }
+
+    public String getFechaSolicitud() {
         return fechaSolicitud;
     }
 
@@ -78,7 +91,11 @@ public class SolicitudEliminacionDTO {
         this.hecho = hecho;
     }
 
-    public void setFechaSolicitud(LocalDateTime fechaSolicitud) {
+    public void setHechoDTO(HechoDTO hechoDTO) {
+        this.hechoDTO = hechoDTO;
+    }
+
+    public void setFechaSolicitud(String fechaSolicitud) {
         this.fechaSolicitud = fechaSolicitud;
     }
 

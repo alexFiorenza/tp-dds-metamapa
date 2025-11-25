@@ -1,6 +1,70 @@
 # MetaMapa
 
-Proyecto de microservicios con dominio compartido para el sistema MetaMapa.
+Sistema de microservicios para la gestión y agregación de datos de diversas fuentes con capacidades de monitoreo.
+
+## Arquitectura
+
+### Microservicios
+
+El sistema está compuesto por 7 microservicios independientes:
+
+1. **Fuentes Estáticas** (Puerto 7001)
+   - Gestión de datos estáticos desde archivos CSV
+   - Almacenamiento en MinIO/S3
+   - Independiente de bases de datos
+
+2. **Fuentes Dinámicas** (Puerto 7002)
+   - Procesamiento de datos dinámicos
+   - Integración con CouchDB para persistencia NoSQL
+   - Almacenamiento flexible de documentos
+
+3. **Proxy MetaMapa** (Puerto 7003)
+   - Proxy hacia fuentes externas de MetaMapa
+   - Integración con APIs externas
+   - Independiente de bases de datos
+
+4. **Proxy Demo** (Puerto 7004)
+   - Proxy de demostración para testing
+   - Integración con CouchDB para persistencia
+   - Almacenamiento de datos de prueba
+
+5. **Agregador** (Puerto 7005)
+   - Agregación de datos de múltiples fuentes
+   - Integración con el Normalizador para procesamiento de datos
+   - Persistencia con Hibernate/PostgreSQL
+   - Procesamiento y consolidación de datos
+
+6. **Normalizador** (Puerto 3005)
+   - Servicio de normalización de hechos (TypeScript/Node.js)
+   - Pipeline de 5 normalizadores secuenciales
+   - Validación y transformación de datos
+   - Categorización con fuzzy matching (Levenshtein)
+   - Arquitectura serverless-ready (Railway Function)
+
+7. **MetaMapa Administrativo** (Puerto 7006)
+   - API administrativa para gestión de colecciones
+   - API pública para consultas
+   - Persistencia con Hibernate/PostgreSQL
+   - Gestión de solicitudes de eliminación
+
+8. **UI Admin** (Puerto 3000)
+   - Interfaz web de administración con Next.js 15
+   - Visualización de hechos en mapa interactivo (Mapbox)
+   - Sistema de filtrado avanzado con sincronización de URL
+   - Gestión de colecciones y solicitudes de eliminación
+   - Autenticación con Clerk.js
+
+### Bases de Datos
+
+- **PostgreSQL**: Base de datos relacional principal para Agregador y MetaMapa
+- **CouchDB**: Base de datos NoSQL para Fuentes Dinámicas y Proxy Demo
+- **MinIO**: Almacenamiento S3-compatible para archivos y datos estáticos
+
+### Stack de Monitoreo
+
+- **Prometheus** (Puerto 9090): Recolección de métricas
+- **Alertmanager** (Puerto 9093): Gestión de alertas
+- **Grafana** (Puerto 3000): Dashboards y visualización
 
 ## Estructura del Proyecto
 
@@ -9,177 +73,391 @@ MetaMapa/
 ├── pom.xml                          # POM padre principal
 ├── docker-compose.yml               # Orquestación de contenedores
 ├── build-and-dockerize.sh           # Script de build y dockerización
+├── .env.example                     # Variables de entorno de ejemplo
 ├── apps/
 │   ├── shared/                      # Módulo de dominio compartido
 │   │   ├── pom.xml
-│   │   └── src/main/java/utn/dds/dominio/
+│   │   └── src/main/java/utn/dds/
+│   │       ├── dominio/             # Entidades de dominio
+│   │       ├── dto/                 # Data Transfer Objects
+│   │       ├── jpa/                 # Entidades JPA
+│   │       └── mappers/             # Mappers entre dominio y JPA
 │   ├── fuentes/                     # Microservicios de fuentes de datos
 │   │   ├── estatica/                # Fuentes de datos estáticas
 │   │   ├── dinamica/                # Fuentes de datos dinámicas
 │   │   └── proxy/                   # Servicios proxy
+│   │       ├── metamapa/            # Proxy MetaMapa
+│   │       └── demo/                # Proxy Demo
 │   ├── agregador/                   # Microservicio agregador
-│   │   ├── pom.xml
-│   │   └── src/main/java/utn/dds/agregador/
 │   ├── metamapa/                    # Microservicio principal MetaMapa
-│   └── estadisticas/                # Stack de monitoreo y dashboards
-│       ├── prometheus/              # Configuración de Prometheus
-│       │   └── prometheus.yml
-│       ├── alertmanager/            # Configuración de Alertmanager
-│       │   └── config.yml
+│   ├── normalizador/                # Servicio de normalización (TypeScript/Node.js)
+│   │   ├── src/
+│   │   │   ├── index.ts             # HTTP server (native Node.js)
+│   │   │   ├── pipeline.ts          # Orquestador del pipeline
+│   │   │   ├── types.ts             # Definiciones TypeScript
+│   │   │   ├── normalizadores/      # 5 normalizadores secuenciales
+│   │   │   │   ├── texto.ts         # Normalización de texto
+│   │   │   │   ├── categoria.ts     # Mapeo de categorías (exacto, regex, fuzzy)
+│   │   │   │   ├── fecha.ts         # Normalización de fechas
+│   │   │   │   ├── coordenadas.ts   # Validación de coordenadas
+│   │   │   │   └── etiquetas.ts     # Normalización de etiquetas
+│   │   │   ├── mapeos/
+│   │   │   │   └── categorias.json  # Configuración de categorías
+│   │   │   └── utils/
+│   │   │       └── similitud.ts     # Algoritmo Levenshtein
+│   │   ├── Dockerfile               # Multi-stage build optimizado
+│   │   ├── package.json             # Dependencias npm
+│   │   └── tsconfig.json            # Configuración TypeScript
+│   ├── ui-admin/                    # Interfaz de administración (Next.js)
+│   │   ├── app/                     # Pages (Next.js App Router)
+│   │   ├── components/              # Componentes React
+│   │   ├── lib/                     # API client y utilidades
+│   │   ├── types/                   # Definiciones TypeScript
+│   │   └── hooks/                   # Custom React hooks
+│   ├── scheduler/                   # Servicio de programación de tareas
+│   └── estadisticas/                # Stack de monitoreo
+│       ├── metric-collector/        # Configuración de Prometheus
+│       ├── gestor-alertas/          # Configuración de Alertmanager
 │       └── grafana/                 # Configuración de Grafana
-│           ├── provisioning/
-│           │   ├── datasources/datasource.yml
-│           │   └── dashboards/dashboard.yml
-│           └── dashboards/          # Dashboards JSON personalizados
 ```
 
-## Módulos y Microservicios
+## APIs Principales
 
-### Dominio Compartido (`apps/shared`)
-Contiene las clases de dominio, enums, fuentes, criterios y repositorios abstractos.
+### API Pública (Puerto 7006)
+- `GET /api/hechos` - Obtener hechos con filtros y paginación
+  - Filtros: `categoria`, `titulo`, `descripcion`, `origen`, `estado`, `fechaAcontecimiento`, `latitud`, `longitud`, `etiquetas`
+  - Paginación: `pagina` (0-indexed), `tamanioPagina` (default: 10, max: 100)
+- `POST /api/hechos/{uuid}/reportar` - Reportar un hecho
+- `GET /api/colecciones` - Listar colecciones con paginación
+- `GET /api/colecciones/{identificador}` - Obtener colección por identificador
+- `GET /api/colecciones/{identificador}/hechos` - Obtener hechos de una colección
+- `POST /api/solicitudes` - Crear solicitud de eliminación
 
-### Fuentes Estáticas (`apps/fuentes/estatica`)
-Microservicio que maneja fuentes de datos estáticas (archivos CSV, JSON, etc.).
-- **Puerto:** 7001
-- **Endpoints:**
-  - `GET /health` - Health check
-  - `GET /` - Información del servicio
+### API Administrativa (Puerto 7006)
+- `GET /administrador/colecciones` - Listar colecciones (admin)
+- `POST /administrador/coleccion` - Crear nueva colección
+- `PUT /administrador/coleccion/{id}` - Actualizar colección
+- `DELETE /administrador/coleccion/{id}` - Eliminar colección
+- `GET /administrador/solicitudes` - Listar solicitudes de eliminación
+- `PUT /administrador/solicitud/{uuid}/aceptar` - Aceptar solicitud
+- `PUT /administrador/solicitud/{uuid}/rechazar` - Rechazar solicitud
 
-### Fuentes Dinámicas (`apps/fuentes/dinamica`)
-Microservicio que maneja fuentes de datos dinámicas (APIs externas, bases de datos, etc.).
-- **Puerto:** 7002
-- **Endpoints:**
-  - `GET /health` - Health check
-  - `GET /` - Información del servicio
+## Configuración del Entorno
 
-### Proxy MetaMapa (`apps/fuentes/proxy/metamapa`)
-Servicio proxy para la integración con MetaMapa.
-- **Puerto:** 7003
-- **Endpoints:**
-  - `GET /health` - Health check
-  - `GET /` - Información del servicio
+### 1. Crear archivo de configuración
 
-### Proxy Demo (`apps/fuentes/proxy/demo`)
-Servicio proxy demo para pruebas y desarrollo.
-- **Puerto:** 7004
-- **Endpoints:**
-  - `GET /health` - Health check
-  - `GET /` - Información del servicio
+Copia el archivo de ejemplo y personalízalo:
 
-### Agregador (`apps/agregador`)
-Microservicio que agrega y expone datos de múltiples fuentes.
-- **Puerto:** 7005
-- **Endpoints:**
-  - `GET /health` - Health check
-  - `GET /` - Información del servicio
+```bash
+cp .env.example .env
+```
 
-### MetaMapa (`apps/metamapa`)
-Microservicio principal del sistema MetaMapa.
-- **Puerto:** 7006
-- **Endpoints:**
-  - `GET /health` - Health check
-  - `GET /` - Información del servicio
+### 2. Configurar variables de entorno
 
-## Estadísticas y Monitoreo
+Edita el archivo `.env` con tus configuraciones:
 
-### apps/estadisticas
-Contiene la configuración para el stack de monitoreo y visualización:
+```bash
+# Base de datos PostgreSQL
+POSTGRES_DB=metamapa_db
+POSTGRES_USER=metamapa
+POSTGRES_PASSWORD=metamapa123
 
-- **Prometheus:**
-  - Scrapea métricas de los microservicios en `/metrics`.
-  - Configuración en `apps/estadisticas/prometheus/prometheus.yml`.
-- **Alertmanager:**
-  - Gestiona alertas y notificaciones.
-  - Configuración en `apps/estadisticas/alertmanager/config.yml`.
-  - **Integración:** Envía alertas vía HTTP POST al endpoint `/consenso` del microservicio `proxy-metamapa`.
-- **Grafana:**
-  - Dashboards y visualización de métricas.
-  - Provisioning automático de datasources y dashboards en `apps/estadisticas/grafana/provisioning/`.
+# pgAdmin
+PGADMIN_EMAIL=admin@metamapa.com
+PGADMIN_PASSWORD=admin123
 
-### Ejemplo de integración de alertas
-Cuando se dispara una alerta en Prometheus, Alertmanager enviará un POST a:
+# CouchDB Configuration
+COUCHDB_USER=admin
+COUCHDB_PASSWORD=admin123
+
+# MinIO S3 Configuration
+MINIO_ACCESS_KEY=minioadmin
+MINIO_SECRET_KEY=minioadmin123
+
+# S3 Configuration for Services
+S3_ENDPOINT=http://minio:9000
+S3_BUCKET=metamapa-data
+S3_REGION=us-east-1
+
+# Configuración de DAOs
+AGREGADOR_DAO_TYPE=hibernate
+METAMAPA_DAO_TYPE=hibernate
+FUENTE_ESTATICA_DAO_TYPE=s3
+FUENTE_DINAMICA_DAO_TYPE=filesystem
+FUENTE_PROXY_DEMO_DAO_TYPE=filesystem
+
+# Normalizador
+NORMALIZADOR_ENABLED=true
+```
+
+## Instalación y Ejecución
+
+### Prerrequisitos
+
+- Docker y Docker Compose
+- Java 17
+- Maven 3.8+
+- Node.js 20+ (para el normalizador)
+- npm o yarn
+
+### Opción 1: Con Docker Compose (Recomendado)
+
+1. **Preparar el entorno:**
+   ```bash
+   cp .env.example .env
+   # Editar .env con tus configuraciones
+   ```
+
+2. **Construir y ejecutar todos los servicios:**
+   ```bash
+   ./build-and-dockerize.sh
+   docker-compose up -d
+   ```
+
+3. **Verificar servicios:**
+   ```bash
+   docker-compose ps
+   ```
+
+### Opción 2: Desarrollo Local
+
+1. **Compilar todo el proyecto:**
+   ```bash
+   mvn clean compile
+   ```
+
+2. **Ejecutar servicios específicos:**
+   ```bash
+   # Agregador
+   cd apps/agregador
+   mvn exec:java -Dexec.mainClass="utn.dds.agregador.Main"
+
+   # MetaMapa
+   cd apps/metamapa
+   mvn exec:java -Dexec.mainClass="utn.dds.metamapa.Main"
+   ```
+
+3. **Ejecutar UI Admin (Next.js):**
+   ```bash
+   cd apps/ui-admin
+
+   # Instalar dependencias (primera vez)
+   yarn install
+
+   # Configurar variables de entorno
+   cp .env.example .env.local
+   # Editar .env.local con tus credenciales
+
+   # Ejecutar servidor de desarrollo
+   yarn dev
+   ```
+
+   La aplicación estará disponible en http://localhost:3000
+
+4. **Crear JARs ejecutables:**
+   ```bash
+   mvn clean package
+   ```
+
+## Acceso a Servicios
+
+### Microservicios
+- **Fuentes Estáticas**: http://localhost:7001
+- **Fuentes Dinámicas**: http://localhost:7002
+- **Proxy MetaMapa**: http://localhost:7003
+- **Proxy Demo**: http://localhost:7004
+- **Agregador**: http://localhost:7005
+- **Normalizador**: http://localhost:3005
+  - Health check: http://localhost:3005/health
+  - Endpoint de normalización: http://localhost:3005/normalizar
+- **MetaMapa**: http://localhost:7006
+
+### Interfaz Web
+- **UI Admin**: http://localhost:3000
+  - `/hechos` - Vista de hechos con mapa y filtros
+  - `/colecciones` - Listado de colecciones
+  - `/solicitudes` - Solicitudes de eliminación
+  - `/admin` - Dashboard administrativo (requiere autenticación)
+
+### Bases de Datos
+- **PostgreSQL**: localhost:5432
+- **CouchDB**: http://localhost:5984
+- **CouchDB Web UI**: http://localhost:5984/_utils
+- **MinIO**: http://localhost:9000
+- **MinIO Console**: http://localhost:9001
+
+### Herramientas de Administración
+- **pgAdmin**: http://localhost:5050
+- **Prometheus**: http://localhost:9090
+- **Alertmanager**: http://localhost:9093
+- **Grafana**: http://localhost:3000 (admin/admin)
+
+### APIs y Documentación
+- **API MetaMapa**: http://localhost:7006
+- **Swagger UI**: http://localhost:7006/swagger-ui
+- **API Documentation**: http://localhost:7006/redoc
+
+## Monitoreo y Métricas
+
+### Configuración de Alertas
+
+Las alertas de Prometheus se envían automáticamente al endpoint:
 ```
 http://proxy-metamapa:7003/consenso
 ```
-con el payload de la alerta.
 
-Puedes implementar el handler en `proxy-metamapa` así:
+### Integración de Alertas en Código
+
 ```java
+// Ejemplo en proxy-metamapa
 app.post("/consenso", ctx -> {
-    String payload = ctx.body();
+    String alertPayload = ctx.body();
     // Procesar alerta recibida
+    logger.info("Alerta recibida: {}", alertPayload);
     ctx.status(200);
 });
 ```
 
-## Tecnologías
+### Métricas de Microservicios
 
-- **Java 17**
-- **Maven**
-- **Javalin**
-- **SLF4J**
-- **Jackson**
-- **JUnit 5**
-- **Docker**
-- **Docker Compose**
-- **OpenCSV**
-
-## Compilación y Ejecución
-
-### Compilar todo el proyecto
-```bash
-mvn clean compile
+Cada microservicio debe exponer métricas en:
 ```
-
-### Ejecutar un microservicio específico
-```bash
-# Ejemplo para el agregador
-cd apps/agregador
-mvn exec:java -Dexec.mainClass="utn.dds.agregador.Main"
-
-# Ejemplo para MetaMapa
-cd apps/metamapa
-mvn exec:java -Dexec.mainClass="utn.dds.metamapa.Main"
-```
-
-### Crear JARs ejecutables
-```bash
-mvn clean package
-```
-
-## Docker y Containerización
-
-### Construir y Dockerizar
-```bash
-./build-and-dockerize.sh
-```
-
-### Ejecutar con Docker Compose
-```bash
-docker-compose up -d
-```
-
-### Verificar servicios
-```bash
-curl http://localhost:7005/health   # Agregador
-curl http://localhost:7006/health   # MetaMapa
+http://localhost:PORT/metrics
 ```
 
 ## Desarrollo
 
-1. Modelos de dominio en `apps/shared/src/main/java/utn/dds/dominio/`
-2. Implementar lógica específica en cada microservicio
-3. Agregar endpoints según necesidades
-4. Configurar dependencias necesarias en cada `pom.xml`
-5. Actualizar Dockerfiles si se agregan nuevas dependencias
+### Estructura de Dominio Compartido
 
-## Notas
+El módulo `apps/shared` contiene:
+- **Entidades de dominio**: `Hecho`, `Contribuyente`, `Coleccion`
+- **Enums**: `EstadoHecho`, `TipoHecho`, `Origen`
+- **Strategy patterns**: Para categorización y criterios
+- **DTOs**: Para transferencia de datos
+- **Mappers**: Entre dominio y JPA
 
-- Todos los microservicios usan Javalin
-- Cada servicio tiene su propio puerto
-- El módulo `shared` es compartido entre todos los servicios
-- Los JARs son ejecutables con el plugin shade de Maven
-- Docker Compose facilita el despliegue de todos los servicios
-- El stack de monitoreo (Prometheus, Alertmanager, Grafana) está listo para usarse desde `apps/estadisticas`.
-- Las alertas pueden ser visualizadas en Grafana y gestionadas por Alertmanager.
-- Las métricas deben ser expuestas en `/metrics` por cada microservicio para ser recolectadas.
+### Agregando Nuevos Endpoints
+
+1. **Definir en el controlador:**
+   ```java
+   @OpenApi(/* documentación */)
+   public void nuevoEndpoint(Context ctx) {
+       // lógica del endpoint
+   }
+   ```
+
+2. **Registrar en routes:**
+   ```java
+   app.get("/nuevo-endpoint", controller::nuevoEndpoint);
+   ```
+
+3. **Implementar lógica en service y repository**
+
+### Testing
+
+```bash
+# Ejecutar todos los tests
+mvn test
+
+# Tests de un módulo específico
+cd apps/metamapa
+mvn test
+```
+
+## Tecnologías
+
+### Backend
+- **Java 17**
+- **Maven** (multi-module project)
+- **Javalin** (web framework)
+- **Hibernate** (ORM)
+- **Jackson** (JSON)
+- **SLF4J** (logging)
+- **OpenCSV** (CSV processing)
+
+### Normalizador (Microservicio TypeScript)
+- **Node.js 20+**
+- **TypeScript**
+- **Native HTTP** (no frameworks, ultra-lightweight)
+- **ES Modules** (ESM)
+- **Levenshtein distance** (fuzzy matching)
+
+### Frontend (UI Admin)
+- **Next.js 15** (React 19)
+- **TypeScript**
+- **HeroUI** (component library)
+- **Tailwind CSS v4** (styling)
+- **Mapbox GL** (map visualization)
+- **Clerk.js** (authentication)
+- **React Hook Form** + **Zod** (forms & validation)
+- **Framer Motion** (animations)
+- **Recharts** (data visualization)
+
+### Bases de Datos
+- **PostgreSQL 15** (relacional)
+- **CouchDB 3.3** (NoSQL)
+- **MinIO** (S3-compatible storage)
+
+### Infraestructura
+- **Docker & Docker Compose**
+- **Prometheus** (métricas)
+- **Grafana** (visualización)
+- **Alertmanager** (alertas)
+
+### APIs y Documentación
+- **OpenAPI 3** (documentación)
+- **Swagger UI** (interfaz interactiva)
+- **ReDoc** (documentación estática)
+
+## Troubleshooting
+
+### Problemas Comunes
+
+1. **Puerto ocupado:**
+   ```bash
+   # Verificar puertos en uso
+   docker-compose ps
+   lsof -i :7006
+   ```
+
+2. **Base de datos no conecta:**
+   ```bash
+   # Verificar logs
+   docker-compose logs postgres
+   docker-compose logs couchdb
+   ```
+
+3. **Rebuild necesario:**
+   ```bash
+   docker-compose down
+   ./build-and-dockerize.sh
+   docker-compose up -d
+   ```
+
+### Logs y Debug
+
+```bash
+# Ver logs de todos los servicios
+docker-compose logs -f
+
+# Ver logs de un servicio específico
+docker-compose logs -f metamapa
+
+# Ver logs en tiempo real
+docker-compose logs -f --tail=100
+```
+
+## Contribución
+
+1. Crear feature branch desde `main`
+2. Implementar cambios con tests
+3. Actualizar documentación si es necesario
+4. Crear Pull Request con descripción detallada
+
+### Convenciones de Código
+
+- Usar Java 17 features
+- Seguir patrones existentes en el codebase
+- Documentar APIs con OpenAPI
+- Agregar tests para nuevas funcionalidades
+- Mantener la separación de responsabilidades entre capas
