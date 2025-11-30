@@ -461,3 +461,6 @@ docker-compose logs -f --tail=100
 - Documentar APIs con OpenAPI
 - Agregar tests para nuevas funcionalidades
 - Mantener la separación de responsabilidades entre capas
+
+### Carpeta de la entrega: Drive
+https://drive.google.com/drive/folders/1_4EGrutGIoxEHehAnuEJKheCh8Wt4vqP?usp=drive_link
